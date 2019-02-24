@@ -1,5 +1,6 @@
 .dub
 docs.json
+dub.selections.json
 __dummy.html
 docs/
 /fancyengine2
@@ -15,4 +16,4 @@ fancyengine2-test-*
 .*.swm
 .*.swl
 
-src/commit_hash.txt
+src/.commit_hash.txt
