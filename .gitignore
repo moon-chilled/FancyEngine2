@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/fancyengine2
+fancyengine2-test-*
+*.exe
+*.o
+*.obj
+*.lst
+
+.*.swp
+.*.swo
+.*.swn
+.*.swm
+.*.swl

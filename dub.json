@@ -1,0 +1,14 @@
+{
+	"authors": [
+		"Elronnd"
+	],
+	"copyright": "Copyright © 2019, Elronnd",
+	"dependencies": {
+		"derelict-gl3": "~>1.0.24",
+		"derelict-sdl2": "~>2.1.4"
+	},
+	"description": "A fancy game engine.",
+	"license": "proprietary",
+	"name": "fancyengine2",
+	"preBuildCommands": ["git rev-parse --short HEAD > src/commit_hash.txt"]
+}
