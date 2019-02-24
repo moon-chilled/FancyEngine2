@@ -14,3 +14,5 @@ fancyengine2-test-*
 .*.swn
 .*.swm
 .*.swl
+
+src/commit_hash.txt
