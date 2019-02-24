@@ -10,6 +10,6 @@
 	"description": "A fancy game engine.",
 	"license": "proprietary",
 	"name": "fancyengine2",
-	"preBuildCommands": ["git rev-parse --short HEAD > src/commit_hash.txt"],
+	"preBuildCommands": ["git rev-parse --short HEAD > src/.commit_hash.txt"],
 	"stringImportPaths": ["src/"]
 }
