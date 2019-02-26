@@ -17,3 +17,4 @@ fancyengine2-test-*
 .*.swl
 
 src/.commit_hash.txt
+lib

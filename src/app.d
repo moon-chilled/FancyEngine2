@@ -1,7 +1,7 @@
 import std.stdio;
 import logging;
+import windowing.windows;
 
 void main() {
-	string commit_hash = import(".commit_hash.txt");
-	log("Currently running FancyEngine2 revision %s", commit_hash);
+	GraphicsState gfx = new_winstate(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
 }
