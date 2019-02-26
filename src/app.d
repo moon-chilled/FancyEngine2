@@ -10,7 +10,7 @@ import std.math: abs, trunc;
 version (Windows) pragma(lib, "user32");
 
 void main() {
-	GraphicsState gfx = new_winstate(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
+	auto gfx = GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
 
 	float r = 0, g = 0, b = 0;
 	void nice(ref float f) {
