@@ -5,14 +5,26 @@ import windowing.windows;
 import derelict.opengl;
 import derelict.sdl2.sdl;
 
+import std.math: abs, trunc;
+
 version (Windows) pragma(lib, "user32");
 
 void main() {
 	GraphicsState gfx = new_winstate(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+
+	float r = 0, g = 0, b = 0;
+	void nice(ref float f) {
+		if (f > 1)
+			f -= 1;
+		if (f < 0)
+			f = 1 - (trunc(f) - f);
+	}
 
 	while (true) {
+		///////////////////////////////////
+		////EVENT HANDLING ////////////////
+		///               /////////////////
+		//               /
 		SDL_Event ev;
 		if (SDL_PollEvent(&ev)) {
 			if (ev.type == SDL_KEYDOWN) {
@@ -22,6 +34,24 @@ void main() {
 			}
 		}
 
+		///////////////////////////////////
+		////  PHYSICS      ////////////////
+		///               /////////////////
+		//               /
+		r += 0.01;
+		g += 0.02;
+		b -= 0.01;
+		nice(r);
+		nice(g);
+		nice(b);
+
+
+		///////////////////////////////////
+		////  RENDERING    ////////////////
+		///               /////////////////
+		//               /
+		glClearColor(r, g, b, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 		gfx.blit();
 	}
 
