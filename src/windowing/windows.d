@@ -6,6 +6,8 @@ import std.string: dstr = fromStringz;
 
 import logging;
 
+public bool is_sdl_loaded;
+
 struct GraphicsState {
 	SDL_GLContext gl_context;
 
@@ -49,6 +51,7 @@ GraphicsState new_winstate(WindowSpec window) {
 	} catch(Throwable) {
 		fatal("Error loading SDL2");
 	}
+	is_sdl_loaded = true;
 
 	with (window) trace("Opening %s window titled '%s' (%sx%s, render resolution %sx%s), fullscreen state %s, with%s vsync", borders ? "bordered" : "borderless", title, win_width, win_height, render_width, render_height, window.fullscreen, vsync ? "" : "out");
 
@@ -92,7 +95,7 @@ GraphicsState new_winstate(WindowSpec window) {
 	}
 
 
-	info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
+	error("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
 
 	return ret;
 }

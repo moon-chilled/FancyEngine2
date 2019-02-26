@@ -27,13 +27,13 @@ void set_min_log_level(LogLevel ll) {
 void set_msg_log_level(LogLevel ll) {
 	synchronized msg_log_level = ll;
 }
+
 void handle_log(LogLevel ll, int line, string file, string func_name, string pretty_func_name, string module_name, string msg) {
 	import std.datetime.systime: Clock;
 
-	string formatted_msg = format("\033[34m%s||%s||%s:%s:%s\033[31m|$\033[0m %s", Clock.currTime.toISOExtString(),
+	string formatted_msg = format("\033[34m%s||%s||%s:%s\033[31m|$\033[0m %s\n", Clock.currTime.toISOExtString(),
 			import(".commit_hash.txt")[0 .. $-1],
 			file,
-			func_name,
 			line,
 			msg);
 
@@ -43,9 +43,27 @@ void handle_log(LogLevel ll, int line, string file, string func_name, string pre
 		}
 	}
 	if (ll >= msg_log_level) {
-		import std.stdio;
-		writeln("TODO: show a message window");
+		import windowing.windows;
+		import std.string: toStringz;
+
+		string msgformatted_msg = format("An error was encountered!  Please report this to the developers:\n<%s>%s:%s: %s", import(".commit_hash.txt")[0 .. $-1], file, line, msg);
+		if (is_sdl_loaded) {
+			import derelict.sdl2.sdl;
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", msgformatted_msg.toStringz, null);
+		} else {
+			version(Windows) {
+				import core.sys.windows.winuser: MessageBox;
+				import std.conv: to;
+				MessageBox(null, (msgformatted_msg.to!wstring.dup ~ '\0').ptr, null, 0);
+			} else version (OSX) {
+				writefln("TODO: print a message on macos");
+			} else {
+				import core.stdc.stdlib;
+				system(toStringz("xmessage '" ~ msgformatted_msg ~ "'"));
+			}
+		}
 	}
+
 	if (ll == LogLevel.fatal) {
 		throw new Exception("Fatal message logged: " ~ formatted_msg);
 	}
