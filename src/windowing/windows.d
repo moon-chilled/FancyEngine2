@@ -6,7 +6,7 @@ import std.string: dstr = fromStringz;
 
 import logging;
 
-public bool is_sdl_loaded;
+public __gshared bool is_sdl_loaded;
 
 struct GraphicsState {
 	SDL_GLContext gl_context;
@@ -93,9 +93,14 @@ GraphicsState new_winstate(WindowSpec window) {
 			warning("Unable to turn off vsync.  SDL says: %s", SDL_GetError());
 		}
 	}
+	//glViewPort(0, 0, window.render_width, window.render_height); // I'm not sure if this does what I want it to
 
 
-	error("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
+	info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
 
 	return ret;
+}
+
+void blit(GraphicsState gs) {
+	SDL_GL_SwapWindow(gs.window);
 }

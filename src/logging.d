@@ -42,7 +42,11 @@ void handle_log(LogLevel ll, int line, string file, string func_name, string pre
 			target.write(formatted_msg);
 		}
 	}
+
+	// TODO: globally pause everything?
 	if (ll >= msg_log_level) {
+		import core.thread: Thread;
+		new Thread({
 		import windowing.windows;
 		import std.string: toStringz;
 
@@ -62,6 +66,7 @@ void handle_log(LogLevel ll, int line, string file, string func_name, string pre
 				system(toStringz("xmessage '" ~ msgformatted_msg ~ "'"));
 			}
 		}
+		}).start();
 	}
 
 	if (ll == LogLevel.fatal) {
