@@ -82,7 +82,7 @@ template log_funf(LogLevel ll) {
 			string pretty_func_name = __PRETTY_FUNCTION__,
 			string module_name = __MODULE__, A...)
 		(string msg, A args) {
-			handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
+			version (dev) handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
 		}
 
 	void log_funf(int line = __LINE__, string file = __FILE__,
@@ -91,10 +91,11 @@ template log_funf(LogLevel ll) {
 			string module_name = __MODULE__, A...)
 		(bool condition, string msg, A args) {
 			if (condition) {
-				handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
+				version (dev) handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
 			}
 		}
 }
+
 alias trace = log_funf!(LogLevel.trace);
 alias info = log_funf!(LogLevel.info);
 alias log = log_funf!(LogLevel.log);
@@ -113,7 +114,7 @@ template log_funs(LogLevel ll) {
 			string pretty_func_name = __PRETTY_FUNCTION__,
 			string module_name = __MODULE__, A...)
 		(A args) if ((args.length > 0 && !is(Unqual!(A[0]) : bool)) || args.length == 0) {
-			handle_log(ll, line, file, func_name, pretty_func_name, module_name, text(args));
+			version (dev) handle_log(ll, line, file, func_name, pretty_func_name, module_name, text(args));
 		}
 
 	void log_funs(int line = __LINE__, string file = __FILE__,
@@ -122,7 +123,7 @@ template log_funs(LogLevel ll) {
 			string module_name = __MODULE__, A...)
 		(bool condition, A args) {
 			if (condition) {
-				handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
+				version (dev) handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
 			}
 		}
 }

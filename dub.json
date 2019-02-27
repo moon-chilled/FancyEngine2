@@ -11,5 +11,18 @@
 	"license": "proprietary",
 	"name": "fancyengine2",
 	"preBuildCommands": ["git rev-parse --short HEAD > src/.commit_hash.txt"],
-	"stringImportPaths": ["src/"]
+	"stringImportPaths": ["src/"],
+
+	"buildTypes": {
+		"dev": {
+			"versions": ["dev"],
+			"buildOptions": ["debugInfo", "optimize"]
+		},
+		"release": {
+			"versions": ["release"],
+			"buildOptions": ["optimize", "inline"],
+
+			"lflags-windows": ["/exetype:nt", "/subsystem:windows"]
+		}
+	}
 }
