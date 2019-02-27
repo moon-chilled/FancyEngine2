@@ -1,5 +1,30 @@
 module windowing.key;
 
+struct Event {
+	Evtype type;
+	union {
+		Key key;
+		private struct _msev {
+			int deltay;
+			int deltax;
+			int ypos;
+			int xpos;
+		}
+		_msev mouse;
+	}
+}
+
+enum Evtype {
+	// Stateful events.  Including mouse clicks even though it says 'key'
+	Keydown, // type: Key
+	Keyup, // type: Key
+
+	// Stateless events
+	Mousemove, // type: _msev
+	Keypress, // type: Key.  Includes scroll wheel (actually currently it's just scroll wheel)
+	Quit, // typeless
+}
+
 enum Key {
 	unknown,
 
@@ -248,39 +273,38 @@ enum Key {
 	kbdillumdown,
 	kbdillumup,
 	eject,
-	sleep
+	sleep,
+
+	mouse1, //left
+	mouse2, //middle
+	mouse3, //right
+	mouse4, // "x1" (close thumb button)
+	mouse5, // "x2" (far thumb button)
+
+	mousewheelup,
+	mousewheeldown,
+	mousewheelleft,
+	mousewheelright,
 }
 
 string tostr(Key key) {
-	// This version guard DOESN'T FUCKING WORK and I don't know why
-	version (DigitalMars) {
-		string[Key] dict;
+	string[Key] dict;
 
-		static foreach (asstr; [__traits(allMembers, Key)]) {
-			mixin("dict[Key." ~ asstr ~ "] = \"" ~ asstr ~ "\";");
-		}
-
-		return dict[key];
-	} else {
-		pragma(msg, "Conversions between keys and strings are non-operational.  This may cause issues.");
-		return "";
+	static foreach (asstr; [__traits(allMembers, Key)]) {
+		mixin("dict[Key." ~ asstr ~ "] = \"" ~ asstr ~ "\";");
 	}
+
+	return dict[key];
 }
 
 Key tokey(string str) {
-	// this one too
-	version (DigitalMars) {
-		Key[string] dict;
+	Key[string] dict;
 
-		static foreach (asstr; [__traits(allMembers, Key)]) {
-			mixin("dict[\"" ~ asstr ~ "\"] = Key." ~ asstr ~ ";");
-		}
-
-		Key *ret;
-
-		return ((ret = (str in dict)) !is null) ? *ret : Key.unknown;
-	} else {
-		pragma(msg, "Conversions between keys and strings are non-operations.  This may cause issues.");
-		return Key.unknown;
+	static foreach (asstr; [__traits(allMembers, Key)]) {
+		mixin("dict[\"" ~ asstr ~ "\"] = Key." ~ asstr ~ ";");
 	}
+
+	Key *ret;
+
+	return ((ret = (str in dict)) !is null) ? *ret : Key.unknown;
 }

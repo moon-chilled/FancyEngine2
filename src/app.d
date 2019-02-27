@@ -1,6 +1,8 @@
 import std.stdio;
+
 import logging;
 import windowing.windows;
+import windowing.key;
 
 import derelict.opengl;
 import derelict.sdl2.sdl;
@@ -20,19 +22,29 @@ void main() {
 			f = 1 - (trunc(f) - f);
 	}
 
+mainloop:
 	while (true) {
 		///////////////////////////////////
 		////EVENT HANDLING ////////////////
 		///               /////////////////
 		//               /
-		SDL_Event ev;
-		if (SDL_PollEvent(&ev)) {
-			if (ev.type == SDL_KEYDOWN) {
-				break;
-			} else if (ev.type == SDL_MOUSEBUTTONDOWN) {
-				error("Hallooooo!");
+		foreach (ev; poll_events) {
+			final switch (ev.type) {
+				case Evtype.Keydown:
+					writefln("Key %s down", ev.key);
+					break;
+				case Evtype.Keyup:
+					writefln("Key %s is up", ev.key); break;
+				case Evtype.Mousemove:
+					writefln("Mouse moved by (%s, %s)", ev.mouse.deltay, ev.mouse.deltax); break;
+				case Evtype.Keypress:
+					writefln("Key %s was pressed", ev.key);
+					break;
+				case Evtype.Quit:
+					break mainloop;
 			}
 		}
+
 
 		///////////////////////////////////
 		////  PHYSICS      ////////////////
