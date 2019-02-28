@@ -19,6 +19,7 @@ class GraphicsState {
 
 
 	@disable this();
+	@disable this(this);
 	this(WindowSpec window) {
 		log("GraphicsState()");
 		try {
