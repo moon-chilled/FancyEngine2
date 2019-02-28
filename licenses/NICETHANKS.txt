@@ -1,0 +1,12 @@
+Special thanks to:
+
+The SDL people for:
+SDL2, and
+SDL2 mixer
+
+The Xiph People for:
+FLAC, and
+OGG, and
+Vorbis, and
+Opus, and
+Opusfile
