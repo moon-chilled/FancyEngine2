@@ -9,7 +9,7 @@ import windowing.key;
 
 public __gshared bool is_sdl_loaded;
 
-struct GraphicsState {
+class GraphicsState {
 	SDL_GLContext gl_context;
 
 	SDL_Window *window; // maybe I should allow for multiple windows.  But meh
@@ -85,6 +85,10 @@ struct GraphicsState {
 
 
 		info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
+	}
+	~this() {
+		SDL_DestroyWindow(window);
+		SDL_Quit();
 	}
 }
 

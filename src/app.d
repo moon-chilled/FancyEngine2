@@ -12,7 +12,7 @@ import std.math: abs, trunc;
 version (Windows) pragma(lib, "user32");
 
 void main() {
-	auto gfx = GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
+	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
 
 	float r = 0, g = 0, b = 0;
 	void nice(ref float f) {
@@ -66,7 +66,4 @@ mainloop:
 		glClear(GL_COLOR_BUFFER_BIT);
 		gfx.blit();
 	}
-
-	import core.stdc.stdlib: exit;
-	exit(0);
 }
