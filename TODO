@@ -1,0 +1,7 @@
+* Finish audio support
+* Make a basic scene manager, with consumers and producers pushing things to screen/audio
+ * Multithreading
+* Add support for scripting, at least with ecl and c/cffi, but maybe with others (d, perl6?)
+* Add more assets (textures, 3d models, video maybe, custom/user-defined?)
+
+* Maybe (in far future) get rid of SDL_mixer and replace with -- gorilla audio (oss)?  irrKlang (proprietary, you pay them money if you want to make money off of it, but free for free projects)?  Fmod (also proprietary, 'industry standard' (or so), costs more, not sure if they have a free tier).  Maybe make it pluggable and ship only with support for sdl mixer, but if user wants irrklang/fmod, they just need to grab a dll and stuff it in there and it'll work perfectly?
