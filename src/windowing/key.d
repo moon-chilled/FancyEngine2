@@ -1,4 +1,5 @@
 module windowing.key;
+import stdlib;
 
 struct Event {
 	Evtype type;

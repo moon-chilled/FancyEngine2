@@ -1,13 +1,10 @@
 module windowing.windows;
+import stdlib;
+
 import derelict.sdl2.sdl;
 import derelict.opengl;
-import std.string: cstr = toStringz;
-import std.string: dstr = fromStringz;
 
-import logging;
 import windowing.key;
-
-public __gshared bool is_sdl_loaded;
 
 class GraphicsState {
 	SDL_GLContext gl_context;
@@ -17,29 +14,7 @@ class GraphicsState {
 
 	WindowSpec window_spec;
 
-
-	@disable this();
-	@disable this(this);
 	this(WindowSpec window) {
-		log("GraphicsState()");
-		try {
-			DerelictGL3.load();
-		} catch(Throwable) {
-			fatal("Error loading OpenGL (mark I)");
-		}
-		try {
-			version (Win64) {
-				DerelictSDL2.load("lib/win/SDL2.dll");
-			} else version (Win32) {
-				DerelictSDL2.load("lib/win32/SDL2.dll");
-			} else {
-				DerelictSDL2.load();
-			}
-		} catch(Throwable) {
-			fatal("Error loading SDL2");
-		}
-		is_sdl_loaded = true;
-
 		with (window) trace("Opening %s window titled '%s' (%sx%s, render resolution %sx%s), fullscreen state %s, with%s vsync", borders ? "bordered" : "borderless", title, win_width, win_height, render_width, render_height, window.fullscreen, vsync ? "" : "out");
 
 		this.window_spec = window;

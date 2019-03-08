@@ -1,5 +1,5 @@
 module logging;
-import std.stdio;
+import stdlib;
 
 import std.stdio: File, stderr;
 import std.string: format;
@@ -11,7 +11,12 @@ enum LogLevel {
 }
 
 shared static this() {
-	set_logger_targets([stderr]);
+	version (dev)
+		set_logger_targets([stderr]);
+	else version (release) {
+		import std.datetime.systime: Clock;
+		set_logger_targets([File("fancy_log_" ~ Clock.currTime.toIsoExtString, "w")]);
+	}
 }
 
 private File[] log_targets;
@@ -51,7 +56,7 @@ void handle_log(LogLevel ll, int line, string file, string func_name, string pre
 		import std.string: toStringz;
 
 		string msgformatted_msg = format("An error was encountered!  Please report this to the developers:\n<%s>%s:%s: %s", import(".commit_hash.txt")[0 .. $-1], file, line, msg);
-		if (is_sdl_loaded) {
+		if (are_libraries_loaded) {
 			import derelict.sdl2.sdl;
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", msgformatted_msg.toStringz, null);
 		} else {
@@ -60,7 +65,8 @@ void handle_log(LogLevel ll, int line, string file, string func_name, string pre
 				import std.conv: to;
 				MessageBox(null, (msgformatted_msg.to!wstring.dup ~ '\0').ptr, null, 0);
 			} else version (OSX) {
-				writefln("TODO: print a message on macos");
+				import std.stdio: writeln;
+				writeln("TODO: print a message on macos");
 			} else {
 				import core.stdc.stdlib;
 				system(toStringz("xmessage '" ~ msgformatted_msg ~ "'"));
@@ -82,7 +88,7 @@ template log_funf(LogLevel ll) {
 			string pretty_func_name = __PRETTY_FUNCTION__,
 			string module_name = __MODULE__, A...)
 		(string msg, A args) {
-			version (dev) handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
+			handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
 		}
 
 	void log_funf(int line = __LINE__, string file = __FILE__,
@@ -91,7 +97,7 @@ template log_funf(LogLevel ll) {
 			string module_name = __MODULE__, A...)
 		(bool condition, string msg, A args) {
 			if (condition) {
-				version (dev) handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
+				handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
 			}
 		}
 }
@@ -114,7 +120,7 @@ template log_funs(LogLevel ll) {
 			string pretty_func_name = __PRETTY_FUNCTION__,
 			string module_name = __MODULE__, A...)
 		(A args) if ((args.length > 0 && !is(Unqual!(A[0]) : bool)) || args.length == 0) {
-			version (dev) handle_log(ll, line, file, func_name, pretty_func_name, module_name, text(args));
+			handle_log(ll, line, file, func_name, pretty_func_name, module_name, text(args));
 		}
 
 	void log_funs(int line = __LINE__, string file = __FILE__,
@@ -123,7 +129,7 @@ template log_funs(LogLevel ll) {
 			string module_name = __MODULE__, A...)
 		(bool condition, A args) {
 			if (condition) {
-				version (dev) handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
+				handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
 			}
 		}
 }

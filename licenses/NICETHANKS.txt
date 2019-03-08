@@ -1,8 +1,6 @@
 Special thanks to:
 
-The SDL people for:
-SDL2, and
-SDL2 mixer
+The SDL people for SDL2.
 
 The Xiph People for:
 FLAC, and
@@ -10,3 +8,8 @@ OGG, and
 Vorbis, and
 Opus, and
 Opusfile
+
+The Derelict people for their binding tools,
+and their bindings to:
+SDL2, and
+OpenGL.

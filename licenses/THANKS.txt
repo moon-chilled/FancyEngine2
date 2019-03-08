@@ -1,4 +1,5 @@
 This program may contain the following external libraries:
 
-* SDL2 and SDL2_mixer, licensed under the zlib license (available at LICENSE.zlib.txt).  Source code for these is available at https://www.libsdl.org/release/SDL2-2.0.9.tar.gz and https://www.libsdl.org/projects/SDL_mixer/release/SDL2_mixer-2.0.4.tar.gz, respectively.
-* libFLAC, libogg/libvorbis, libopus, and libopusfile, licensed under the BSD 3-clause license (available at LICENSE.BSD3.txt).  Source available at https://git.xiph.org/?p=flac.git, https://git.xiph.org/?p=ogg.git, https://git.xiph.org/?p=vorbis.git, https://git.xiph.org/?p=opus.git, https://git.xiph.org/?p=opusfile.git, with modifications from https://hg.libsdl.org/SDL_mixer/file/default/external.
+* SDL2, licensed under the zlib license (available at LICENSE.zlib.txt).  Source code is available at https://www.libsdl.org/release/SDL2-2.0.9.tar.gz.
+* libFLAC, libogg/libvorbis, libopus, and libopusfile, licensed under the BSD 3-clause license (available at LICENSE.BSD3.txt).  Source available at https://git.xiph.org/?p=flac.git, https://git.xiph.org/?p=ogg.git, https://git.xiph.org/?p=vorbis.git, https://git.xiph.org/?p=opus.git, and https://git.xiph.org/?p=opusfile.git.
+* DerelictSDL2, DerelictGL, and Derelict utils, licensed under the boost license (available at LICENSE.boost.txt).  Source code for these is available at https://github.com/DerelictOrg/DerelictSDL2, https://github.com/DerelictOrg/DerelictGL3, and https://github.com/DerelictOrg/DerelictUtil.

@@ -14,7 +14,7 @@
 	"stringImportPaths": ["src/"],
 
 	"buildTypes": {
-		"dev": {
+		"debug": {
 			"versions": ["dev"],
 			"buildOptions": ["debugInfo", "optimize"]
 		},
