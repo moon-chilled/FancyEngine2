@@ -5,10 +5,11 @@ import windowing.key;
 
 import assets.asset;
 
+import scripting;
+import scripting.ecl;
+
 import derelict.opengl;
 import derelict.sdl2.sdl;
-
-import scripting.ecl;
 
 version (Windows) pragma(lib, "user32");
 
@@ -35,9 +36,12 @@ void dispatch(Event[] evs) {
 
 void main() {
 	load_all_libraries();
-	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
 	init_ecl();
 	scope(exit) shutdown_ecl();
+
+	auto f = new ECLScript();
+
+	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
 
 	float r = 0, g = 0, b = 0;
 	void nice(ref float f) {
@@ -83,13 +87,12 @@ mainloop:
 void load_all_libraries() {
 	import derelict.sdl2.sdl;
 	import derelict.opengl;
-	import scripting.ecl: DerelictECLLoader;
+	import scripting.ecl_lib_interface: DerelictECLLoader;
 
 	set_lib_path();
 
 	try {
 		DerelictGL3.load();
-		log("hi");
 	} catch(Throwable) {
 		fatal("Error loading OpenGL (mark I)");
 	}
