@@ -95,19 +95,19 @@ void load_all_libraries() {
 
 	try {
 		DerelictGL3.load();
-	} catch(Throwable) {
-		fatal("Error loading OpenGL (mark I)");
+	} catch(Throwable t) {
+		fatal("Error loading OpenGL (mark I).  '%s'", t.msg);
 	}
 	try {
 		DerelictSDL2.load();
-	} catch(Throwable) {
-		fatal("Error loading SDL2");
+	} catch(Throwable t) {
+		fatal("Error loading SDL2.  '%s'", t.msg);
 	}
 
 	try {
 		new DerelictECLLoader().load();
-	} catch(Throwable) {
-		fatal("Error loading ECL");
+	} catch(Throwable t) {
+		fatal("Error loading ECL.  '%s'", t.msg);
 	}
 
 	are_libraries_loaded = true;
