@@ -6,12 +6,17 @@ import scripting.ecl_lib_interface;
 
 import std.string: format;
 
+
+string[] _dont_gc_names;
+ScriptFun[] _dont_gc_funs;
+ScriptVarType[][] _dont_gc_argtypes;
+
 ScriptVarType cl_obj_type(cl_object lisp_obj) {
 	switch (lisp_obj.ecl_t_of) {
-		case cl_type.t_fixnum: return ScriptVarType.num;
-		case cl_type.t_singlefloat, cl_type.t_doublefloat: return ScriptVarType.dec;
-		//case cl_type.t_string: return ScriptVarType.str;
-		default: return ScriptVarType.none;
+		case cl_type.t_fixnum: return ScriptVarType.Int;
+		case cl_type.t_singlefloat, cl_type.t_doublefloat: return ScriptVarType.Real;
+		//case cl_type.t_string: return ScriptVarType.Str;
+		default: return ScriptVarType.None;
 	}
 }
 private ScriptVar cl_to_script(cl_object lisp_obj) {
@@ -35,6 +40,7 @@ private cl_object script_to_cl(ScriptVar script_obj) {
 			(None) => Nil)();
 }
 
+
 class ECLScript: Scriptlang {
 	this(){}
 	~this(){}
@@ -51,7 +57,11 @@ class ECLScript: Scriptlang {
 	// but we can't pass delegates into c functions
 	// so instead we name the real function _ecl_d_fancy_fn_<funname>
 	// and declare a *lisp* function that stores pointers to the 'closed over' variables as integers and passes those into the real wrapper function
-	void expose_fun(string name, ScriptVar function(ScriptVar[] args) fun, ScriptVarType[] argtypes) {
+	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes) {
+		_dont_gc_names ~= name;
+		_dont_gc_funs ~= fun;
+		_dont_gc_argtypes ~= argtypes;
+
 		string real_fn_name = "_ecl_d_fancy_fn_" ~ name;
 		extern (C) cl_object real_fun(long nargs, ...) {
 			import core.vararg;
@@ -60,7 +70,7 @@ class ECLScript: Scriptlang {
 			va_start(vargs, nargs);
 
 			string name = *(cast(string*)cast(long)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
-			ScriptVar function(ScriptVar[] args) fun = *(cast(ScriptVar function(ScriptVar[] args)*)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
+			ScriptFun fun = *(cast(ScriptFun*)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
 			ScriptVarType[] argtypes = *(cast(ScriptVarType[]*)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
 			nargs -= 3;
 
@@ -84,6 +94,7 @@ class ECLScript: Scriptlang {
 		}
 
 		ecl_def_c_function_va(real_fn_name.lstr, &real_fun);
+
 		this.eval(format("(defun %s (&rest args) (apply #'%s (cons %s (cons %s (cons %s args)))))", name, real_fn_name, cast(long)(&name), cast(long)(&fun), cast(long)(&argtypes)));
 	}
 }

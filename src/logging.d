@@ -51,6 +51,8 @@ void handle_log(LogLevel ll, int line, string file, string func_name, string pre
 	// TODO: globally pause everything?
 	if (ll >= msg_log_level) {
 		import core.thread: Thread;
+
+
 		new Thread({
 		import windowing.windows;
 		import std.string: toStringz;

@@ -6,14 +6,14 @@ import std.variant: Sum = Algebraic;
 struct None{}
 
 enum ScriptVarType {
-	num,
-	dec,
-	str,
-	any,
-	none,
+	Int,
+	Real,
+	Str,
+	Any,
+	None,
 }
 alias ScriptVar = Sum!(long, double, string, None);
-alias ScriptFun = ScriptVar function(ScriptVar[] args);
+alias ScriptFun = ScriptVar delegate(ScriptVar[] args);
 
 interface Scriptlang {
 	ScriptVar eval(string text);
