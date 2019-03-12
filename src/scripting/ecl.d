@@ -63,13 +63,13 @@ class ECLScript: Scriptlang {
 		_dont_gc_argtypes ~= argtypes;
 
 		string real_fn_name = "_ecl_d_fancy_fn_" ~ name;
-		extern (C) cl_object real_fun(long nargs, ...) {
+		extern (C) cl_object real_fun(fixnum nargs, ...) {
 			import core.vararg;
 			assert (nargs >= 3);
 			va_list vargs; //(v)arargs
 			va_start(vargs, nargs);
 
-			string name = *(cast(string*)cast(long)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
+			string name = *(cast(string*)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
 			ScriptFun fun = *(cast(ScriptFun*)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
 			ScriptVarType[] argtypes = *(cast(ScriptVarType[]*)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
 			nargs -= 3;
@@ -95,7 +95,7 @@ class ECLScript: Scriptlang {
 
 		ecl_def_c_function_va(real_fn_name.lstr, &real_fun);
 
-		this.eval(format("(defun %s (&rest args) (apply #'%s (cons %s (cons %s (cons %s args)))))", name, real_fn_name, cast(long)(&name), cast(long)(&fun), cast(long)(&argtypes)));
+		this.eval(format("(defun %s (&rest args) (apply #'%s (cons %s (cons %s (cons %s args)))))", name, real_fn_name, cast(fixnum)(&name), cast(fixnum)(&fun), cast(fixnum)(&argtypes)));
 	}
 }
 

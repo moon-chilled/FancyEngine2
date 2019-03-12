@@ -9,6 +9,12 @@ static import std.conv;
 import derelict.util.loader;
 import derelict.util.system;
 
+version (X86_64) {
+	alias fixnum = long;
+} else version (X86) {
+	alias fixnum = int;
+}
+
 public class DerelictECLLoader: SharedLibLoader {
 	public this() {
 		static if (Derelict_OS_Windows) {
@@ -39,19 +45,19 @@ public class DerelictECLLoader: SharedLibLoader {
 __gshared extern (C) nothrow @nogc {
 	int function(int, char**) cl_boot;
 	void function() cl_shutdown;
-	cl_object function(c_long, cl_object, cl_lispunion*, ...) si_safe_eval;
+	cl_object function(fixnum, cl_object, cl_lispunion*, ...) si_safe_eval;
 	cl_object function(cl_lispunion*) cl_eval;
-	cl_object function(c_long, cl_lispunion*, ...) si_string_to_object;
-	cl_object function(const char *s, long i) ecl_make_constant_base_string;
-	c_long function(cl_object) fixint;
+	cl_object function(fixnum, cl_lispunion*, ...) si_string_to_object;
+	cl_object function(const char *s, fixnum i) ecl_make_constant_base_string;
+	fixnum function(cl_object) fixint;
 	float function(cl_object) ecl_to_float;
 	double function(cl_object) ecl_to_double;
 	cl_object function(double) ecl_make_double_float;
-	void function(cl_object, cl_object function(long, ...)) ecl_def_c_function_va;
+	void function(cl_object, cl_object function(fixnum, ...)) ecl_def_c_function_va;
 	pragma(inline, true) cl_object cl_safe_eval(cl_object form, cl_object env, cl_object value) { return si_safe_eval(3, form, env, value); }
 	pragma(inline, true) cl_object lstr(string s) { return si_string_to_object(1, ecl_make_constant_base_string(cast(char*)(s.ptr), s.length)); }
 	pragma(inline, true) cl_type ecl_t_of(cl_object o) {
-		int i = 3&cast(c_long)o;
+		int i = 3&cast(fixnum)o;
 		return i ? cast(cl_type)i : cast(cl_type)(o.d.t);
 	}
 

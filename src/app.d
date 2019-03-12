@@ -113,13 +113,28 @@ void load_all_libraries() {
 	are_libraries_loaded = true;
 }
 
+// really, it returns errno_t, but that's the same as int
 version (Windows) private extern (C) int _putenv_s(const char*, const char*);
+version (Windows) private extern (C) int putenv(const char*);
 // setup LD_LIBRARY_PATH (or equivalent) so derelict (or something else) can find libraries
 void set_lib_path() {
 	version (Windows) {
-		// it returns errno_t, but that's an alias for int
-		void set_env(const char *key, const char *value) {
-			_putenv_s(key, value);
+		version (CRuntime_DigitalMars) {
+			void set_env(const char *key, const char *value) {
+				import core.stdc.stdlib: calloc;
+				import core.stdc.string: strlen, strcpy, strcat;
+				char *new_str = cast(char*)calloc(1, strlen(key) + strlen(value) + 1 + 1); // 1 for the '=', 1 for the nul terminator
+				strcpy(new_str, key);
+				strcat(new_str, "=\0".ptr);
+				strcat(new_str, value);
+				putenv(new_str);
+			}
+		} else version (CRuntime_Microsoft) {
+			void set_env(const char *key, const char *value) {
+				_putenv_s(key, value);
+			}
+		} else {
+			static assert(0);
 		}
 	} else {
 		void set_env(const char *key, const char *value) {
