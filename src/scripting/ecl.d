@@ -15,7 +15,7 @@ ScriptVarType cl_obj_type(cl_object lisp_obj) {
 	switch (lisp_obj.ecl_t_of) {
 		case cl_type.t_fixnum: return ScriptVarType.Int;
 		case cl_type.t_singlefloat, cl_type.t_doublefloat: return ScriptVarType.Real;
-		//case cl_type.t_string: return ScriptVarType.Str;
+		case cl_type.t_string: return ScriptVarType.Str;
 		default: return ScriptVarType.None;
 	}
 }
@@ -27,6 +27,30 @@ private ScriptVar cl_to_script(cl_object lisp_obj) {
 			return ScriptVar(cast(double)lisp_obj.SF.SFVAL);
 		case cl_type.t_doublefloat:
 			return ScriptVar(lisp_obj.DF.DFVAL);
+		case cl_type.t_base_string:
+			immutable x = new char[lisp_obj.base_string.dim];
+			import core.stdc.stdio: printf;
+			printf("I have %p", lisp_obj.base_string.self);
+			memcpy(x.ptr, lisp_obj.base_string.self, lisp_obj.base_string.dim);
+			return ScriptVar(x);
+		case cl_type.t_string:
+			lisp_obj = si_copy_to_simple_base_string(lisp_obj);
+			goto case cl_type.t_base_string;
+			/*
+			import std.conv: text;
+			wchar_t[] x;// = new wchar_t[lisp_obj.string.dim];
+			log("helloooooo nurse");
+			//memcpy(x.ptr, lisp_obj.string.self, lisp_obj.string.dim * wchar_t.sizeof);
+			log("String is %s", lisp_obj.string.self);
+			foreach (i; 0 .. lisp_obj.string.dim) {
+				log("copying");
+				x ~= lisp_obj.string.self[i];
+				log("copied");
+			}
+
+			log("Reading string '%s'", x);
+
+			*/
 		default:
 			return ScriptVar(None());
 	}
@@ -100,8 +124,20 @@ class ECLScript: Scriptlang {
 }
 
 void init_ecl() {
+	import core.stdc.signal;
+	/*
+	ecl_set_option(ecl_option.trap_sigsegv, 0);
+	ecl_set_option(ecl_option.trap_sigfpe, 0);
+	ecl_set_option(ecl_option.trap_sigint, 0);
+	ecl_set_option(ecl_option.trap_sigill, 0);
+	*/
 	cl_boot(1, cast(char**)[cast(char*)[0].ptr].ptr);
+	signal(SIGSEGV, SIG_DFL);
+	signal(SIGFPE, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
+	signal(SIGILL, SIG_DFL);
 	info("initiated ECL");
+
 }
 void shutdown_ecl() {
 	cl_shutdown();

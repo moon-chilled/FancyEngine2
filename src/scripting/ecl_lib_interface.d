@@ -2,6 +2,7 @@ module scripting.ecl_lib_interface;
 import stdlib;
 
 import core.stdc.config;
+public import core.stdc.stddef;
 import core.stdc.stdarg: va_list;
 static import core.simd;
 static import std.conv;
@@ -38,6 +39,8 @@ public class DerelictECLLoader: SharedLibLoader {
 		bindFunc(cast(void**)&ecl_make_constant_base_string, "ecl_make_constant_base_string");
 		bindFunc(cast(void**)&ecl_make_double_float, "ecl_make_double_float");
 		bindFunc(cast(void**)&ecl_def_c_function_va, "ecl_def_c_function_va");
+		bindFunc(cast(void**)&ecl_set_option, "ecl_set_option");
+		bindFunc(cast(void**)&si_copy_to_simple_base_string, "si_copy_to_simple_base_string");
 	}
 }
 
@@ -54,6 +57,8 @@ __gshared extern (C) nothrow @nogc {
 	double function(cl_object) ecl_to_double;
 	cl_object function(double) ecl_make_double_float;
 	void function(cl_object, cl_object function(fixnum, ...)) ecl_def_c_function_va;
+	void function(int, fixnum) ecl_set_option;
+	cl_object function(cl_object) si_copy_to_simple_base_string;
 	pragma(inline, true) cl_object cl_safe_eval(cl_object form, cl_object env, cl_object value) { return si_safe_eval(3, form, env, value); }
 	pragma(inline, true) cl_object lstr(string s) { return si_string_to_object(1, ecl_make_constant_base_string(cast(char*)(s.ptr), s.length)); }
 	pragma(inline, true) cl_type ecl_t_of(cl_object o) {
@@ -351,8 +356,7 @@ __gshared extern (C) nothrow @nogc {
 		ecl_array_data self;
 		ubyte offset;
 	}
-	struct ecl_base_string
-	{
+	struct ecl_base_string {
 		byte t;
 		byte m;
 		byte elttype;
@@ -362,8 +366,7 @@ __gshared extern (C) nothrow @nogc {
 		c_ulong fillp;
 		ubyte* self;
 	}
-	struct ecl_string
-	{
+	struct ecl_string {
 		byte t;
 		byte m;
 		byte elttype;
@@ -371,7 +374,7 @@ __gshared extern (C) nothrow @nogc {
 		cl_object displaced;
 		c_ulong dim;
 		c_ulong fillp;
-		int* self;
+		wchar_t* self;
 	}
 	enum ecl_smmode
 	{
@@ -498,6 +501,36 @@ __gshared extern (C) nothrow @nogc {
 		byte padding1;
 		byte padding2;
 	}
+
+    enum ecl_option {
+        incremental_gc = 0,
+        trap_sigsegv = 1,
+        trap_sigfpe = 2,
+        trap_sigint = 3,
+        trap_sigill = 4,
+        trap_sigbus = 5,
+        trap_sigpipe = 6,
+        trap_sigchld = 7,
+        trap_interrupt_signal = 8,
+        signal_handling_thread = 9,
+        signal_queue_size = 10,
+        booted = 11,
+        bind_stack_size = 12,
+        bind_stack_safety_area = 13,
+        frame_stack_size = 14,
+        frame_stack_safety_area = 15,
+        lisp_stack_size = 16,
+        lisp_stack_safety_area = 17,
+        c_stack_size = 18,
+        c_stack_safety_area = 19,
+        sigaltstack_size = 20,
+        heap_size = 21,
+        heap_safety_area = 22,
+        thread_interrupt_signal = 23,
+        set_gmp_memory_functions = 24,
+        use_setmode_on_files = 25,
+        limit = 26,
+    }
 }
 
 
@@ -1349,66 +1382,8 @@ extern(C) {
     cl_object si_pointer(cl_lispunion*) @nogc nothrow;
     cl_object si_quit(c_long, ...) @nogc nothrow;
     cl_object si_exit(c_long) @nogc nothrow;
-    alias ecl_option = _Anonymous_3;
-    enum _Anonymous_3
-    {
-        ECL_OPT_INCREMENTAL_GC = 0,
-        ECL_OPT_TRAP_SIGSEGV = 1,
-        ECL_OPT_TRAP_SIGFPE = 2,
-        ECL_OPT_TRAP_SIGINT = 3,
-        ECL_OPT_TRAP_SIGILL = 4,
-        ECL_OPT_TRAP_SIGBUS = 5,
-        ECL_OPT_TRAP_SIGPIPE = 6,
-        ECL_OPT_TRAP_SIGCHLD = 7,
-        ECL_OPT_TRAP_INTERRUPT_SIGNAL = 8,
-        ECL_OPT_SIGNAL_HANDLING_THREAD = 9,
-        ECL_OPT_SIGNAL_QUEUE_SIZE = 10,
-        ECL_OPT_BOOTED = 11,
-        ECL_OPT_BIND_STACK_SIZE = 12,
-        ECL_OPT_BIND_STACK_SAFETY_AREA = 13,
-        ECL_OPT_FRAME_STACK_SIZE = 14,
-        ECL_OPT_FRAME_STACK_SAFETY_AREA = 15,
-        ECL_OPT_LISP_STACK_SIZE = 16,
-        ECL_OPT_LISP_STACK_SAFETY_AREA = 17,
-        ECL_OPT_C_STACK_SIZE = 18,
-        ECL_OPT_C_STACK_SAFETY_AREA = 19,
-        ECL_OPT_SIGALTSTACK_SIZE = 20,
-        ECL_OPT_HEAP_SIZE = 21,
-        ECL_OPT_HEAP_SAFETY_AREA = 22,
-        ECL_OPT_THREAD_INTERRUPT_SIGNAL = 23,
-        ECL_OPT_SET_GMP_MEMORY_FUNCTIONS = 24,
-        ECL_OPT_USE_SETMODE_ON_FILES = 25,
-        ECL_OPT_LIMIT = 26,
-    }
-    enum ECL_OPT_INCREMENTAL_GC = _Anonymous_3.ECL_OPT_INCREMENTAL_GC;
-    enum ECL_OPT_TRAP_SIGSEGV = _Anonymous_3.ECL_OPT_TRAP_SIGSEGV;
-    enum ECL_OPT_TRAP_SIGFPE = _Anonymous_3.ECL_OPT_TRAP_SIGFPE;
-    enum ECL_OPT_TRAP_SIGINT = _Anonymous_3.ECL_OPT_TRAP_SIGINT;
-    enum ECL_OPT_TRAP_SIGILL = _Anonymous_3.ECL_OPT_TRAP_SIGILL;
-    enum ECL_OPT_TRAP_SIGBUS = _Anonymous_3.ECL_OPT_TRAP_SIGBUS;
-    enum ECL_OPT_TRAP_SIGPIPE = _Anonymous_3.ECL_OPT_TRAP_SIGPIPE;
-    enum ECL_OPT_TRAP_SIGCHLD = _Anonymous_3.ECL_OPT_TRAP_SIGCHLD;
-    enum ECL_OPT_TRAP_INTERRUPT_SIGNAL = _Anonymous_3.ECL_OPT_TRAP_INTERRUPT_SIGNAL;
-    enum ECL_OPT_SIGNAL_HANDLING_THREAD = _Anonymous_3.ECL_OPT_SIGNAL_HANDLING_THREAD;
-    enum ECL_OPT_SIGNAL_QUEUE_SIZE = _Anonymous_3.ECL_OPT_SIGNAL_QUEUE_SIZE;
-    enum ECL_OPT_BOOTED = _Anonymous_3.ECL_OPT_BOOTED;
-    enum ECL_OPT_BIND_STACK_SIZE = _Anonymous_3.ECL_OPT_BIND_STACK_SIZE;
-    enum ECL_OPT_BIND_STACK_SAFETY_AREA = _Anonymous_3.ECL_OPT_BIND_STACK_SAFETY_AREA;
-    enum ECL_OPT_FRAME_STACK_SIZE = _Anonymous_3.ECL_OPT_FRAME_STACK_SIZE;
-    enum ECL_OPT_FRAME_STACK_SAFETY_AREA = _Anonymous_3.ECL_OPT_FRAME_STACK_SAFETY_AREA;
-    enum ECL_OPT_LISP_STACK_SIZE = _Anonymous_3.ECL_OPT_LISP_STACK_SIZE;
-    enum ECL_OPT_LISP_STACK_SAFETY_AREA = _Anonymous_3.ECL_OPT_LISP_STACK_SAFETY_AREA;
-    enum ECL_OPT_C_STACK_SIZE = _Anonymous_3.ECL_OPT_C_STACK_SIZE;
-    enum ECL_OPT_C_STACK_SAFETY_AREA = _Anonymous_3.ECL_OPT_C_STACK_SAFETY_AREA;
-    enum ECL_OPT_SIGALTSTACK_SIZE = _Anonymous_3.ECL_OPT_SIGALTSTACK_SIZE;
-    enum ECL_OPT_HEAP_SIZE = _Anonymous_3.ECL_OPT_HEAP_SIZE;
-    enum ECL_OPT_HEAP_SAFETY_AREA = _Anonymous_3.ECL_OPT_HEAP_SAFETY_AREA;
-    enum ECL_OPT_THREAD_INTERRUPT_SIGNAL = _Anonymous_3.ECL_OPT_THREAD_INTERRUPT_SIGNAL;
-    enum ECL_OPT_SET_GMP_MEMORY_FUNCTIONS = _Anonymous_3.ECL_OPT_SET_GMP_MEMORY_FUNCTIONS;
-    enum ECL_OPT_USE_SETMODE_ON_FILES = _Anonymous_3.ECL_OPT_USE_SETMODE_ON_FILES;
-    enum ECL_OPT_LIMIT = _Anonymous_3.ECL_OPT_LIMIT;
-    extern __gshared const(char)* ecl_self;
-    void ecl_set_option(int, c_long) @nogc nothrow;
+
+        extern __gshared const(char)* ecl_self;
     c_long ecl_get_option(int) @nogc nothrow;
     cl_object cl_mapcar(c_long, cl_lispunion*, ...) @nogc nothrow;
     cl_object cl_maplist(c_long, cl_lispunion*, ...) @nogc nothrow;
@@ -1839,7 +1814,6 @@ extern(C) {
     cl_object cl_nstring_downcase(c_long, ...) @nogc nothrow;
     cl_object cl_nstring_capitalize(c_long, ...) @nogc nothrow;
     cl_object si_base_string_concatenate(c_long, ...) @nogc nothrow;
-    cl_object si_copy_to_simple_base_string(cl_lispunion*) @nogc nothrow;
     cl_object ecl_alloc_adjustable_base_string(c_ulong) @nogc nothrow;
     void __gmpf_trunc(__mpf_struct*, const(__mpf_struct)*) @nogc nothrow;
     cl_object make_base_string_copy(const(char)*) @nogc nothrow;

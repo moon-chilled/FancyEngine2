@@ -40,8 +40,8 @@ void main() {
 	scope(exit) shutdown_ecl();
 
 	auto f = new ECLScript();
-	f.expose_fun("traa", (ScriptVar[] args) { log("%s + %s => %s", args[0], args[1], args[0] + args[1]); return args[0] + args[1]; }, [ScriptVarType.Int, ScriptVarType.Real]);
-	f.eval("(traa 5 17.6)");
+	f.expose_fun("traa", (ScriptVar[] args) { log("%s + %s => %s", args[0], args[1], args[0] ~ args[1]); return args[0] + args[1]; }, [ScriptVarType.Str, ScriptVarType.Str]);
+	f.eval("(traa \"hi\" \"therro\")");
 
 	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
 
