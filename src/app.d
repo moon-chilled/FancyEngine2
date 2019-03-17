@@ -1,17 +1,18 @@
 import stdlib;
+import cstdlib;
 
 import windowing.windows;
 import windowing.key;
 
-import assets.asset;
+import asset;
 
 import scripting;
 import scripting.ecl;
 
+import sound.gorilla;
+
 import derelict.opengl;
 import derelict.sdl2.sdl;
-
-version (Windows) pragma(lib, "user32");
 
 bool done;
 
@@ -39,11 +40,20 @@ void main() {
 	init_ecl();
 	scope(exit) shutdown_ecl();
 
+	/*
 	auto f = new ECLScript();
 	f.expose_fun("traa", (ScriptVar[] args) { log("%s + %s => %s", args[0], args[1], args[0] ~ args[1]); return args[0] + args[1]; }, [ScriptVarType.Str, ScriptVarType.Str]);
 	f.eval("(traa \"hi\" \"therro\")");
+	*/
 
 	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
+	scope GorillaAudio audio = new GorillaAudio();
+
+//CachedSound muse = audio.load_cache_sound("out.ogg");
+	BufferedSound muse = audio.load_buf_sound("out.ogg");
+	audio.play(muse);
+
+
 
 	float r = 0, g = 0, b = 0;
 	void nice(ref float f) {
@@ -82,6 +92,10 @@ mainloop:
 		glClearColor(r, g, b, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		gfx.blit();
+
+
+		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
+		audio.update(.0166666);
 	}
 }
 

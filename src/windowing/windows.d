@@ -1,5 +1,6 @@
 module windowing.windows;
 import stdlib;
+import cstdlib;
 
 import derelict.sdl2.sdl;
 import derelict.opengl;

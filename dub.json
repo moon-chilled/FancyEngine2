@@ -12,6 +12,11 @@
 	"name": "fancyengine2",
 	"preBuildCommands": ["git rev-parse --short HEAD > src/.commit_hash.txt"],
 	"stringImportPaths": ["src/"],
+	"lflags-windows": ["/LIBPATH:lib/win"],
+	"libs": ["gorilla"],
+	"libs-windows": ["ole32", "oleaut32", "strmiids", "user32"],
+
+
 
 	"buildTypes": {
 		"debug": {

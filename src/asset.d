@@ -1,23 +1,21 @@
-module assets.asset;
+module asset;
 import stdlib;
 
-enum Assettype {
+enum AssetType {
 	Data,
-	Sound,
+	BufferedSound,
+	CachedSound,
 }
 
-interface Asset {
+interface Asset(AssetType asset_type)  {
+	enum type = asset_type;
 }
 
-class Data: Asset {
-	ubyte[] data;
-	static bool f_is_valid(string fpath) {
-		import std.file;
-		return fpath.exists;
-	}
-
+class Data: Asset!(AssetType.Data) {
+	private ubyte[] data;
 	this(string fpath) {
-		import std.file: read;
+		import std.file: read, exists;
+		if (!fpath.exists) fatal("tried to load nonexistent file '%s'", fpath);
 		data = cast(ubyte[])read(fpath);
 	}
 }
