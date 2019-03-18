@@ -29,8 +29,6 @@ private ScriptVar cl_to_script(cl_object lisp_obj) {
 			return ScriptVar(lisp_obj.DF.DFVAL);
 		case cl_type.t_base_string:
 			immutable x = new char[lisp_obj.base_string.dim];
-			import core.stdc.stdio: printf;
-			printf("I have %p", lisp_obj.base_string.self);
 			memcpy(x.ptr, lisp_obj.base_string.self, lisp_obj.base_string.dim);
 			return ScriptVar(x);
 		case cl_type.t_string:
@@ -70,7 +68,7 @@ class ECLScript: Scriptlang {
 	~this(){}
 
 	ScriptVar eval(string text) {
-		return text.lstr.cl_eval.cl_to_script;
+		return text.lsym.cl_eval.cl_to_script;
 	}
 
 	// A bit of explanation is due here.
@@ -117,7 +115,7 @@ class ECLScript: Scriptlang {
 			return fun(sargs).script_to_cl;
 		}
 
-		ecl_def_c_function_va(real_fn_name.lstr, &real_fun);
+		ecl_def_c_function_va(real_fn_name.lsym, &real_fun);
 
 		this.eval(format("(defun %s (&rest args) (apply #'%s (cons %s (cons %s (cons %s args)))))", name, real_fn_name, cast(fixnum)(&name), cast(fixnum)(&fun), cast(fixnum)(&argtypes)));
 	}
@@ -125,13 +123,18 @@ class ECLScript: Scriptlang {
 
 void init_ecl() {
 	import core.stdc.signal;
-	/*
 	ecl_set_option(ecl_option.trap_sigsegv, 0);
 	ecl_set_option(ecl_option.trap_sigfpe, 0);
 	ecl_set_option(ecl_option.trap_sigint, 0);
 	ecl_set_option(ecl_option.trap_sigill, 0);
-	*/
+
+	ecl_set_option(ecl_option.trap_sigbus, 0);
+	ecl_set_option(ecl_option.trap_sigpipe, 0);
+	ecl_set_option(ecl_option.trap_sigchld, 0);
+	ecl_set_option(ecl_option.trap_interrupt_signal, 0);
+
 	cl_boot(1, cast(char**)[cast(char*)[0].ptr].ptr);
+	ecl_process_env().disable_interrupts = 1;
 	signal(SIGSEGV, SIG_DFL);
 	signal(SIGFPE, SIG_DFL);
 	signal(SIGINT, SIG_DFL);

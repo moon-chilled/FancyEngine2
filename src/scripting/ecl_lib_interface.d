@@ -37,10 +37,12 @@ public class DerelictECLLoader: SharedLibLoader {
 		bindFunc(cast(void**)&cl_eval, "cl_eval");
 		bindFunc(cast(void**)&si_string_to_object, "si_string_to_object");
 		bindFunc(cast(void**)&ecl_make_constant_base_string, "ecl_make_constant_base_string");
+		bindFunc(cast(void**)&ecl_make_simple_base_string, "ecl_make_simple_base_string");
 		bindFunc(cast(void**)&ecl_make_double_float, "ecl_make_double_float");
 		bindFunc(cast(void**)&ecl_def_c_function_va, "ecl_def_c_function_va");
 		bindFunc(cast(void**)&ecl_set_option, "ecl_set_option");
 		bindFunc(cast(void**)&si_copy_to_simple_base_string, "si_copy_to_simple_base_string");
+		bindFunc(cast(void**)&ecl_process_env, "ecl_process_env");
 	}
 }
 
@@ -52,6 +54,7 @@ __gshared extern (C) nothrow @nogc {
 	cl_object function(cl_lispunion*) cl_eval;
 	cl_object function(fixnum, cl_lispunion*, ...) si_string_to_object;
 	cl_object function(const char *s, fixnum i) ecl_make_constant_base_string;
+	cl_object function(const char *s, fixnum i) ecl_make_simple_base_string;
 	fixnum function(cl_object) fixint;
 	float function(cl_object) ecl_to_float;
 	double function(cl_object) ecl_to_double;
@@ -59,13 +62,74 @@ __gshared extern (C) nothrow @nogc {
 	void function(cl_object, cl_object function(fixnum, ...)) ecl_def_c_function_va;
 	void function(int, fixnum) ecl_set_option;
 	cl_object function(cl_object) si_copy_to_simple_base_string;
+	cl_env_struct *function() ecl_process_env;
+
 	pragma(inline, true) cl_object cl_safe_eval(cl_object form, cl_object env, cl_object value) { return si_safe_eval(3, form, env, value); }
-	pragma(inline, true) cl_object lstr(string s) { return si_string_to_object(1, ecl_make_constant_base_string(cast(char*)(s.ptr), s.length)); }
+	pragma(inline, true) cl_object lsym(string s) { return si_string_to_object(1, s.lstr); }
+	pragma(inline, true) cl_object lstr(string s) { return ecl_make_simple_base_string(cast(char*)(s.ptr), s.length); }
 	pragma(inline, true) cl_type ecl_t_of(cl_object o) {
 		int i = 3&cast(fixnum)o;
 		return i ? cast(cl_type)i : cast(cl_type)(o.d.t);
 	}
 
+	struct cl_env_struct {
+		int disable_interrupts;
+		fixnum nvalues;
+		cl_object[64] values;
+		cl_object function_;
+		fixnum stack_size;
+		fixnum stack_limit_size;
+		cl_object* stack;
+		cl_object* stack_top;
+		cl_object* stack_limit;
+		fixnum thread_local_bindings_size;
+		cl_object* thread_local_bindings;
+		cl_object bindings_array;
+		fixnum bds_size;
+		fixnum bds_limit_size;
+		//ecl_bds_frame* bds_org;
+		//ecl_bds_frame* bds_top;
+		//ecl_bds_frame* bds_limit;
+		//ecl_ihs_frame* ihs_top;
+		fixnum frs_size;
+		fixnum frs_limit_size;
+		//ecl_frame* frs_org;
+		//ecl_frame* frs_top;
+		//ecl_frame* frs_limit;
+		//ecl_frame* nlj_fr;
+		fixnum frame_id;
+		fixnum cs_size;
+		fixnum cs_limit_size;
+		fixnum cs_max_size;
+		char* cs_org;
+		char* cs_limit;
+		char* cs_barrier;
+		cl_object string_pool;
+		//cl_compiler_env* c_env;
+		//cl_object fmt_aux_stream;
+		cl_object[3] big_register;
+		cl_object own_process;
+		cl_object pending_interrupt;
+		cl_object signal_queue;
+		cl_object signal_queue_spinlock;
+		void* default_sigmask;
+		//ecl_cache* method_cache;
+		//ecl_cache* slot_cache;
+		/*
+		c_ulong ffi_args_limit;
+		void **ffi_types; //_ffi_type** ffi_types; //idk where to get a struct _ffi_type
+		ecl_ffi_values* ffi_values;
+		ecl_ffi_values** ffi_values_ptrs;
+		*/
+		void* altstack;
+		c_ulong altstack_size;
+		int trap_fpe_bits;
+		void* old_exception_filter;
+		cl_object packages_to_be_created;
+		cl_object packages_to_be_created_p;
+		void* fault_address;
+		int cleanup;
+	}
 
 
 	enum Nil = cast(cl_object)cl_type.t_list;
@@ -362,8 +426,8 @@ __gshared extern (C) nothrow @nogc {
 		byte elttype;
 		byte flags;
 		cl_object displaced;
-		c_ulong dim;
-		c_ulong fillp;
+		fixnum dim;
+		fixnum fillp;
 		ubyte* self;
 	}
 	struct ecl_string {
@@ -372,8 +436,8 @@ __gshared extern (C) nothrow @nogc {
 		byte elttype;
 		byte flags;
 		cl_object displaced;
-		c_ulong dim;
-		c_ulong fillp;
+		fixnum dim;
+		fixnum fillp;
 		wchar_t* self;
 	}
 	enum ecl_smmode

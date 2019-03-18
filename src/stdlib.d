@@ -19,3 +19,14 @@ void memcpy(T, U)(T *dest, const U *src, size_t size) {
 }
 
 __gshared bool are_libraries_loaded;
+
+void segfault() {
+	int inner() {
+		import core.stdc.stdlib: malloc;
+
+		int *p = cast(int*)malloc(-1);
+		return *p;
+	}
+
+	inner();
+}
