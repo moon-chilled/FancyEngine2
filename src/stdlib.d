@@ -30,3 +30,24 @@ void segfault() {
 
 	inner();
 }
+
+
+version (Windows) {
+	version (CRuntime_Microsoft) {
+	} else {
+		static assert (false, "Only supported MSVCRT on windows");
+		// maybe someday this turns into mingw/gnu crt, when I have a better dev environment
+		// until then, I am sad
+	}
+} else version (OSX) {
+} else version (linux) {
+} else {
+	static assert (false, "Only supported windows, macos, or linux");
+}
+
+
+version (X86_64) {
+	//yayy
+} else {
+	static assert (false, "Only supported x86_64");
+}

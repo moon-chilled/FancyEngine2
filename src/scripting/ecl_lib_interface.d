@@ -12,8 +12,9 @@ import derelict.util.system;
 
 version (X86_64) {
 	alias fixnum = long;
-} else version (X86) {
+} else {
 	alias fixnum = int;
+	pragma(msg, "don't know what fixnum is!!!");
 }
 
 public class DerelictECLLoader: SharedLibLoader {

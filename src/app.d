@@ -127,26 +127,11 @@ void load_all_libraries() {
 
 // really, it returns errno_t, but that's the same as int
 version (Windows) private extern (C) int _putenv_s(const char*, const char*);
-version (Windows) private extern (C) int putenv(const char*);
 // setup LD_LIBRARY_PATH (or equivalent) so derelict (or something else) can find libraries
 void set_lib_path() {
 	version (Windows) {
-		version (CRuntime_DigitalMars) {
-			void set_env(const char *key, const char *value) {
-				import core.stdc.stdlib: calloc;
-				import core.stdc.string: strlen, strcpy, strcat;
-				char *new_str = cast(char*)calloc(1, strlen(key) + strlen(value) + 1 + 1); // 1 for the '=', 1 for the nul terminator
-				strcpy(new_str, key);
-				strcat(new_str, "=\0".ptr);
-				strcat(new_str, value);
-				putenv(new_str);
-			}
-		} else version (CRuntime_Microsoft) {
-			void set_env(const char *key, const char *value) {
+		void set_env(const char *key, const char *value) {
 				_putenv_s(key, value);
-			}
-		} else {
-			static assert(0);
 		}
 	} else {
 		void set_env(const char *key, const char *value) {
@@ -159,23 +144,13 @@ void set_lib_path() {
 	const(char) *plat_lib_path;
 	version (Windows) {
 		plat_libpath_name = "PATH".cstr;
-		version (Win64) {
-			plat_lib_path = r"lib\win\".cstr;
-		} else version (Win32) {
-			plat_lib_path = r"lib\win32\".cstr;
-		} else {
-			static assert(0);
-		}
+		plat_lib_path = r"lib\win\".cstr;
 	} else version (OSX) {
 		plat_libpath_name = "DYLD_LIBRARY_PATH".cstr;
 		plat_lib_path = "lib/macos".cstr;
 	} else version (linux) {
 		plat_libpath_name = "LD_LIBRARY_PATH".cstr;
-		version (X86_64) {
-			plat_lib_path = r"lib/linux".cstr;
-		} else version (X86) {
-			plat_lib_path = r"lib/linux32".cstr;
-		}
+		plat_lib_path = "lib/linux".cstr;
 	}
 
 	set_env(plat_libpath_name, plat_lib_path);
