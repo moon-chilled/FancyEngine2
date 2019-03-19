@@ -19,16 +19,10 @@ bool done;
 void dispatch(Event[] evs) {
 	foreach (ev; evs) {
 		final switch (ev.type) {
-			case Evtype.Keydown:
-				log("Key %s down", ev.key);
-				break;
-			case Evtype.Keyup:
-				log("Key %s is up", ev.key); break;
-			case Evtype.Mousemove:
-				log("Mouse moved by (%s, %s)", ev.mouse.deltay, ev.mouse.deltax); break;
-			case Evtype.Keypress:
-				log("Key %s was pressed", ev.key);
-				break;
+			case Evtype.Keydown: break;
+			case Evtype.Keyup: break;
+			case Evtype.Mousemove: break;
+			case Evtype.Keypress: break;
 			case Evtype.Quit:
 				done = true;
 		}
@@ -42,7 +36,7 @@ int real_main(string[] args) {
 
 	auto f = new ECLScript();
 	f.expose_fun("traa", (ScriptVar[] args) { log("%s + %s => %s", args[0], args[1], args[0] ~ args[1]); return args[0] ~ args[1]; }, [ScriptVarType.Str, ScriptVarType.Str]);
-	log("%s", f.eval("(traa \"hi\" \"therro\")"));
+	log("%s", f.eval("(traa \"hi┖\" \"therro\")"));
 
 	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
 	scope GorillaAudio audio = new GorillaAudio();

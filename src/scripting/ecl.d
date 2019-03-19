@@ -28,29 +28,33 @@ private ScriptVar cl_to_script(cl_object lisp_obj) {
 		case cl_type.t_doublefloat:
 			return ScriptVar(lisp_obj.DF.DFVAL);
 		case cl_type.t_base_string:
-			immutable x = new char[lisp_obj.base_string.dim];
+			string x = new char[lisp_obj.base_string.dim];
 			memcpy(x.ptr, lisp_obj.base_string.self, lisp_obj.base_string.dim);
 			return ScriptVar(x);
 		case cl_type.t_string:
-			lisp_obj = si_copy_to_simple_base_string(lisp_obj);
-			goto case cl_type.t_base_string;
-			/*
-			import std.conv: text;
-			wchar_t[] x;// = new wchar_t[lisp_obj.string.dim];
-			log("helloooooo nurse");
-			//memcpy(x.ptr, lisp_obj.string.self, lisp_obj.string.dim * wchar_t.sizeof);
-			log("String is %s", lisp_obj.string.self);
-			foreach (i; 0 .. lisp_obj.string.dim) {
-				log("copying");
-				x ~= lisp_obj.string.self[i];
-				log("copied");
+			/+
+			if (!ecl_fits_in_base_string(lisp_obj)) {
+				log("It fits");
+				return cl_to_script(si_copy_to_simple_base_string(lisp_obj));
+				/*
+				lisp_obj = si_copy_to_simple_base_string(lisp_obj);
+				assert(lisp_obj.ecl_t_of == cl_type.t_base_string);
+				goto case cl_type.t_base_string;
+				*/
+			} else {
+				log("I sits :<");
+				lisp_obj = cl_copy_seq(lisp_obj);
+				goto case cl_type.t_base_string;
+				//return cl_to_script(cl_copy_seq(lisp_obj));
+				//return None;
 			}
+			+/
 
-			log("Reading string '%s'", x);
-
-			*/
+			wchar_t[] x = new wchar_t[lisp_obj.string.dim];
+			memcpy(x.ptr, lisp_obj.string.self, wchar_t.sizeof * lisp_obj.string.dim);
+			return ScriptVar(x.tostr);
 		default:
-			return ScriptVar(None());
+			return None;
 	}
 }
 private cl_object script_to_cl(ScriptVar script_obj) {
@@ -64,7 +68,22 @@ private cl_object script_to_cl(ScriptVar script_obj) {
 
 
 class ECLScript: Scriptlang {
-	this(){}
+	this(){
+		ScriptVar dlog(LogLevel ll)(ScriptVar[] s) {
+			log_funs!ll(s[0]);
+			return None;
+		}
+		import std.traits: EnumMembers;
+		static foreach (ll; EnumMembers!LogLevel[1 .. $]) {
+			expose_fun("_d" ~ ll.to!string, &(dlog!ll), [ScriptVarType.Str]);
+			eval("(defun log" ~ ll.to!string ~ " (&rest args) (_d" ~ ll.to!string ~ " (apply #'format (cons nil args))))");
+		}
+		/*
+		expose_fun("_dinfo", &(dlog!(LogLevel.info)), [ScriptVarType.Str]);
+		eval("(defun info (&rest args) (_dinfo (apply #'format (cons nil args))))");
+		*/
+		eval(`(loginfo "hii from ECL")`);
+	}
 	~this(){}
 
 	ScriptVar eval(string text) {
@@ -140,8 +159,8 @@ void init_ecl() {
 	signal(SIGINT, SIG_DFL);
 	signal(SIGILL, SIG_DFL);
 	info("initiated ECL");
-
 }
+
 void shutdown_ecl() {
 	cl_shutdown();
 	info("shutdown ECL");

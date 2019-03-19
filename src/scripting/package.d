@@ -1,9 +1,7 @@
 module scripting;
 import stdlib;
 
-import std.variant: Sum = Algebraic;
-
-struct None{}
+struct NoneType{}
 
 enum ScriptVarType {
 	Int,
@@ -12,8 +10,12 @@ enum ScriptVarType {
 	Any,
 	None,
 }
-alias ScriptVar = Sum!(long, double, string, None);
+alias ScriptVar = Sum!(long, double, string, NoneType);
 alias ScriptFun = ScriptVar delegate(ScriptVar[] args);
+ScriptVar None;
+shared static this() {
+	None = ScriptVar(NoneType());
+}
 
 interface Scriptlang {
 	ScriptVar eval(string text);

@@ -44,6 +44,8 @@ public class DerelictECLLoader: SharedLibLoader {
 		bindFunc(cast(void**)&ecl_set_option, "ecl_set_option");
 		bindFunc(cast(void**)&si_copy_to_simple_base_string, "si_copy_to_simple_base_string");
 		bindFunc(cast(void**)&ecl_process_env, "ecl_process_env");
+		bindFunc(cast(void**)&ecl_fits_in_base_string, "ecl_fits_in_base_string");
+		bindFunc(cast(void**)&cl_copy_seq, "cl_copy_seq");
 	}
 }
 
@@ -64,6 +66,8 @@ __gshared extern (C) nothrow @nogc {
 	void function(int, fixnum) ecl_set_option;
 	cl_object function(cl_object) si_copy_to_simple_base_string;
 	cl_env_struct *function() ecl_process_env;
+	int function(cl_object) ecl_fits_in_base_string;
+	cl_object function(cl_object) cl_copy_seq;
 
 	pragma(inline, true) cl_object cl_safe_eval(cl_object form, cl_object env, cl_object value) { return si_safe_eval(3, form, env, value); }
 	pragma(inline, true) cl_object lsym(string s) { return si_string_to_object(1, s.lstr); }
@@ -439,7 +443,7 @@ __gshared extern (C) nothrow @nogc {
 		cl_object displaced;
 		fixnum dim;
 		fixnum fillp;
-		wchar_t* self;
+		short* self;
 	}
 	enum ecl_smmode
 	{
@@ -1821,7 +1825,6 @@ extern(C) {
     cl_object si_sequence_start_end(cl_lispunion*, cl_lispunion*, cl_lispunion*, cl_lispunion*) @nogc nothrow;
     cl_object cl_elt(cl_lispunion*, cl_lispunion*) @nogc nothrow;
     cl_object si_elt_set(cl_lispunion*, cl_lispunion*, cl_lispunion*) @nogc nothrow;
-    cl_object cl_copy_seq(cl_lispunion*) @nogc nothrow;
     cl_object cl_length(cl_lispunion*) @nogc nothrow;
     cl_object cl_reverse(cl_lispunion*) @nogc nothrow;
     cl_object cl_nreverse(cl_lispunion*) @nogc nothrow;
@@ -1885,7 +1888,6 @@ extern(C) {
     cl_object ecl_cstring_to_base_string_or_nil(const(char)*) @nogc nothrow;
     int ecl_string_eq(cl_object, cl_lispunion*) @nogc nothrow;
     int ecl_member_char(int, cl_object) @nogc nothrow;
-    int ecl_fits_in_base_string(cl_object) @nogc nothrow;
     int ecl_char(cl_object, c_ulong) @nogc nothrow;
     int ecl_char_set(cl_object, c_ulong, int) @nogc nothrow;
     cl_object si_structure_subtype_p(cl_lispunion*, cl_lispunion*) @nogc nothrow;

@@ -32,7 +32,7 @@ class GraphicsState {
 		if (window.fullscreen == Fullscreenstate.Desktop) win_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 
 		// 0, 0: window position
-		this.window = SDL_CreateWindow(window.title.cstr, 0, 0, window.win_width, window.win_height, win_flags);
+		this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window.win_width, window.win_height, win_flags);
 		if (!this.window) sdlerror;
 
 		this.gl_context = SDL_GL_CreateContext(this.window);
