@@ -10,6 +10,7 @@ fancyengine2-test-*
 *.obj
 *.lst
 
+# vim turds
 .*.swp
 .*.swo
 .*.swn
@@ -18,3 +19,6 @@ fancyengine2-test-*
 
 src/.commit_hash.txt
 lib
+icon.res
+
+fancy_log_*.txt

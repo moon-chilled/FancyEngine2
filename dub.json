@@ -11,8 +11,9 @@
 	"license": "proprietary",
 	"name": "fancyengine2",
 	"preBuildCommands": ["git rev-parse --short HEAD > src/.commit_hash.txt"],
+	"preBuildCommands-windows": ["rc.exe icon.rc > NUL"],
 	"stringImportPaths": ["src/"],
-	"lflags-windows": ["/LIBPATH:lib/win"],
+	"lflags-windows": ["icon.res", "/LIBPATH:lib/win"],
 	"libs": ["gorilla"],
 	"libs-windows": ["ole32", "oleaut32", "strmiids", "user32"],
 
@@ -27,7 +28,7 @@
 			"versions": ["release"],
 			"buildOptions": ["optimize", "inline"],
 
-			"lflags-windows": ["/exetype:nt", "/subsystem:windows"]
+			"lflags-windows": ["/subsystem:windows"]
 		}
 	}
 }

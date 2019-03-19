@@ -35,7 +35,7 @@ void dispatch(Event[] evs) {
 	}
 }
 
-void main() {
+int real_main(string[] args) {
 	load_all_libraries();
 	init_ecl();
 	scope(exit) shutdown_ecl();
@@ -95,6 +95,8 @@ mainloop:
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
 		audio.update(.0166666);
 	}
+
+	return 0;
 }
 
 
@@ -154,4 +156,40 @@ void set_lib_path() {
 	}
 
 	set_env(plat_libpath_name, plat_lib_path);
+}
+
+version (release) { version (Windows) {
+	import core.runtime;
+	import core.sys.windows.windows;
+	import std.conv: text;
+
+	extern (Windows) int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+		try {
+			int res;
+			Runtime.initialize();
+			wchar *args_unparsed = GetCommandLine();
+			wchar **wargs = CommandLineToArgvW(args_unparsed, &res);
+			string[] args;
+			foreach (i; 0 .. res) {
+				args ~= wargs[i].dstr.text;
+			}
+			LocalFree(wargs);
+
+			res = real_main(args);
+
+			Runtime.terminate();
+			return res;
+		} catch (Throwable e) {
+			fatal(e.msg);
+			return 1;
+		}
+	}
+} else {
+	int main(string[] args) {
+		return real_main(args);
+	}
+}} else {
+	int main(string[] args) {
+		return real_main(args);
+	}
 }

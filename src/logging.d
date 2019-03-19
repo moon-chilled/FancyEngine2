@@ -15,7 +15,7 @@ shared static this() {
 		set_logger_targets([stderr]);
 	else version (release) {
 		import std.datetime.systime: Clock;
-		set_logger_targets([File("fancy_log_" ~ Clock.currTime.toIsoExtString, "w")]);
+		set_logger_targets([File("fancy_log_" ~ Clock.currTime.toISOString ~ ".txt", "w")]);
 	}
 }
 
@@ -45,6 +45,7 @@ void handle_log(LogLevel ll, int line, string file, string func_name, string pre
 	if (ll >= min_log_level) {
 		foreach (target; log_targets) {
 			target.write(formatted_msg);
+			target.flush();
 		}
 	}
 

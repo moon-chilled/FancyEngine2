@@ -34,6 +34,12 @@ private extern (C) {
 		DirectSound = 2,
 		XAudio2 = 3,
 	}
+	enum AudioType {
+		Unknown = 1,
+		Autodetect = 2,
+		OGG = 3,
+		WAV = 4,
+	}
 
 	alias FinishCallback = void function(Handle *finished_handle, void *context);
 
@@ -56,11 +62,11 @@ private extern (C) {
 	void gau_manager_update(Manager *mgr);
 	Mixer *gau_manager_mixer(Manager *mgr);
 	StreamManager *gau_manager_streamManager(Manager *mgr);
-	Sound *gau_load_sound_file(const char *fname, const char *format);
+	Sound *gau_load_sound_file(const char *fname, const AudioType format);
 	void gau_on_finish_destroy(Handle *finished_handle, void *context);
-	Handle *gau_create_handle_memory(Mixer *mixer, Memory *memory, const char *format, FinishCallback callback, void *context, SampleSourceLoop **loop_src);
+	Handle *gau_create_handle_memory(Mixer *mixer, Memory *memory, AudioType format, FinishCallback callback, void *context, SampleSourceLoop **loop_src);
 	Handle *gau_create_handle_sound(Mixer *mixer, Sound *sound, FinishCallback callback, void *context, SampleSourceLoop **loop_src);
-	Handle* gau_create_handle_buffered_file(Mixer *mixer, StreamManager *in_streamMgr, const char *filename, const char *format, FinishCallback callback, void *in_context, SampleSourceLoop **loop_src);
+	Handle* gau_create_handle_buffered_file(Mixer *mixer, StreamManager *in_streamMgr, const char *filename, AudioType format, FinishCallback callback, void *in_context, SampleSourceLoop **loop_src);
 
 
 	int ga_handle_play(Handle *handle);
@@ -121,7 +127,7 @@ class GorillaAudio {
 	BufferedSound load_buf_sound(string fpath) {
 		BufferedSound ret = new BufferedSound();
 
-		Handle *handle = gau_create_handle_buffered_file(mixer, stream_mgr, fpath.cstr, "ogg\0".ptr, &gau_on_finish_destroy, null, null);
+		Handle *handle = gau_create_handle_buffered_file(mixer, stream_mgr, fpath.cstr, AudioType.OGG, &gau_on_finish_destroy, null, null);
 		if (!handle) error("unable to load sound '%s'", fpath);
 
 		ret.handle = handle;
@@ -131,7 +137,7 @@ class GorillaAudio {
 	CachedSound load_cache_sound(string fpath) {
 		CachedSound ret = new CachedSound();
 
-		Sound *sound = gau_load_sound_file(fpath.cstr, "ogg\0".ptr);
+		Sound *sound = gau_load_sound_file(fpath.cstr, AudioType.OGG);
 		if (!sound) error("unable to load sound '%s'", fpath);
 		Handle *handle = gau_create_handle_sound(mixer, sound, &gau_on_finish_destroy, null, null); //TODO: need to handle looping here for some reason (unless I pass in a function pointer that gets a pointer to the loop param and auto-restarts it if it should loop?
 		if (!handle) error("unable to process sound '%s'", fpath);
