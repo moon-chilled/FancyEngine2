@@ -7,11 +7,20 @@ import derelict.opengl;
 
 import windowing.key;
 
+GLint max_samples() {
+	SDL_Window *win = SDL_CreateWindow(":)".cstr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1, 1, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+	SDL_GL_CreateContext(win);
+	GLint ret;
+	glGetIntegerv(GL_MAX_SAMPLES, &ret);
+	SDL_DestroyWindow(win);
+	return ret;
+}
+
+
 class GraphicsState {
 	SDL_GLContext gl_context;
 
 	SDL_Window *window; // maybe I should allow for multiple windows.  But meh
-	GLuint program_id, VBO, IBO; // each window gets a different one
 
 	WindowSpec window_spec;
 
@@ -21,6 +30,25 @@ class GraphicsState {
 		this.window_spec = window;
 
 		if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) < 0) sdlerror;
+
+		if (window.aa_samples > 1) {
+			GLint max_samples = max_samples();
+			if (window.aa_samples > max_samples) {
+				warning("was asked for %s samples, but only supported %s", window.aa_samples, max_samples);
+				window.aa_samples = max_samples;
+			}
+			if (SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1) < 0) {
+				error("unable to turn on aa; SDL says '%s'", SDL_GetError().dstr);
+				SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+			}
+
+			if (SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, window.aa_samples) < 0) {
+				error("unable to set aa level to %s; SDL says '%s'", window.aa_samples, SDL_GetError().dstr);
+				SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
+			}
+
+			glEnable(GL_MULTISAMPLE);
+		}
 
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -48,14 +76,20 @@ class GraphicsState {
 
 		if (window.vsync) {
 			if (SDL_GL_SetSwapInterval(1) == -1) {
-				warning("Unable to enable vsync.  SDL says: %s", SDL_GetError());
+				warning("Unable to enable vsync.  SDL says: %s", SDL_GetError().dstr);
 			}
 		} else {
 			if (SDL_GL_SetSwapInterval(0) == -1) {
-				warning("Unable to turn off vsync.  SDL says: %s", SDL_GetError());
+				warning("Unable to turn off vsync.  SDL says: %s", SDL_GetError().dstr);
 			}
 		}
 		//TODO: add adaptive sync support (SDL_GL_SetSwapInterval(-1)
+
+		if (window.wireframe) {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		} else {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
 
 
 		//glViewPort(0, 0, window.render_width, window.render_height); // I'm not sure if this does what I want it to
@@ -63,6 +97,7 @@ class GraphicsState {
 
 		info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
 	}
+
 	~this() {
 		SDL_DestroyWindow(window);
 		SDL_Quit();
@@ -80,9 +115,11 @@ struct WindowSpec {
 	uint render_width, render_height;
 	Fullscreenstate fullscreen;
 	bool borders, vsync;
+	bool wireframe;
+	int aa_samples;
 }
 private void sdlerror() {
-	fatal("SDL Error: %s", SDL_GetError());
+	fatal("SDL Error: %s", SDL_GetError().dstr);
 }
 
 void blit(GraphicsState gs) {
@@ -151,6 +188,7 @@ Event[] poll_events() {
 
 	return ret;
 }
+
 Key sdlmousetokey(SDL_D_MouseButton button) {
 	return [SDL_BUTTON_LEFT: Key.mouse1,
 	       SDL_BUTTON_MIDDLE: Key.mouse2,

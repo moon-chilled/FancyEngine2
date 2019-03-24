@@ -7,6 +7,7 @@ import std.container.array: ManArray = Array;
 import std.variant: Sum = Algebraic;
 import std.conv: to, tostr = text, towstr = wtext, todstr = dtext;
 import std.array: split;
+import std.algorithm.comparison: min, max, clamp;
 
 struct Vector3 {
 	double x, y, z;

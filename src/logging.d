@@ -20,7 +20,7 @@ shared static this() {
 }
 
 private File[] log_targets;
-private LogLevel min_log_level = LogLevel.trace; // logs must be >this to be logged
+private LogLevel min_log_level = LogLevel.info; // logs must be >this to be logged
 private LogLevel msg_log_level = LogLevel.error; // if logs are >this, show a message box
 
 void set_logger_targets(File[] files) {

@@ -4,6 +4,8 @@ import cstdlib;
 import windowing.windows;
 import windowing.key;
 
+import graphics.shading;
+
 import asset;
 
 import scripting;
@@ -15,11 +17,15 @@ import derelict.opengl;
 import derelict.sdl2.sdl;
 
 bool done;
+bool paused;
 
 void dispatch(Event[] evs) {
 	foreach (ev; evs) {
 		final switch (ev.type) {
-			case Evtype.Keydown: break;
+			case Evtype.Keydown:
+				if (ev.key == Key.space)
+					paused = !paused;
+				break;
 			case Evtype.Keyup: break;
 			case Evtype.Mousemove: break;
 			case Evtype.Keypress: break;
@@ -38,13 +44,8 @@ int real_main(string[] args) {
 	f.expose_fun("traa", (ScriptVar[] args) { log("%s + %s => %s", args[0], args[1], args[0] ~ args[1]); return args[0] ~ args[1]; }, [ScriptVarType.Str, ScriptVarType.Str]);
 	log("%s", f.eval("(traa \"hi┖\" \"therro\")"));
 
-	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true));
+	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true, false, 4));
 	scope GorillaAudio audio = new GorillaAudio();
-
-//CachedSound muse = audio.load_cache_sound("out.ogg");
-	BufferedSound muse = audio.load_buf_sound("out.ogg");
-	audio.play(muse);
-
 
 
 	float r = 0, g = 0, b = 0;
@@ -54,6 +55,44 @@ int real_main(string[] args) {
 		if (f < 0)
 			f = 1 - (trunc(f) - f);
 	}
+	void nice2(size_t x, size_t y)(ref float[24] f) {
+		f[x] = clamp(f[x], -.5, 0.5);
+		f[y] = clamp(f[y], -.5, 0.5);
+
+		if (f[x] >= 0.5 && f[y] < 0.5) {
+			f[y] += 0.01;
+		} else if (f[y] >= 0.5 && f[x] > -.5) {
+			f[x] -= 0.01;
+		} else if (f[x] <= -.5 && f[y] > -.5) {
+			f[y] -= 0.01;
+		} else {
+			f[x] += 0.01;
+		}
+	}
+
+	float[24] vertices = [
+		-.5, -.5, 0.0, 1.0, 0.0, 0.0,
+		0.5, -.5, 0.0, 0.0, 1.0, 0.0,
+		0.5, 0.5, 0.0, 0.0, 0.0, 1.0,
+		-.5, 0.5, 0.0, 0.0, 0.0, 0.0];
+
+
+	Program prog = Program("#version 330 core
+layout (location = 0) in vec3 pos;
+layout (location = 1) in vec3 clr;
+out vec4 vertex_clr;
+void main() {
+	gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);
+	vertex_clr = vec4(clr, 1.0);
+
+}", "#version 330 core
+out vec4 frag_color;
+in vec4 vertex_clr;
+
+void main() {
+	frag_color = vertex_clr;
+	//frag_color = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+}");
 
 mainloop:
 	while (!done) {
@@ -76,6 +115,13 @@ mainloop:
 		nice(g);
 		nice(b);
 
+		if (!paused) {
+			nice2!(0, 1)(vertices);
+			nice2!(6, 7)(vertices);
+			nice2!(12, 13)(vertices);
+			nice2!(18, 19)(vertices);
+		}
+
 
 		///////////////////////////////////
 		////  RENDERING    ////////////////
@@ -83,6 +129,10 @@ mainloop:
 		//               /
 		glClearColor(r, g, b, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+
+		prog.upload_vertices(vertices);
+		prog.blit();
 		gfx.blit();
 
 
