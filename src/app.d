@@ -40,12 +40,16 @@ int real_main(string[] args) {
 	init_ecl();
 	scope(exit) shutdown_ecl();
 
+	/+
 	auto f = new ECLScript();
 	f.expose_fun("traa", (ScriptVar[] args) { log("%s + %s => %s", args[0], args[1], args[0] ~ args[1]); return args[0] ~ args[1]; }, [ScriptVarType.Str, ScriptVarType.Str]);
 	log("%s", f.eval("(traa \"hi┖\" \"therro\")"));
+	+/
 
 	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", 640, 480, 640, 480, Fullscreenstate.None, true, true, false, 4));
 	scope GorillaAudio audio = new GorillaAudio();
+	auto f = audio.load_cache_sound("out.ogg");
+	audio.play(f);
 
 
 	float r = 0, g = 0, b = 0;

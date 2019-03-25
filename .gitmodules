@@ -1,0 +1,9 @@
+[submodule "deps/derelictgl3"]
+	path = deps/derelictgl3
+	url = https://github.com/derelictorg/derelictgl3
+[submodule "deps/derelictsdl2"]
+	path = deps/derelictsdl2
+	url = https://github.com/derelictorg/derelictsdl2
+[submodule "deps/derelictutil"]
+	path = deps/derelictutil
+	url = https://github.com/derelictorg/derelictutil
