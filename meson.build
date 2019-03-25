@@ -17,17 +17,18 @@ link_args = ['../lib/' + sys + '/gorilla.lib']
 
 #run_command('git.exe rev-parse --short HEAD > src/.commit.txt')
 if sys == 'win'
+  run_command('powershell', '-c', 'del build/icon.rc')
+  run_command('powershell', '-c', 'del build/icon.res')
   run_command('powershell', '-c', 'add-content build/icon.rc \'100 ICON "../icon.ico"\'')
   run_command('rc.exe', 'build/icon.rc')
   link_args += ['icon.res']
   foreach lib: ['ole32', 'oleaut32', 'strmiids', 'user32']
     link_args += '-L=' + lib + '.lib'
   endforeach
-  link_args += '-L=/libpath:../lib/win'
   link_args += '-L=/nodefaultlib:msvcrtd.lib'
 else
   link_args += '-L-Llib/' + sys + '/'
 endif
 
 
-executable('fancyengine2', fancy_source + derelict_source, d_args: d_args, link_args: link_args, include_directories: include_dirs)
+executable('fancyengine2', fancy_source + dep_source, d_args: d_args, link_args: link_args, include_directories: include_dirs)
