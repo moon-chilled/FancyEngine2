@@ -17,8 +17,9 @@ link_args = ['../lib/' + sys + '/gorilla.lib']
 
 #run_command('git.exe rev-parse --short HEAD > src/.commit.txt')
 if sys == 'win'
-  run_command('rc.exe', 'icon.rc')
-  link_args += ['../icon.res']
+  run_command('powershell', '-c', 'add-content build/icon.rc \'100 ICON "../icon.ico"\'')
+  run_command('rc.exe', 'build/icon.rc')
+  link_args += ['icon.res']
   foreach lib: ['ole32', 'oleaut32', 'strmiids', 'user32']
     link_args += '-L=' + lib + '.lib'
   endforeach
