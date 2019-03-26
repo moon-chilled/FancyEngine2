@@ -30,7 +30,7 @@ class Texture: Asset!(AssetType.Texture) {
 		switch (clr_depth) {
 			case 3: colour_fmt = GL_RGB; break;
 			case 4: colour_fmt = GL_RGBA; break;
-			default: fatal("Need 3-byte or 4-byte colour depth"); assert(0);
+			default: fatal("Need 3-byte or 4-byte colour depth, got %s", clr_depth); assert(0);
 		}
 
 		glGenTextures(1, &tex_id);

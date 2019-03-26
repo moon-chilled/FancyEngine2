@@ -100,6 +100,12 @@ class GraphicsState {
 		info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
 	}
 
+	void grab_mouse() {
+		if (SDL_SetRelativeMouseMode(SDL_TRUE) < 0) error("unable to grab mouse.  SDL says '%s'", SDL_GetError().dstr);
+	}
+	void ungrab_mouse() {
+		if (SDL_SetRelativeMouseMode(SDL_FALSE) < 0) error("unable to ungrab mouse.  SDL says '%s'", SDL_GetError().dstr);
+	}
 	~this() {
 		SDL_DestroyWindow(window);
 		SDL_Quit();

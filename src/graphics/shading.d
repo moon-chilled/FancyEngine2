@@ -16,10 +16,10 @@ struct Program {
 	@disable this();
 	@disable this(this);
 
-	private GLuint program, VAO, VBO, EBO;
+	private GLuint program, VAO, VBO;//, EBO;
 	private GLuint[16] textures;
 
-	void upload_vertices(float[20] vertices) {
+	void upload_vertices(float[180] vertices) {
 		glBufferData(GL_ARRAY_BUFFER, vertices.sizeof, vertices.ptr, GL_DYNAMIC_DRAW); // options: GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * float.sizeof, cast(void*)0);
 		glEnableVertexAttribArray(0);
@@ -37,10 +37,12 @@ struct Program {
 		glGenBuffers(1, &VBO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
+		/*
 		GLuint[] indices = [0, 1, 2, 0, 2, 3];
 		glGenBuffers(1, &EBO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * indices[0].sizeof, indices.ptr, GL_DYNAMIC_DRAW);
+		*/
 
 		/*
 		upload_vertices([-0.5f, -0.5f, 0.0f,
@@ -99,7 +101,8 @@ struct Program {
 		}
 		glBindVertexArray(VAO);
 		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
 		glBindVertexArray(0);
 		/*
 		glDrawArrays(GL_TRIANGLES, 0, 3);

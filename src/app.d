@@ -1,5 +1,6 @@
 import stdlib;
 import cstdlib;
+import stdmath;
 
 import windowing.windows;
 import windowing.key;
@@ -15,24 +16,63 @@ import scripting.ecl;
 import sound.gorilla;
 
 import derelict.opengl;
-import derelict.sdl2.sdl;
 
-enum width = 1280, height = 720;
+enum width = 640, height = 480;
 enum aspect_ratio = cast(double)width/cast(double)height;
 enum fov = 90.0;
+enum speed = 0.1;
 
 bool done;
 bool paused = true;
+bool grabbed;
 
-void dispatch(Event[] evs) {
+struct ViewState {
+	mat4f projection = mat4f.perspective(to_rad(fov/2), aspect_ratio, 100, 0.1);
+	mat4f view = mat4f.identity.translation(vec3f(0, 0, -6));
+	mat4f model = mat4f.identity.rotateX(to_rad(-55));
+
+	vec3f cam_pos = vec3f(0, 0, 3), cam_target = vec3f(), cam_front = vec3f(0, 0, -1), cam_up = vec3f(0, 1, 0);
+	vec3f velocity = vec3f(0, 0, 0);
+	float pitch = 0, yaw = -90, roll; // TODO: implement roll
+}
+void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state) {
 	foreach (ev; evs) {
 		final switch (ev.type) {
 			case Evtype.Keydown:
-				if (ev.key == Key.space)
-					paused = !paused;
+				switch (ev.key) {
+					case Key.space: paused = !paused; break;
+					case Key.enter: grabbed = !grabbed; break;
+					case Key.w: state.velocity.z += speed; break;
+					case Key.s: state.velocity.z -= speed; break;
+					case Key.a: state.velocity.x -= speed; break;
+					case Key.d: state.velocity.x += speed; break;
+					default: break;
+				}
+
 				break;
-			case Evtype.Keyup: break;
-			case Evtype.Mousemove: break;
+			case Evtype.Keyup:
+				switch (ev.key) {
+					case Key.w: state.velocity.z -= speed; break;
+					case Key.s: state.velocity.z += speed; break;
+					case Key.a: state.velocity.x += speed; break;
+					case Key.d: state.velocity.x -= speed; break;
+					default: break;
+				}
+
+				break;
+
+			case Evtype.Mousemove:
+				float sense = 0.1;
+				logs(ev.mouse);
+				state.pitch = clamp(state.pitch - ev.mouse.deltay * sense, -89, 89);
+				state.yaw += sense * ev.mouse.deltax;
+				state.cam_front = vec3f(cos(state.pitch.to_rad) * cos(state.yaw.to_rad),
+						sin(state.pitch.to_rad),
+						cos(state.pitch.to_rad) * sin(state.yaw.to_rad));
+				state.cam_front.normalize();
+
+
+				break;
 			case Evtype.Keypress: break;
 			case Evtype.Quit:
 				done = true;
@@ -54,6 +94,9 @@ int real_main(string[] args) {
 	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", width, height, width, height, Fullscreenstate.None, true, true, false, 4));
 	scope GorillaAudio audio = new GorillaAudio();
 
+	gfx.grab_mouse();
+
+
 
 	float r = 0, g = 0, b = 0;
 	void nice(ref float f) {
@@ -62,20 +105,75 @@ int real_main(string[] args) {
 		if (f < 0)
 			f = 1 - (trunc(f) - f);
 	}
-	float[20] vertices = [
-		0.5, 0.5, 0.0, 1., 1.,
-		0.5, -0.5, 0.0, 1., -1,
-		-0.5, -0.5, 0.0, -1, -1,
-		-0.5, 0.5, 0.0, -1, 1.];
-	import stdmath;
+	float[180] vertices = [
+		///FRONT
+		0.5, 0.5, 0.5, 1., 1.,
+		0.5, -0.5, 0.5, 1., -1,
+		-0.5, 0.5, 0.5, -1, 1,
 
-	struct State {
-		mat4f projection = mat4f.perspective(to_rad(fov/2), aspect_ratio, 0.1, 100.0);
-		mat4f view = mat4f.identity.translation(vec3f(0, 0, -3));
-		mat4f model = mat4f.identity.rotateX(to_rad(-55));
-	}
+		0.5, -0.5, 0.5, 1., -1,
+		-0.5, 0.5, 0.5, -1, 1,
+		-0.5, -0.5, 0.5, -1, -1,
 
-	State state;
+
+
+		///REAR
+		0.5, 0.5, -0.5, 1, 1,
+		0.5, -0.5, -0.5, 1, -1,
+		-0.5, 0.5, -0.5, -1, 1,
+
+		0.5, -0.5, -0.5, 1, -1,
+		-0.5, 0.5, -0.5, -1, 1,
+		-0.5, -0.5, -0.5, -1, -1,
+
+
+
+
+		///TOP
+		0.5, 0.5, 0.5, 1, 1,
+		-0.5, 0.5, 0.5, -1, 1,
+		0.5, 0.5, -0.5, 1, -1,
+
+		-0.5, 0.5, 0.5, -1, 1,
+		0.5, 0.5, -0.5, 1, -1,
+		-0.5, 0.5, -0.5, -1, -1,
+
+		///BOTTOM
+		0.5, -0.5, 0.5, 1, 1,
+		-0.5, -0.5, 0.5, -1, 1,
+		0.5, -0.5, -0.5, 1, -1,
+
+		-0.5, -0.5, 0.5, -1, 1,
+		0.5, -0.5, -0.5, 1, -1,
+		-0.5, -0.5, -0.5, -1, -1,
+
+
+
+		///RIGHT
+		0.5, 0.5, 0.5, 1, 1,
+		0.5, 0.5, -0.5, -1, 1,
+		0.5, -0.5, 0.5, 1, -1,
+
+		0.5, 0.5, -0.5, -1, 1,
+		0.5, -0.5, 0.5, 1, -1,
+		0.5, -0.5, -0.5, -1, -1,
+
+
+
+		///LEFT
+		-0.5, 0.5, 0.5, 1, 1,
+		-0.5, 0.5, -0.5, -1, 1,
+		-0.5, -0.5, 0.5, 1, -1,
+
+		-0.5, 0.5, -0.5, -1, 1,
+		-0.5, -0.5, 0.5, 1, -1,
+		-0.5, -0.5, -0.5, -1, -1,
+	];
+
+	ulong frames;
+
+	ViewState state;
+
 
 
 	Program prog = Program(q{#version 330 core
@@ -102,24 +200,24 @@ uniform sampler2D face_tex;
 
 void main() {
 	//frag_colour = texture(tex, tex_coord);
-	frag_colour = mix(texture(wall_tex, tex_coord), texture(face_tex, vec2(-tex_coord.x, tex_coord.y)), 0.3);
+	frag_colour = mix(texture(wall_tex, tex_coord), texture(face_tex, vec2(-tex_coord.x, tex_coord.y)), 0.9);
 	//frag_colour = vertex_clr;
 	//frag_colour = vec4(1.0f, 0.5f, 0.2f, 1.0f);
 }});
 
 	prog.upload_texture(0, new Texture("wall.jpg"));
-	prog.upload_texture(1, new Texture("face.png"));
+	prog.upload_texture(1, new Texture("dickbutt.jpg"));
 	prog.set_int("wall_tex", 0);
 	prog.set_int("face_tex", 1);
 
 mainloop:
 	while (!done) {
+		if (!paused) frames++;
 		///////////////////////////////////
 		////EVENT HANDLING ////////////////
 		///               /////////////////
 		//               /
-		Event[] evs = poll_events();
-		evs.dispatch();
+		poll_events().dispatch(gfx, state);
 
 
 		///////////////////////////////////
@@ -132,6 +230,12 @@ mainloop:
 		nice(r);
 		nice(g);
 		nice(b);
+
+		state.cam_pos += state.velocity.z * state.cam_front;
+		state.cam_pos += state.cam_front.cross(state.cam_up).normalized * state.velocity.x;
+
+		if (!paused) state.model = mat4f.identity.rotation(frames*.05, vec3f(0.5, 1, 1));
+		state.view = mat4f.lookAt(state.cam_pos, state.cam_pos + state.cam_front, state.cam_up);
 
 
 		///////////////////////////////////
