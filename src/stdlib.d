@@ -9,15 +9,17 @@ import std.conv: to, tostr = text, towstr = wtext, todstr = dtext;
 import std.array: split;
 import std.algorithm.comparison: min, max, clamp;
 
-struct Vector3 {
-	double x, y, z;
-}
 
 // !IMPORTANT!
 // size is NOT dependent on T.sizeof
 // this is to avoid confusion
 // the only purpose of this function is to make it so you don't have to cast your pointers to void*
 pragma(inline, true) void memcpy(T, U)(T *dest, const U *src, size_t size) {
+	static if (!is(T == U)) {
+		import std.string: format;
+		pragma(msg, format("Unequal types %s and %s being catenated", T.stringof, U.stringof));
+	}
+
 	static import core.stdc.string;
 	core.stdc.string.memcpy(cast(void*)dest, cast(const void*)src, size);
 }

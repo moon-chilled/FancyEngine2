@@ -1,6 +1,7 @@
 module sound.gorilla;
 import stdlib;
 import cstdlib;
+import stdmath;
 import asset;
 
 version (Windows) {
@@ -99,7 +100,7 @@ class GorillaAudio {
 	private Manager *mgr;
 	private Mixer *mixer;
 	private StreamManager *stream_mgr;
-	private Vector3 listener;
+	private vec3f listener;
 
 	this() {
 		mgr = gau_manager_create_custom(DeviceType.Default, ThreadPolicy.Multi, 4, 512);
@@ -120,7 +121,7 @@ class GorillaAudio {
 
 	// TODO: maybe have multiple listeners, 1 for each speaker (depends on speaker config) (ask guy about this, maybe?)?
 	// I sincerely apologize for the punctuation atrocity above
-	void set_listener_position(Vector3 pos) {
+	void set_listener_position(vec3f pos) {
 		listener = pos;
 	}
 
@@ -128,7 +129,7 @@ class GorillaAudio {
 		BufferedSound ret = new BufferedSound();
 
 		Handle *handle = gau_create_handle_buffered_file(mixer, stream_mgr, fpath.cstr, AudioType.OGG, &gau_on_finish_destroy, null, null);
-		if (!handle) error("unable to load sound '%s'", fpath);
+		if (!handle) { error("unable to load sound '%s'", fpath); return null; }
 
 		ret.handle = handle;
 		return ret;
@@ -138,7 +139,7 @@ class GorillaAudio {
 		CachedSound ret = new CachedSound();
 
 		Sound *sound = gau_load_sound_file(fpath.cstr, AudioType.OGG);
-		if (!sound) error("unable to load sound '%s'", fpath);
+		if (!sound) { error("unable to load sound '%s'", fpath); return null; }
 		Handle *handle = gau_create_handle_sound(mixer, sound, &gau_on_finish_destroy, null, null); //TODO: need to handle looping here for some reason (unless I pass in a function pointer that gets a pointer to the loop param and auto-restarts it if it should loop?
 		if (!handle) error("unable to process sound '%s'", fpath);
 
@@ -147,7 +148,12 @@ class GorillaAudio {
 	}
 
 	// TODO: use pos
-	void play(AssetType s)(ISound!s sound, Vector3 pos = Vector3(0, 0, 0)) {
+	void play(AssetType s)(ISound!s sound, vec3f pos = vec3f(0, 0, 0)) {
+		if (sound is null) {
+			error("tried to play null sound!");
+			return;
+		}
+
 		int res = ga_handle_play(sound.handle);
 		if (res == 0) error("error playing sound");
 	}

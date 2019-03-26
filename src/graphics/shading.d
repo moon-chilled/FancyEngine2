@@ -1,7 +1,11 @@
 module graphics.shading;
 import stdlib;
+import stdmath;
+import cstdlib;
 
 import derelict.opengl;
+
+import graphics.tex;
 
 enum ShaderType: GLuint {
 	Vertex = GL_VERTEX_SHADER,
@@ -13,13 +17,17 @@ struct Program {
 	@disable this(this);
 
 	private GLuint program, VAO, VBO, EBO;
+	private GLuint[16] textures;
 
-	void upload_vertices(float[24] vertices) {
+	void upload_vertices(float[20] vertices) {
 		glBufferData(GL_ARRAY_BUFFER, vertices.sizeof, vertices.ptr, GL_DYNAMIC_DRAW); // options: GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * float.sizeof, null);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * float.sizeof, cast(void*)0);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * float.sizeof, cast(void*)(3 * float.sizeof));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * float.sizeof, cast(void*)(3 * float.sizeof));
 		glEnableVertexAttribArray(1);
+	}
+	void upload_texture(size_t pos, Texture tex) {
+		textures[pos] = tex.tex_id;
 	}
 
 	this(string vertex_src, string fragment_src) {
@@ -76,8 +84,19 @@ struct Program {
 		glUseProgram(program);
 	}
 
+	void set_int(string id, GLint value) {
+		glUniform1i(glGetUniformLocation(program, id.cstr), value);
+	}
+	void set_mat4(string id, mat4f value) {
+		glUniformMatrix4fv(glGetUniformLocation(program, id.cstr), 1, GL_TRUE, value.v.ptr);
+	}
+
 	void blit() {
 		glUseProgram(program);
+		foreach (i; 0 .. 16) {
+			glActiveTexture(GL_TEXTURE0 + i);
+			glBindTexture(GL_TEXTURE_2D, textures[i]);
+		}
 		glBindVertexArray(VAO);
 		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
@@ -94,11 +113,7 @@ struct Program {
 }
 
 
-
-
 private GLuint compile_shader(ShaderType type, string src) {
-	import cstdlib;
-
 	GLuint ret = glCreateShader(type);
 
 	glShaderSource(ret, 1, [src.cstr].ptr, [cast(int)src.length].ptr);

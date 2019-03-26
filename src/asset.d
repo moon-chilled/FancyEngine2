@@ -5,6 +5,7 @@ enum AssetType {
 	Data,
 	BufferedSound,
 	CachedSound,
+	Texture,
 }
 
 interface Asset(AssetType asset_type)  {

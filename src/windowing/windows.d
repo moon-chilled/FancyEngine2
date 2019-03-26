@@ -91,8 +91,10 @@ class GraphicsState {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
+		glEnable(GL_DEPTH_TEST);
 
-		//glViewPort(0, 0, window.render_width, window.render_height); // I'm not sure if this does what I want it to
+
+		glViewport(0, 0, window.render_width, window.render_height); // I'm not sure if this does what I want it to
 
 
 		info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);

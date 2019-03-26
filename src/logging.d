@@ -11,11 +11,11 @@ enum LogLevel {
 }
 
 shared static this() {
-	version (dev)
-		set_logger_targets([stderr]);
-	else version (release) {
+	version (release) {
 		import std.datetime.systime: Clock;
 		set_logger_targets([File("fancy_log_" ~ Clock.currTime.toISOString ~ ".txt", "w")]);
+	} else {
+		set_logger_targets([stderr]);
 	}
 }
 
@@ -38,7 +38,7 @@ void handle_log(LogLevel ll, int line, string file, string func_name, string pre
 
 	string formatted_msg = format("\033[34m%s||%s||%s:%s\033[31m|$\033[0m %s\n", Clock.currTime.toISOExtString(),
 			import(".commit_hash.txt")[0 .. $-1],
-			file,
+			file[3 .. $],
 			line,
 			msg);
 
