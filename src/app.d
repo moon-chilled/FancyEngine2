@@ -17,7 +17,7 @@ import sound.gorilla;
 
 import derelict.opengl;
 
-enum width = 640, height = 480;
+enum width = 1280, height = 720;
 enum aspect_ratio = cast(double)width/cast(double)height;
 enum fov = 90.0;
 enum speed = 0.1;

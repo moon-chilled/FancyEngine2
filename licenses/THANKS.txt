@@ -1,5 +1,7 @@
 This program may contain the following external libraries:
 
 * SDL2, licensed under the zlib license (available at LICENSE.zlib.txt).  Source code is available at https://www.libsdl.org/release/SDL2-2.0.9.tar.gz.
-* libFLAC, libogg/libvorbis, libopus, and libopusfile, licensed under the BSD 3-clause license (available at LICENSE.BSD3.txt).  Source available at https://git.xiph.org/?p=flac.git, https://git.xiph.org/?p=ogg.git, https://git.xiph.org/?p=vorbis.git, https://git.xiph.org/?p=opus.git, and https://git.xiph.org/?p=opusfile.git.
+* libogg and libvorbis, licensed under the BSD 3-clause license (available at LICENSE.BSD3.txt).  Source available at https://git.xiph.org/?p=ogg.git, https://git.xiph.org/?p=vorbis.git.
 * DerelictSDL2, DerelictGL, and Derelict utils, licensed under the boost license (available at LICENSE.boost.txt).  Source code for these is available at https://github.com/DerelictOrg/DerelictSDL2, https://github.com/DerelictOrg/DerelictGL3, and https://github.com/DerelictOrg/DerelictUtil.
+* GFM, licensed under the unlicense, or public domain.  Source code availabe at https://github.com/d-gamedev-team/gfm
+* Gorilla audio, licensed under the MIT license, originally maintained by Final Form games.  Original source available at https://code.google.com/archive/p/gorilla-audio/, code for this versiona available at https://github.com/Elronnd/gorilla-audio.

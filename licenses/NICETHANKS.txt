@@ -1,15 +1,27 @@
 Special thanks to:
 
-The SDL people for SDL2.
+The SDL people
+for making SDL2
 
-The Xiph People for:
-FLAC, and
-OGG, and
-Vorbis, and
-Opus, and
-Opusfile
+and
+the Xiph People
+for OGG
+and Vorbis
+which are truly unique
 
-The Derelict people for their binding tools,
-and their bindings to:
-SDL2, and
-OpenGL.
+and
+the Derelict people
+for their binding tools
+and their bindings to
+SDL2
+and OpenGL
+
+
+and
+the D gamedev community
+for an excellent math library
+
+and
+Final Form Games
+for making gorilla audio
+which is partly responsible for the beautiful sounds you are hearing.
