@@ -25,7 +25,7 @@ if sys == 'win'
   foreach lib: ['ole32', 'oleaut32', 'strmiids', 'user32']
     link_args += '-L=' + lib + '.lib'
   endforeach
-  link_args += '-L=/nodefaultlib:msvcrtd.lib'
+  link_args += ['-L=/nodefaultlib:msvcrtd.lib', '-L=/nodefaultlib:msvcrt.lib', '-L=/nodefaultlib:vcruntime.lib']
 else
   link_args += '-L-Llib/' + sys + '/'
 endif

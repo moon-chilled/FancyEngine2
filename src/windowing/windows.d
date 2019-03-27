@@ -139,7 +139,7 @@ Event[] poll_events() {
 
 	SDL_Event sdl_ev;
 
-	if (SDL_PollEvent(&sdl_ev)) {
+	while (SDL_PollEvent(&sdl_ev)) {
 		switch (sdl_ev.type) {
 			case SDL_KEYDOWN:
 				if (!sdl_ev.key.repeat) ret ~= Event(Evtype.Keydown, sdltokey(sdl_ev.key.keysym.sym));

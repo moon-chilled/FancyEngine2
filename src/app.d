@@ -33,7 +33,7 @@ struct ViewState {
 
 	vec3f cam_pos = vec3f(0, 0, 3), cam_target = vec3f(), cam_front = vec3f(0, 0, -1), cam_up = vec3f(0, 1, 0);
 	vec3f velocity = vec3f(0, 0, 0);
-	float pitch = 0, yaw = -90, roll; // TODO: implement roll
+	float pitch = 0, yaw = -90, roll = 0; // TODO: implement roll
 }
 void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state) {
 	foreach (ev; evs) {
@@ -62,8 +62,7 @@ void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state) {
 				break;
 
 			case Evtype.Mousemove:
-				float sense = 0.1;
-				logs(ev.mouse);
+				float sense = 0.3;
 				state.pitch = clamp(state.pitch - ev.mouse.deltay * sense, -89, 89);
 				state.yaw += sense * ev.mouse.deltax;
 				state.cam_front = vec3f(cos(state.pitch.to_rad) * cos(state.yaw.to_rad),
