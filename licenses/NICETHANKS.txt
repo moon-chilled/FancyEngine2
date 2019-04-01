@@ -16,12 +16,16 @@ and their bindings to
 SDL2
 and OpenGL
 
-
 and
 the D gamedev community
 for an excellent math library
+called GFM
 
 and
 Final Form Games
 for making gorilla audio
 which is partly responsible for the beautiful sounds you are hearing.
+
+and
+the ASSimp people
+for an excellent sense of humour
