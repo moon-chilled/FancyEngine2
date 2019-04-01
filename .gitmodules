@@ -13,3 +13,6 @@
 [submodule "deps/gfm"]
 	path = deps/gfm
 	url = https://github.com/d-gamedev-team/gfm
+[submodule "deps/derelictassimp3"]
+	path = deps/derelictassimp3
+	url = https://github.com/DerelictOrg/derelictassimp3

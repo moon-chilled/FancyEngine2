@@ -262,9 +262,10 @@ mainloop:
 
 
 void load_all_libraries() {
-	import derelict.sdl2.sdl;
-	import derelict.opengl;
+	import derelict.sdl2.sdl: DerelictSDL2;
+	import derelict.opengl: DerelictGL3;
 	import scripting.ecl_lib_interface: DerelictECLLoader;
+	import derelict.assimp3.assimp: DerelictASSIMP3;
 
 	set_lib_path();
 
@@ -283,6 +284,12 @@ void load_all_libraries() {
 		new DerelictECLLoader().load();
 	} catch(Throwable t) {
 		fatal("Error loading ECL.  '%s'", t.msg);
+	}
+
+	try {
+		DerelictASSIMP3.load();
+	} catch (Throwable t) {
+		fatal("Error loading ASSIMP 3.  '%s'", t.msg);
 	}
 
 	are_libraries_loaded = true;
