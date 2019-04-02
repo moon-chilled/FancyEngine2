@@ -9,9 +9,18 @@ elif host_machine.system() == 'linux'
   sys = 'linux'
 endif
 
+d_versions = []
+
+if get_option('buildtype') == 'debugoptimized'
+  d_versions += '_Build_type_is_dev'
+elif get_option('buildtype') == 'release'
+  d_versions += '_Build_type_is_release'
+endif
+
+
 subdir('deps')
 fancy_source = ['src/app.d', 'src/asset.d', 'src/cstdlib.d', 'src/logging.d', 'src/stdlib.d', 'src/stdmath.d', 'src/sound/gorilla.d', 'src/graphics/shading.d', 'src/graphics/tex.d', 'src/scripting/ecl.d', 'src/scripting/ecl_lib_interface.d', 'src/scripting/package.d', 'src/windowing/key.d', 'src/windowing/windows.d']
-include_dirs = include_directories('src', 'deps/derelictgl3/source', 'deps/derelictsdl2/source', 'deps/derelictutil/source', 'deps/gfm/math')
+include_dirs = include_directories('src', 'deps/derelictgl3/source', 'deps/derelictsdl2/source', 'deps/derelictutil/source', 'deps/gfm/math', 'deps/derelictassimp3/source')
 link_args = ['../lib/' + sys + '/gorilla.lib']
 
 
@@ -31,4 +40,4 @@ else
 endif
 
 
-executable('fancyengine2', fancy_source + dep_source, d_args: d_args, link_args: link_args, include_directories: include_dirs)
+executable('fancyengine2', fancy_source + dep_source, d_args: d_args, link_args: link_args, include_directories: include_dirs, d_module_versions: d_versions)

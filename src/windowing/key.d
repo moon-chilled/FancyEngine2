@@ -1,5 +1,4 @@
 module windowing.key;
-import stdlib;
 
 struct Event {
 	Evtype type;
@@ -300,11 +299,11 @@ shared static this() {
 }
 
 pragma(inline, true) string tostr(Key key) {
-	return key_to_str[key];
+	return key_to_string[key];
 }
 
-Key tokey(string str) {
-	Key *ret = str in dict;
+pragma(inline, true) Key tokey(string str) {
+	Key *ret = str in string_to_key;
 
 	return (ret !is null) ? *ret : Key.unknown;
 }

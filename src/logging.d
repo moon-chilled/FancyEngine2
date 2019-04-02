@@ -11,7 +11,7 @@ enum LogLevel {
 }
 
 shared static this() {
-	version (release) {
+	static if (build_type == BuildType.Release) {
 		import std.datetime.systime: Clock;
 		set_logger_targets([File("fancy_log_" ~ Clock.currTime.toISOString ~ ".txt", "w")]);
 	} else {

@@ -9,6 +9,21 @@ import std.conv: to, tostr = text, towstr = wtext, todstr = dtext;
 import std.array: split;
 import std.algorithm.comparison: min, max, clamp;
 
+enum BuildType {
+	Dev,
+	Release,
+}
+version (_Build_type_is_dev) {
+	enum build_type = BuildType.Dev;
+	pragma(msg, "making a dev build");
+} else version (_Build_type_is_release) {
+	enum build_type = BuildType.Release;
+	pragma(msg, "making a release build");
+} else {
+	static assert(0, "must select a build type -- either dev or release");
+}
+
+
 
 // !IMPORTANT!
 // size is NOT dependent on T.sizeof

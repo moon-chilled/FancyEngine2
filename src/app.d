@@ -326,7 +326,7 @@ void set_lib_path() {
 	set_env(plat_libpath_name, plat_lib_path);
 }
 
-version (release) { version (Windows) {
+static if (build_type == BuildType.Release) { version (Windows) {
 	import core.runtime;
 	import core.sys.windows.windows;
 	import std.conv: text;
