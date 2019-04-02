@@ -288,24 +288,23 @@ enum Key {
 	mousewheelright,
 }
 
-string tostr(Key key) {
-	string[Key] dict;
-
+private __gshared string[Key] key_to_string;
+private __gshared Key[string] string_to_key;
+shared static this() {
 	static foreach (asstr; [__traits(allMembers, Key)]) {
-		mixin("dict[Key." ~ asstr ~ "] = \"" ~ asstr ~ "\";");
+		mixin("key_to_string[Key." ~ asstr ~ "] = \"" ~ asstr ~ "\";");
 	}
+	static foreach (asstr; [__traits(allMembers, Key)]) {
+		mixin("string_to_key[\"" ~ asstr ~ "\"] = Key." ~ asstr ~ ";");
+	}
+}
 
-	return dict[key];
+pragma(inline, true) string tostr(Key key) {
+	return key_to_str[key];
 }
 
 Key tokey(string str) {
-	Key[string] dict;
+	Key *ret = str in dict;
 
-	static foreach (asstr; [__traits(allMembers, Key)]) {
-		mixin("dict[\"" ~ asstr ~ "\"] = Key." ~ asstr ~ ";");
-	}
-
-	Key *ret;
-
-	return ((ret = (str in dict)) !is null) ? *ret : Key.unknown;
+	return (ret !is null) ? *ret : Key.unknown;
 }
