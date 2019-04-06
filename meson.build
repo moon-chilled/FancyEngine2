@@ -12,9 +12,12 @@ endif
 d_versions = []
 fancy_source = []
 
+subdir('deps')
+
 if get_option('graphics_backend') == 'opengl'
   d_versions += '_Gfx_is_opengl'
-  fancy_source += ['src/graphics/tex_gl.d', 'src/graphics/shading_gl.d']
+  fancy_source += ['src/graphics/tex_gl.d', 'src/graphics/shading_gl.d', 'src/windowing/windows_gl.d']
+  fancy_source += gl_source
 elif get_option('graphics_backend') == 'd3d11'
   d_versions += '_Gfx_is_d3d11'
   fancy_source += ['src/graphics/tex_d3d11.d', 'src/graphics/shading_d3d11.d']
@@ -27,7 +30,6 @@ elif get_option('buildtype') == 'release'
 endif
 
 
-subdir('deps')
 fancy_source += ['src/app.d', 'src/asset.d', 'src/cstdlib.d', 'src/logging.d', 'src/stdlib.d', 'src/stdmath.d', 'src/sound/gorilla.d', 'src/graphics/shading.d', 'src/graphics/tex.d', 'src/scripting/ecl.d', 'src/scripting/ecl_lib_interface.d', 'src/scripting/package.d', 'src/windowing/key.d', 'src/windowing/windows.d']
 include_dirs = include_directories('src', 'deps/derelictgl3/source', 'deps/derelictsdl2/source', 'deps/derelictutil/source', 'deps/gfm/math', 'deps/derelictassimp3/source')
 link_args = ['../lib/' + sys + '/gorilla.lib']

@@ -15,10 +15,8 @@ enum BuildType {
 }
 version (_Build_type_is_dev) {
 	enum build_type = BuildType.Dev;
-	pragma(msg, "making a dev build");
 } else version (_Build_type_is_release) {
 	enum build_type = BuildType.Release;
-	pragma(msg, "making a release build");
 } else {
 	static assert(0, "must select a build type -- either dev or release");
 }
@@ -29,10 +27,8 @@ enum GfxBackend {
 }
 version (_Gfx_is_d3d11) {
 	enum gfx_backend = GfxBackend.Direct3D11;
-	pragma(msg, "Building for Direct3D 11");
 } else version (_Gfx_is_opengl) {
 	enum gfx_backend = GfxBackend.OpenGL;
-	pragma(msg, "Building for OpenGL");
 } else {
 	static assert(0, "Must select graphics backend");
 }

@@ -15,8 +15,6 @@ import scripting.ecl;
 
 import sound.gorilla;
 
-import derelict.opengl;
-
 enum width = 1280, height = 720;
 enum aspect_ratio = cast(double)width/cast(double)height;
 enum fov = 90.0;
@@ -241,8 +239,7 @@ mainloop:
 		////  RENDERING    ////////////////
 		///               /////////////////
 		//               /
-		glClearColor(r, g, b, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		clear(gfx, r, g, b);
 
 
 		prog.upload_vertices(vertices);
@@ -263,17 +260,20 @@ mainloop:
 
 void load_all_libraries() {
 	import derelict.sdl2.sdl: DerelictSDL2;
-	import derelict.opengl: DerelictGL3;
 	import scripting.ecl_lib_interface: DerelictECLLoader;
 	import derelict.assimp3.assimp: DerelictASSIMP3;
 
 	set_lib_path();
 
-	try {
-		DerelictGL3.load();
-	} catch(Throwable t) {
-		fatal("Error loading OpenGL (mark I).  '%s'", t.msg);
+	static if (gfx_backend == GfxBackend.OpenGL) {
+		import derelict.opengl: DerelictGL3;
+		try {
+			DerelictGL3.load();
+		} catch(Throwable t) {
+			fatal("Error loading OpenGL (mark I).  '%s'", t.msg);
+		}
 	}
+
 	try {
 		DerelictSDL2.load();
 	} catch(Throwable t) {

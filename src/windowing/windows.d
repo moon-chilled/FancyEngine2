@@ -2,23 +2,17 @@ module windowing.windows;
 import stdlib;
 import cstdlib;
 
-import derelict.sdl2.sdl;
-import derelict.opengl;
-
 import windowing.key;
-
-GLint max_samples() {
-	SDL_Window *win = SDL_CreateWindow(":)".cstr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1, 1, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
-	SDL_GL_CreateContext(win);
-	GLint ret;
-	glGetIntegerv(GL_MAX_SAMPLES, &ret);
-	SDL_DestroyWindow(win);
-	return ret;
+static if (gfx_backend == GfxBackend.Direct3D11) {
+	import windowing.windows_d3d11;
+} else static if (gfx_backend == GfxBackend.OpenGL) {
+	import windowing.windows_gl;
 }
 
+import derelict.sdl2.sdl;
 
 class GraphicsState {
-	SDL_GLContext gl_context;
+	GfxContext gfx_context;
 
 	SDL_Window *window; // maybe I should allow for multiple windows.  But meh
 
@@ -32,72 +26,28 @@ class GraphicsState {
 		if (SDL_Init(SDL_INIT_VIDEO|SDL_INIT_EVENTS) < 0) sdlerror;
 
 		if (window.aa_samples > 1) {
-			GLint max_samples = max_samples();
-			if (window.aa_samples > max_samples) {
-				warning("was asked for %s samples, but only supported %s", window.aa_samples, max_samples);
-				window.aa_samples = max_samples;
-			}
-			if (SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1) < 0) {
-				error("unable to turn on aa; SDL says '%s'", SDL_GetError().dstr);
-				SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-			}
-
-			if (SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, window.aa_samples) < 0) {
-				error("unable to set aa level to %s; SDL says '%s'", window.aa_samples, SDL_GetError().dstr);
-				SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-			}
-
-			glEnable(GL_MULTISAMPLE);
+			setup_aa(window.aa_samples);
 		}
 
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+		pre_window_setup();
 
-		SDL_WindowFlags win_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+		SDL_WindowFlags win_flags = SDL_WINDOW_SHOWN;
 		if (!window.borders) win_flags |= SDL_WINDOW_BORDERLESS;
 		if (window.fullscreen == Fullscreenstate.Fullscreen) win_flags |= SDL_WINDOW_FULLSCREEN;
 		if (window.fullscreen == Fullscreenstate.Desktop) win_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+		win_flags |= auxiliary_sdl_window_flags;
 
 		// 0, 0: window position
 		this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window.win_width, window.win_height, win_flags);
 		if (!this.window) sdlerror;
 
-		this.gl_context = SDL_GL_CreateContext(this.window);
-		if (this.gl_context is null) {
-			fatal("Error creating OpenGL context");
-		}
+		gfx_context = setup_context(this.window);
 
-		try {
-			DerelictGL3.reload();
-		} catch(Throwable) {
-			fatal("Error loading OpenGL (mark II)");
-		}
+		post_window_setup(this.window);
 
-		if (window.vsync) {
-			if (SDL_GL_SetSwapInterval(1) == -1) {
-				warning("Unable to enable vsync.  SDL says: %s", SDL_GetError().dstr);
-			}
-		} else {
-			if (SDL_GL_SetSwapInterval(0) == -1) {
-				warning("Unable to turn off vsync.  SDL says: %s", SDL_GetError().dstr);
-			}
-		}
-		//TODO: add adaptive sync support (SDL_GL_SetSwapInterval(-1)
+		set_vsync(window.vsync);
 
-		if (window.wireframe) {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		} else {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
-
-		glEnable(GL_DEPTH_TEST);
-
-
-		glViewport(0, 0, window.render_width, window.render_height); // I'm not sure if this does what I want it to
-
-
-		info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
+		set_wireframe(window.wireframe);
 	}
 
 	void grab_mouse() {
@@ -106,6 +56,7 @@ class GraphicsState {
 	void ungrab_mouse() {
 		if (SDL_SetRelativeMouseMode(SDL_FALSE) < 0) error("unable to ungrab mouse.  SDL says '%s'", SDL_GetError().dstr);
 	}
+	
 	~this() {
 		SDL_DestroyWindow(window);
 		SDL_Quit();
@@ -130,9 +81,13 @@ private void sdlerror() {
 	fatal("SDL Error: %s", SDL_GetError().dstr);
 }
 
-void blit(GraphicsState gs) {
-	SDL_GL_SwapWindow(gs.window);
+pragma(inline, true) void blit(GraphicsState gs) {
+	gfx_blit(gs.gfx_context, gs.window);
 }
+pragma(inline, true) void clear(GraphicsState gs, float r, float g, float b) {
+	gfx_clear(gs.gfx_context, r, g, b);
+}
+
 
 Event[] poll_events() {
 	Event[] ret;
