@@ -80,6 +80,10 @@ void set_vsync(bool enabled) {
 	//TODO: add adaptive sync support (SDL_GL_SetSwapInterval(-1)
 }
 
+// stub because direct3d needs it
+void set_fullscreen(bool enabled) {
+}
+
 void set_wireframe(bool enabled) {
 	if (enabled) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

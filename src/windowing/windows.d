@@ -3,7 +3,7 @@ import stdlib;
 import cstdlib;
 
 import windowing.key;
-static if (gfx_backend == GfxBackend.Direct3D11) {
+static if (gfx_backend == GfxBackend.D3D11) {
 	import windowing.windows_d3d11;
 } else static if (gfx_backend == GfxBackend.OpenGL) {
 	import windowing.windows_gl;
@@ -56,7 +56,7 @@ class GraphicsState {
 	void ungrab_mouse() {
 		if (SDL_SetRelativeMouseMode(SDL_FALSE) < 0) error("unable to ungrab mouse.  SDL says '%s'", SDL_GetError().dstr);
 	}
-	
+
 	~this() {
 		SDL_DestroyWindow(window);
 		SDL_Quit();

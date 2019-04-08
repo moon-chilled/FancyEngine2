@@ -22,11 +22,11 @@ version (_Build_type_is_dev) {
 }
 
 enum GfxBackend {
-	Direct3D11,
+	D3D11,
 	OpenGL,
 }
 version (_Gfx_is_d3d11) {
-	enum gfx_backend = GfxBackend.Direct3D11;
+	enum gfx_backend = GfxBackend.D3D11;
 } else version (_Gfx_is_opengl) {
 	enum gfx_backend = GfxBackend.OpenGL;
 } else {

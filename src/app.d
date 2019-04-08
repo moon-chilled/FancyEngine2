@@ -5,8 +5,10 @@ import stdmath;
 import windowing.windows;
 import windowing.key;
 
+/*
 import graphics.shading;
 import graphics.tex;
+*/
 
 import asset;
 
@@ -88,11 +90,16 @@ int real_main(string[] args) {
 	log("%s", faux.eval("(traa \"hi┖\" \"therro\")"));
 	*/
 
-	scope GraphicsState gfx = new GraphicsState(WindowSpec("test", width, height, width, height, Fullscreenstate.None, true, true, false, 4));
+	string title = "FancyEngine2 test";
+	static if (gfx_backend == GfxBackend.OpenGL) {
+		title ~= " ? OpenGL";
+	} else static if (gfx_backend == GfxBackend.D3D11) {
+		title ~= " ? Direct3D11";
+	}
+	scope GraphicsState gfx = new GraphicsState(WindowSpec(title, width, height, width, height, Fullscreenstate.None, true, true, false, 4));
 	scope GorillaAudio audio = new GorillaAudio();
 
 	gfx.grab_mouse();
-
 
 
 	float r = 0, g = 0, b = 0;
@@ -172,6 +179,7 @@ int real_main(string[] args) {
 	ViewState state;
 
 
+	/+
 
 	Program prog = Program(q{#version 330 core
 layout (location = 0) in vec3 in_pos;
@@ -206,6 +214,7 @@ void main() {
 	prog.upload_texture(1, new Texture("dickbutt.jpg"));
 	prog.set_int("wall_tex", 0);
 	prog.set_int("face_tex", 1);
+	+/
 
 mainloop:
 	while (!done) {
@@ -242,11 +251,13 @@ mainloop:
 		clear(gfx, r, g, b);
 
 
+		/+
 		prog.upload_vertices(vertices);
 		prog.set_mat4("projection", state.projection);
 		prog.set_mat4("model", state.model);
 		prog.set_mat4("view", state.view);
 		prog.blit();
+		+/
 		gfx.blit();
 
 
@@ -292,7 +303,7 @@ void load_all_libraries() {
 		fatal("Error loading ASSIMP 3.  '%s'", t.msg);
 	}
 
-	are_libraries_loaded = true;
+	synchronized are_libraries_loaded = true;
 }
 
 // really, it returns errno_t, but that's the same as int
