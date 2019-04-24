@@ -3,9 +3,11 @@ import stdlib;
 import stdmath;
 import cstdlib;
 
+import windowing.windows_gl;
+import graphics.tex;
+
 import derelict.opengl;
 
-import graphics.tex;
 
 enum ShaderType: GLuint {
 	Vertex = GL_VERTEX_SHADER,
@@ -19,18 +21,18 @@ struct Program {
 	private GLuint program, VAO, VBO;//, EBO;
 	private GLuint[16] textures;
 
-	void upload_vertices(float[180] vertices) {
+	void upload_vertices(float[21] vertices) {
 		glBufferData(GL_ARRAY_BUFFER, vertices.sizeof, vertices.ptr, GL_DYNAMIC_DRAW); // options: GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * float.sizeof, cast(void*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * float.sizeof, cast(void*)0);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * float.sizeof, cast(void*)(3 * float.sizeof));
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * float.sizeof, cast(void*)(3 * float.sizeof));
 		glEnableVertexAttribArray(1);
 	}
 	void upload_texture(size_t pos, Texture tex) {
 		textures[pos] = tex.tex_id;
 	}
 
-	this(string vertex_src, string fragment_src) {
+	this(string vertex_src, string fragment_src, GfxContext ctx) {
 		glGenVertexArrays(1, &VAO);
 		glBindVertexArray(VAO);
 
@@ -82,8 +84,6 @@ struct Program {
 			glGetProgramInfoLog(program, error_len, null, error.ptr);
 			fatal("error linking program!  OpenGL says '%s'", error);
 		}
-
-		glUseProgram(program);
 	}
 
 	void set_int(string id, GLint value) {

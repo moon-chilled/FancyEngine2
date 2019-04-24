@@ -5,8 +5,8 @@ import stdmath;
 import windowing.windows;
 import windowing.key;
 
-/*
 import graphics.shading;
+/*
 import graphics.tex;
 */
 
@@ -90,11 +90,11 @@ int real_main(string[] args) {
 	log("%s", faux.eval("(traa \"hi┖\" \"therro\")"));
 	*/
 
-	string title = "FancyEngine2 test";
+	string title = "FE2";
 	static if (gfx_backend == GfxBackend.OpenGL) {
-		title ~= " ? OpenGL";
+		title ~= "—OpenGL";
 	} else static if (gfx_backend == GfxBackend.D3D11) {
-		title ~= " ? Direct3D11";
+		title ~= "—Direct3D11";
 	}
 	scope GraphicsState gfx = new GraphicsState(WindowSpec(title, width, height, width, height, Fullscreenstate.None, true, true, false, 4));
 	scope GorillaAudio audio = new GorillaAudio();
@@ -179,7 +179,43 @@ int real_main(string[] args) {
 	ViewState state;
 
 
-	/+
+	static if (gfx_backend == GfxBackend.D3D11) {
+		Program prog = Program(q{
+				struct Fmt {
+					float4 position: SV_POSITION;
+					float4 color: COLOR;
+				};
+				Fmt main(float3 pos: POSITION, float4 color: COLOR) {
+					Fmt output;
+					output.position = float4(pos, 1.0);
+					output.color = color;
+					return output;
+				}}, q{
+				float4 main(float4 position: SV_POSITION, float4 color: COLOR) : SV_TARGET {
+					return color;
+				}}, gfx.gfx_context);
+	} else static if (gfx_backend == GfxBackend.OpenGL) {
+		Program prog = Program(q{layout (location = 0) in vec3 in_pos;
+			layout (location = 1) in vec4 in_clr;
+			out vec4 colour;
+			void main() {
+				gl_Position = vec4(in_pos, 1.0);
+				colour = in_clr;
+			}
+			}, q{#version 330 core
+			out vec4 FragColor;
+			in vec4 colour;
+			void main() {
+				FragColor = colour;
+			}}, gfx.gfx_context);
+	}
+	float[21] verts = [
+		-.5, -.5, 0, 1, 0, 0, 1,
+		.5, -.5, 0, 0, 1, 0, 1,
+		0, .5, 0, 0, 0, 1, 1];
+	prog.upload_vertices(verts);
+/+
+
 
 	Program prog = Program(q{#version 330 core
 layout (location = 0) in vec3 in_pos;
@@ -250,14 +286,12 @@ mainloop:
 		//               /
 		clear(gfx, r, g, b);
 
-
 		/+
-		prog.upload_vertices(vertices);
 		prog.set_mat4("projection", state.projection);
 		prog.set_mat4("model", state.model);
 		prog.set_mat4("view", state.view);
-		prog.blit();
 		+/
+		prog.blit();
 		gfx.blit();
 
 

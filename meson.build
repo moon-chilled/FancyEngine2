@@ -1,5 +1,6 @@
 project('FancyEngine2', ['c', 'd'])
-d_args = ['-J../src']
+d_args = ['-J../src'] # -enable-color #for ldc
+# -color=on #for dmd
 
 if host_machine.system() == 'windows'
   sys = 'win'
@@ -20,7 +21,7 @@ if get_option('graphics_backend') == 'opengl'
   fancy_source += gl_source
 elif get_option('graphics_backend') == 'd3d11'
   d_versions += '_Gfx_is_d3d11'
-  #fancy_source += ['src/graphics/tex_d3d11.d', 'src/graphics/shading_d3d11.d', 'src/windowing/windows_d3d11.d']
+  fancy_source += ['src/graphics/tex_d3d11.d', 'src/graphics/shading_d3d11.d', 'src/windowing/windows_d3d11.d']
   fancy_source += ['src/windowing/windows_d3d11.d']
   fancy_source += dx_source
 endif
@@ -49,7 +50,7 @@ if sys == 'win'
   endforeach
   link_args += ['-L=/nodefaultlib:msvcrtd.lib', '-L=/nodefaultlib:msvcrt.lib', '-L=/nodefaultlib:vcruntime.lib']
   if get_option('graphics_backend') == 'd3d11'
-    link_args += '-L=d3d11.lib'
+    link_args += ['-L=d3d11.lib', '-L=D3DCompiler.lib']
   endif
 else
   link_args += '-L-Llib/' + sys + '/'

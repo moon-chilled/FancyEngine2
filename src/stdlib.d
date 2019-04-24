@@ -40,9 +40,10 @@ version (_Gfx_is_d3d11) {
 // this is to avoid confusion
 // the only purpose of this function is to make it so you don't have to cast your pointers to void*
 pragma(inline, true) void memcpy(T, U)(T *dest, const U *src, size_t size) {
-	static if (!is(T == U)) {
+	// print a message if T and U are different sizes, unless one is void
+	static if ((T.sizeof != U.sizeof) && !(is(T == void)) && !(is(U == void))) {
 		import std.string: format;
-		pragma(msg, format("Unequal types %s and %s being catenated", T.stringof, U.stringof));
+		pragma(msg, format("Unequal types %s (%s bytes) and %s (%s bytes) being catenated", T.stringof, T.sizeof, U.stringof, U.sizeof));
 	}
 
 	static import core.stdc.string;

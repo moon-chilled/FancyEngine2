@@ -49,7 +49,10 @@ GfxContext setup_context(SDL_Window *window) {
 
 	uint flags;
 	debug flags = D3D11_CREATE_DEVICE_DEBUG;
-	D3D11CreateDeviceAndSwapChain(null, D3D_DRIVER_TYPE_HARDWARE, null, flags, [D3D_FEATURE_LEVEL_11_0].ptr, 1, D3D11_SDK_VERSION, &desc, &ret.swapchain, &ret.device, null, &ret.device_context);
+	auto res = D3D11CreateDeviceAndSwapChain(null, D3D_DRIVER_TYPE_HARDWARE, null, flags, [D3D_FEATURE_LEVEL_11_0].ptr, 1, D3D11_SDK_VERSION, &desc, &ret.swapchain, &ret.device, null, &ret.device_context);
+	if (FAILED(res) || !(ret.swapchain && ret.device && ret.device_context)) {
+		fatal("failed to initialize Direct3D 11.  Result of '%s'", res);
+	}
 
 	ID3D11Texture2D pBackBuffer; // the one time I agree to stoop to the level of the hungarians
 	ret.swapchain.GetBuffer(0, &IID_ID3D11Texture2D, cast(void**)&pBackBuffer);
@@ -88,4 +91,11 @@ pragma(inline, true) void gfx_blit(GfxContext ctx, SDL_Window *win) {
 
 pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {
 	ctx.device_context.ClearRenderTargetView(ctx.back_buffer, [r, g, b, 1.0f].ptr);
+}
+
+void gfx_end(GfxContext ctx) {
+	ctx.swapchain.Release();
+	ctx.device.Release();
+	ctx.device_context.Release();
+	ctx.back_buffer.Release();
 }

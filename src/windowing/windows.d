@@ -36,6 +36,7 @@ class GraphicsState {
 		if (window.fullscreen == Fullscreenstate.Fullscreen) win_flags |= SDL_WINDOW_FULLSCREEN;
 		if (window.fullscreen == Fullscreenstate.Desktop) win_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 		win_flags |= auxiliary_sdl_window_flags;
+		set_fullscreen(window.fullscreen == Fullscreenstate.Fullscreen);
 
 		// 0, 0: window position
 		this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window.win_width, window.win_height, win_flags);
@@ -58,6 +59,7 @@ class GraphicsState {
 	}
 
 	~this() {
+		gfx_end(gfx_context);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
 	}
