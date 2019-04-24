@@ -210,9 +210,9 @@ int real_main(string[] args) {
 			}}, gfx.gfx_context);
 	}
 	float[21] verts = [
-		-.5, -.5, 0, 1, 0, 0, 1,
+		0, .5, 0, 0, 0, 1, 1,
 		.5, -.5, 0, 0, 1, 0, 1,
-		0, .5, 0, 0, 0, 1, 1];
+		-.5, -.5, 0, 1, 0, 0, 1];
 	prog.upload_vertices(verts);
 /+
 
