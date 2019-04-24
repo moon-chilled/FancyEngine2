@@ -1,9 +1,4 @@
-/fancyengine2
-fancyengine2-test-*
 *.exe
-*.o
-*.obj
-*.lst
 build
 
 # vim turds
