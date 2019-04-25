@@ -2,18 +2,19 @@ module graphics.tex_gl;
 import stdlib;
 import cstdlib;
 
+import asset;
+import windowing.windows_gl;
+
 import derelict.opengl;
 
-import asset;
-
-extern (C) ubyte *stbi_load(const(char) *filename, int *x, int *y, int *channels, int desired_channels);
-extern (C) void stbi_image_free(void *retval_from_stbi_load);
+private extern (C) ubyte *stbi_load(const(char) *filename, int *x, int *y, int *channels, int desired_channels);
+private extern (C) void stbi_image_free(void *retval_from_stbi_load);
 
 class Texture: Asset!(AssetType.Texture) {
 	uint w, h;
 	GLuint tex_id;
 
-	this(string fpath) {
+	this(string fpath, GfxContext) {
 		import std.file: exists;
 		if (!fpath.exists) fatal("tried to read nonexistent texture '%s'", fpath);
 		int clr_depth;
@@ -49,7 +50,7 @@ class Texture: Asset!(AssetType.Texture) {
 	}
 }
 
-extern (C) void stbi_set_flip_vertically_on_load(int);
+private extern (C) void stbi_set_flip_vertically_on_load(int);
 shared static this() {
 	stbi_set_flip_vertically_on_load(true);
 }

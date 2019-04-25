@@ -19,17 +19,18 @@ struct Program {
 	@disable this(this);
 
 	private GLuint program, VAO, VBO;//, EBO;
-	private GLuint[16] textures;
 
-	void upload_vertices(float[21] vertices) {
+	void upload_vertices(float[15] vertices) {
 		glBufferData(GL_ARRAY_BUFFER, vertices.sizeof, vertices.ptr, GL_DYNAMIC_DRAW); // options: GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * float.sizeof, cast(void*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * float.sizeof, cast(void*)0);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * float.sizeof, cast(void*)(3 * float.sizeof));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * float.sizeof, cast(void*)(3 * float.sizeof));
 		glEnableVertexAttribArray(1);
 	}
-	void upload_texture(size_t pos, Texture tex) {
-		textures[pos] = tex.tex_id;
+	void upload_texture(uint pos, Texture tex) {
+		assert (pos < 16);
+		glActiveTexture(GL_TEXTURE0 + pos);
+		glBindTexture(GL_TEXTURE_2D, tex.tex_id);
 	}
 
 	this(string vertex_src, string fragment_src, GfxContext ctx) {
@@ -95,10 +96,7 @@ struct Program {
 
 	void blit() {
 		glUseProgram(program);
-		foreach (i; 0 .. 16) {
-			glActiveTexture(GL_TEXTURE0 + i);
-			glBindTexture(GL_TEXTURE_2D, textures[i]);
-		}
+
 		glBindVertexArray(VAO);
 		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);

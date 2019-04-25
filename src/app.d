@@ -6,9 +6,7 @@ import windowing.windows;
 import windowing.key;
 
 import graphics.shading;
-/*
 import graphics.tex;
-*/
 
 import asset;
 
@@ -90,11 +88,10 @@ int real_main(string[] args) {
 	log("%s", faux.eval("(traa \"hi┖\" \"therro\")"));
 	*/
 
-	string title = "FE2";
 	static if (gfx_backend == GfxBackend.OpenGL) {
-		title ~= "—OpenGL";
+		string title = "FE2—OpenGL";
 	} else static if (gfx_backend == GfxBackend.D3D11) {
-		title ~= "—Direct3D11";
+		string title = "FE2—Direct3D11";
 	}
 	scope GraphicsState gfx = new GraphicsState(WindowSpec(title, width, height, width, height, Fullscreenstate.None, true, true, false, 4));
 	scope GorillaAudio audio = new GorillaAudio();
@@ -183,36 +180,44 @@ int real_main(string[] args) {
 		Program prog = Program(q{
 				struct Fmt {
 					float4 position: SV_POSITION;
-					float4 color: COLOR;
+					float2 tex_coord: TEXCOORD0;
 				};
-				Fmt main(float3 pos: POSITION, float4 color: COLOR) {
+				Fmt main(float3 pos: POSITION, float2 tex_coord: TEXCOORD0) {
 					Fmt output;
 					output.position = float4(pos, 1.0);
-					output.color = color;
+					output.tex_coord = tex_coord;
 					return output;
 				}}, q{
-				float4 main(float4 position: SV_POSITION, float4 color: COLOR) : SV_TARGET {
-					return color;
+				Texture2D shaderTexture;
+				SamplerState sample_type;
+				float4 main(float4 position: SV_POSITION, float2 tex_coord: TEXCOORD0): SV_TARGET {
+					float4 ret;
+					ret = shaderTexture.Sample(sample_type, tex_coord);
+					return ret;
 				}}, gfx.gfx_context);
 	} else static if (gfx_backend == GfxBackend.OpenGL) {
 		Program prog = Program(q{layout (location = 0) in vec3 in_pos;
-			layout (location = 1) in vec4 in_clr;
+			layout (location = 0) in vec4 in_clr;
+			layout (location = 1) in vec2 in_tex_coord;
 			out vec4 colour;
+			out vec2 tex_coord;
 			void main() {
+				tex_coord = in_tex_coord;
 				gl_Position = vec4(in_pos, 1.0);
 				colour = in_clr;
 			}
 			}, q{#version 330 core
+			uniform sampler2D face_tex;
 			out vec4 FragColor;
-			in vec4 colour;
+			in vec2 tex_coord;
 			void main() {
-				FragColor = colour;
+				FragColor = texture(face_tex, tex_coord);
 			}}, gfx.gfx_context);
 	}
-	float[21] verts = [
-		0, .5, 0, 0, 0, 1, 1,
-		.5, -.5, 0, 0, 1, 0, 1,
-		-.5, -.5, 0, 1, 0, 0, 1];
+	float[15] verts = [
+		0, .5, 0, 0, 0,
+		.5, -.5, 0, 0, 1,
+		-.5, -.5, 0, 1, 0];
 	prog.upload_vertices(verts);
 /+
 
@@ -251,6 +256,8 @@ void main() {
 	prog.set_int("wall_tex", 0);
 	prog.set_int("face_tex", 1);
 	+/
+	prog.upload_texture(0, new Texture("dickbutt.png", gfx.gfx_context));
+	prog.set_int("face_tex", 0);
 
 mainloop:
 	while (!done) {

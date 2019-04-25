@@ -4,6 +4,7 @@ import stdmath;
 import cstdlib;
 
 import windowing.windows_d3d11;
+import graphics.tex_d3d11;
 
 import directx.d3d11;
 import directx.d3dcompiler;
@@ -28,7 +29,7 @@ struct Program {
 
 	ID3D11InputLayout layout;
 
-	void upload_vertices(float[21] vertices) {
+	void upload_vertices(float[15] vertices) {
 		D3D11_MAPPED_SUBRESOURCE hrsrc;
 		device_context.Map(VBO, 0, D3D11_MAP_WRITE_DISCARD, 0, &hrsrc);
 		memcpy(hrsrc.pData, vertices.ptr, vertices.sizeof);
@@ -54,7 +55,7 @@ struct Program {
 		device_context.PSSetShader(fs, null, 0);
 		D3D11_INPUT_ELEMENT_DESC[] layout_src = [
 			D3D11_INPUT_ELEMENT_DESC("POSITION".cstr, 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0),
-			D3D11_INPUT_ELEMENT_DESC("COLOR".cstr, 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 3 * float.sizeof, D3D11_INPUT_PER_VERTEX_DATA, 0),
+			D3D11_INPUT_ELEMENT_DESC("TEXCOORD0".cstr, 0, DXGI_FORMAT_R32G32_FLOAT, 0, 3 * float.sizeof, D3D11_INPUT_PER_VERTEX_DATA, 0),
 			];
 		device.CreateInputLayout(layout_src.ptr, 2, vss.GetBufferPointer, vss.GetBufferSize, &layout);
 		device_context.IASetInputLayout(layout);
@@ -62,18 +63,22 @@ struct Program {
 		// ah, nevermind
 		D3D11_BUFFER_DESC buf_des;
 		buf_des.Usage = D3D11_USAGE_DYNAMIC;
-		buf_des.ByteWidth = float.sizeof * 7 * 3;
+		buf_des.ByteWidth = float.sizeof * 5 * 3;
 		buf_des.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		buf_des.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 		device.CreateBuffer(&buf_des, null, &VBO);
 	}
 
 	void blit() {
-		uint stride = 7 * float.sizeof;
+		uint stride = 5 * float.sizeof;
 		uint offset = 0;
 		device_context.IASetVertexBuffers(0, 1, &VBO, &stride, &offset);
 		device_context.IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		device_context.Draw(3, 0);
+	}
+
+	void upload_texture(size_t pos, Texture tex) {
+
 	}
 
 	~this() {
