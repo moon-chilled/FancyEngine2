@@ -216,8 +216,8 @@ int real_main(string[] args) {
 	}
 	float[15] verts = [
 		0, .5, 0, 0, 0,
-		.5, -.5, 0, 0, 1,
-		-.5, -.5, 0, 1, 0];
+		-.5, -.5, 0, 1, 0,
+		.5, -.5, 0, 0, 1];
 	prog.upload_vertices(verts);
 /+
 

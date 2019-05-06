@@ -77,8 +77,14 @@ struct Program {
 		device_context.Draw(3, 0);
 	}
 
-	void upload_texture(size_t pos, Texture tex) {
+	void upload_texture(uint pos, Texture tex) {
+		assert (pos < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
+		ID3D11ShaderResourceView view;
+		assert (!FAILED(device.CreateShaderResourceView(tex.tex_id, null, &view)));
+		synchronized device_context.PSSetShaderResources(pos, 1, &view);
+	}
 
+	void set_int(string name, uint val) {
 	}
 
 	~this() {
