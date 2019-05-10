@@ -5,6 +5,7 @@ import stdmath;
 import windowing.windows;
 import windowing.key;
 
+import graphics.model;
 import graphics.shading;
 import graphics.tex;
 
@@ -176,49 +177,31 @@ int real_main(string[] args) {
 	ViewState state;
 
 
-	static if (gfx_backend == GfxBackend.D3D11) {
-		Program prog = Program(q{
-				struct Fmt {
-					float4 position: SV_POSITION;
-					float2 tex_coord: TEXCOORD0;
-				};
-				Fmt main(float3 pos: POSITION, float2 tex_coord: TEXCOORD0) {
-					Fmt output;
-					output.position = float4(pos, 1.0);
-					output.tex_coord = tex_coord;
-					return output;
-				}}, q{
-				Texture2D shaderTexture;
-				SamplerState sample_type;
-				float4 main(float4 position: SV_POSITION, float2 tex_coord: TEXCOORD0): SV_TARGET {
-					float4 ret;
-					ret = shaderTexture.Sample(sample_type, tex_coord);
-					return ret;
-				}}, gfx.gfx_context);
-	} else static if (gfx_backend == GfxBackend.OpenGL) {
-		Program prog = Program(q{layout (location = 0) in vec3 in_pos;
-			layout (location = 0) in vec4 in_clr;
-			layout (location = 1) in vec2 in_tex_coord;
+static if (gfx_backend == GfxBackend.OpenGL) {
+		Program prog = Program(q{#version 330 core
+			layout (location = 0) in vec3 in_pos;
+			layout (location = 1) in vec3 in_clr;
 			out vec4 colour;
-			out vec2 tex_coord;
 			void main() {
-				tex_coord = in_tex_coord;
 				gl_Position = vec4(in_pos, 1.0);
-				colour = in_clr;
+				colour = vec4(in_clr, 1.0);
 			}
 			}, q{#version 330 core
-			uniform sampler2D face_tex;
 			out vec4 FragColor;
-			in vec2 tex_coord;
+			in vec4 colour;
 			void main() {
-				FragColor = texture(face_tex, tex_coord);
+				FragColor = colour;
 			}}, gfx.gfx_context);
 	}
-	float[15] verts = [
-		0, .5, 0, 0, 0,
-		-.5, -.5, 0, 1, 0,
-		.5, -.5, 0, 0, 1];
-	prog.upload_vertices(verts);
+	float[] verts = [
+		-.5, .5, 0, 1, 0, 0,
+		-.5, -.5, 0, 0, 1, 0,
+		.5, -.5, 0, 0, 0, 1,
+
+		-.5, .5, 0, 1, 1, 0,
+		.5, -.5, 0, 1, 0, 1,
+		.5, .5, 0, 0, 1, 1,];
+	Model model = Model(verts, [3, 3]);
 /+
 
 
@@ -256,7 +239,7 @@ void main() {
 	prog.set_int("wall_tex", 0);
 	prog.set_int("face_tex", 1);
 	+/
-	prog.upload_texture(0, new Texture("dickbutt.png", gfx.gfx_context));
+	upload_texture(0, new Texture("dickbutt.png", gfx.gfx_context));
 	prog.set_int("face_tex", 0);
 
 mainloop:
@@ -298,7 +281,7 @@ mainloop:
 		prog.set_mat4("model", state.model);
 		prog.set_mat4("view", state.view);
 		+/
-		prog.blit();
+		prog.blit(model);
 		gfx.blit();
 
 

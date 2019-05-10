@@ -8,6 +8,7 @@ import std.variant: Sum = Algebraic;
 import std.conv: to, tostr = text, towstr = wtext, todstr = dtext;
 import std.array: split;
 import std.algorithm.comparison: min, max, clamp;
+import std.algorithm.iteration: reduce = fold, sum;
 
 enum BuildType {
 	Dev,

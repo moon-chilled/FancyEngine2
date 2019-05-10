@@ -5,6 +5,7 @@ import cstdlib;
 
 import windowing.windows_gl;
 import graphics.tex;
+import graphics.model;
 
 import derelict.opengl;
 
@@ -13,59 +14,19 @@ enum ShaderType: GLuint {
 	Vertex = GL_VERTEX_SHADER,
 	Fragment = GL_FRAGMENT_SHADER,
 }
+void upload_texture(uint pos, Texture tex) {
+	assert (pos < 16);
+	glActiveTexture(GL_TEXTURE0 + pos);
+	glBindTexture(GL_TEXTURE_2D, tex.tex_id);
+} //TODO: move this to another file
 
 struct Program {
 	@disable this();
 	@disable this(this);
 
-	private GLuint program, VAO, VBO;//, EBO;
-
-	void upload_vertices(float[15] vertices) {
-		glBufferData(GL_ARRAY_BUFFER, vertices.sizeof, vertices.ptr, GL_DYNAMIC_DRAW); // options: GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * float.sizeof, cast(void*)0);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * float.sizeof, cast(void*)(3 * float.sizeof));
-		glEnableVertexAttribArray(1);
-	}
-	void upload_texture(uint pos, Texture tex) {
-		assert (pos < 16);
-		glActiveTexture(GL_TEXTURE0 + pos);
-		glBindTexture(GL_TEXTURE_2D, tex.tex_id);
-	}
+	private GLuint program;
 
 	this(string vertex_src, string fragment_src, GfxContext ctx) {
-		glGenVertexArrays(1, &VAO);
-		glBindVertexArray(VAO);
-
-		glGenBuffers(1, &VBO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-		/*
-		GLuint[] indices = [0, 1, 2, 0, 2, 3];
-		glGenBuffers(1, &EBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * indices[0].sizeof, indices.ptr, GL_DYNAMIC_DRAW);
-		*/
-
-		/*
-		upload_vertices([-0.5f, -0.5f, 0.0f,
-				0.5f, -0.5f, 0.0f,
-				0.5f,  0.5f, 0.0f,
-				-0.5f, 0.5f, 0.0]);
-				*/
-		/*
-
-                   3                            2
-
-
-
-
-
-
-		   0                            1
-		   */
-
-
 		GLuint vertex_shader = compile_shader(ShaderType.Vertex, vertex_src);
 		GLuint fragment_shader = compile_shader(ShaderType.Fragment, fragment_src);
 
@@ -94,22 +55,16 @@ struct Program {
 		glUniformMatrix4fv(glGetUniformLocation(program, id.cstr), 1, GL_TRUE, value.v.ptr);
 	}
 
-	void blit() {
+	void blit(const ref Model model) {
 		glUseProgram(program);
 
-		glBindVertexArray(VAO);
-		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null);
+		glBindVertexArray(model.VAO);
+		glDrawArrays(GL_TRIANGLES, 0, model.num_verts);
 		glBindVertexArray(0);
-		/*
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawArrays(GL_TRIANGLES, 1, 4);
-		*/
 	}
 
 	~this() {
-//		glDeleteProgram(program);
+		glDeleteProgram(program);
 	}
 }
 
@@ -127,7 +82,7 @@ private GLuint compile_shader(ShaderType type, string src) {
 		glGetShaderiv(ret, GL_INFO_LOG_LENGTH, &error_len);
 		scope char[] error = new char[error_len];
 		glGetShaderInfoLog(ret, error_len, null, error.ptr);
-		fatal("error compiling shader!  OpenGL says '%s'", error);
+		fatal("error compiling %s shader!  OpenGL says '%s'", type, error);
 	}
 
 	return ret;
