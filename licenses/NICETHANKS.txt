@@ -1,4 +1,4 @@
-Special thanks to:
+Thanks to:
 
 The SDL people
 for making SDL2
@@ -18,14 +18,20 @@ and OpenGL
 
 and
 the D gamedev community
-for an excellent math library
+for their wonderful math code
 called GFM
 
 and
 Final Form Games
 for making gorilla audio
-which is partly responsible for the beautiful sounds you are hearing.
+which is responsible for playing the beautiful sounds you are hearing
 
 and
 the ASSimp people
 for an excellent sense of humour
+and an easy way to handle models
+
+and
+Kripth
+for providing a simple way
+to load configuration files

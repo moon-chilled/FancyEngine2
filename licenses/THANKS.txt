@@ -6,5 +6,6 @@ This program may contain the following external libraries:
 * GFM, licensed under the unlicense, or public domain.  Source code available at https://github.com/d-gamedev-team/gfm
 * Gorilla audio, licensed under the MIT license, originally maintained by Final Form games.  Original source available at https://code.google.com/archive/p/gorilla-audio/, code for this versiona available at https://github.com/Elronnd/gorilla-audio.
 * assimp, licensed under the 3-clause BSD license.  Source code available at https://github.com/assimp/assimp.
+* toml for D, licensed under the MIT license.  Source code available at https://github.com/Kripth/toml
 
 Text for the above-mentioned licenses are available in the 'licensing' directory.
