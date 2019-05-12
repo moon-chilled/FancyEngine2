@@ -1,7 +1,7 @@
 public:
 import gfm.math.vector: vec2f, vec3f, vec4f, dot, cross, reflect, angle_between = angleBetween;
 import gfm.math.matrix: mat4f;
-import std.math: sin, cos, tan, PI;
+import std.math: sin, cos, tan, PI, sqrt;
 
 pragma(inline, true) float sin(int x) {
 	return sin(cast(float)x);

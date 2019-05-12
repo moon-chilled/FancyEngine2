@@ -208,7 +208,7 @@ static if (gfx_backend == GfxBackend.OpenGL) {
 
 	auto sw = StopWatch(AutoStart.yes);
 	float time_so_far = 0;
-	float fps = 1/physics_frame;
+	float avg_frame_time = physics_frame;
 mainloop:
 	while (!done) {
 		bool something_worth_framing;
@@ -216,13 +216,13 @@ mainloop:
 		float frame_time = sw.peek.total!"nsecs" / 1_000_000_000.0;
 		sw.reset;
 		time_so_far += frame_time;
-		fps = fps*0.9 + 0.1/frame_time;
+		avg_frame_time = avg_frame_time*0.9 + 0.1*frame_time;
 
 		if (time_so_far >= physics_frame) {
 			time_so_far -= physics_frame;
 			something_worth_framing = true;
 		}
-		if (something_worth_framing) gfx.set_title(format("%s %.f FPS ", title, fps));
+		if (something_worth_framing) gfx.set_title(format("%s %.f FPS", title, 1/avg_frame_time));
 
 		if (!paused) frames++;
 		///////////////////////////////////
