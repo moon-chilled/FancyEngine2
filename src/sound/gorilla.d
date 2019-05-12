@@ -119,7 +119,7 @@ class GorillaAudio {
 		gau_manager_update(mgr);
 	}
 
-	// TODO: maybe have multiple listeners, 1 for each speaker (depends on speaker config) (ask guy about this, maybe?)?
+	// TODO: maybe have multiple listeners, 1 for each speaker (depends on speaker config) (ask Guy about this, maybe?)?
 	// I sincerely apologize for the punctuation atrocity above
 	void set_listener_position(vec3f pos) {
 		listener = pos;

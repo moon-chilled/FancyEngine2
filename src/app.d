@@ -26,9 +26,9 @@ bool paused = true;
 bool grabbed;
 
 struct ViewState {
-	mat4f projection = mat4f.perspective(to_rad(fov/2), aspect_ratio, 100, 0.1);
+	mat4f projection = mat4f.perspective(to_rad(fov/2), aspect_ratio, 0.1, 100);
 	mat4f view = mat4f.identity.translation(vec3f(0, 0, -6));
-	mat4f model = mat4f.identity.rotateX(to_rad(-55));
+	mat4f model = mat4f.identity.rotateX(to_rad(90));
 
 	vec3f cam_pos = vec3f(0, 0, 3), cam_target = vec3f(), cam_front = vec3f(0, 0, -1), cam_up = vec3f(0, 1, 0);
 	vec3f velocity = vec3f(0, 0, 0);
@@ -94,8 +94,9 @@ int real_main(string[] args) {
 	} else static if (gfx_backend == GfxBackend.D3D11) {
 		string title = "FE2—Direct3D11";
 	}
-	scope GraphicsState gfx = new GraphicsState(WindowSpec(title, width, height, width, height, Fullscreenstate.None, true, true, false, 4));
+	scope GraphicsState gfx = new GraphicsState(WindowSpec(title, width, height, width, height, Fullscreenstate.None, true, false, false, 4));
 	scope GorillaAudio audio = new GorillaAudio();
+	//audio.play(audio.load_cache_sound("out.ogg"));
 
 	gfx.grab_mouse();
 
@@ -114,15 +115,15 @@ int real_main(string[] args) {
 		-0.5, 0.5, 0.5, -1, 1,
 
 		0.5, -0.5, 0.5, 1., -1,
-		-0.5, 0.5, 0.5, -1, 1,
 		-0.5, -0.5, 0.5, -1, -1,
+		-0.5, 0.5, 0.5, -1, 1,
 
 
 
 		///REAR
 		0.5, 0.5, -0.5, 1, 1,
-		0.5, -0.5, -0.5, 1, -1,
 		-0.5, 0.5, -0.5, -1, 1,
+		0.5, -0.5, -0.5, 1, -1,
 
 		0.5, -0.5, -0.5, 1, -1,
 		-0.5, 0.5, -0.5, -1, 1,
@@ -137,13 +138,13 @@ int real_main(string[] args) {
 		0.5, 0.5, -0.5, 1, -1,
 
 		-0.5, 0.5, 0.5, -1, 1,
-		0.5, 0.5, -0.5, 1, -1,
 		-0.5, 0.5, -0.5, -1, -1,
+		0.5, 0.5, -0.5, 1, -1,
 
 		///BOTTOM
 		0.5, -0.5, 0.5, 1, 1,
-		-0.5, -0.5, 0.5, -1, 1,
 		0.5, -0.5, -0.5, 1, -1,
+		-0.5, -0.5, 0.5, -1, 1,
 
 		-0.5, -0.5, 0.5, -1, 1,
 		0.5, -0.5, -0.5, 1, -1,
@@ -152,20 +153,20 @@ int real_main(string[] args) {
 
 
 		///RIGHT
+		0.5, -0.5, 0.5, 1, -1,
 		0.5, 0.5, 0.5, 1, 1,
 		0.5, 0.5, -0.5, -1, 1,
-		0.5, -0.5, 0.5, 1, -1,
 
-		0.5, 0.5, -0.5, -1, 1,
 		0.5, -0.5, 0.5, 1, -1,
+		0.5, 0.5, -0.5, -1, 1,
 		0.5, -0.5, -0.5, -1, -1,
 
 
 
 		///LEFT
 		-0.5, 0.5, 0.5, 1, 1,
-		-0.5, 0.5, -0.5, -1, 1,
 		-0.5, -0.5, 0.5, 1, -1,
+		-0.5, 0.5, -0.5, -1, 1,
 
 		-0.5, 0.5, -0.5, -1, 1,
 		-0.5, -0.5, 0.5, 1, -1,
@@ -197,52 +198,8 @@ static if (gfx_backend == GfxBackend.OpenGL) {
 				FragColor = texture(face_tex, out_tex_coord);
 			}}, gfx.gfx_context);
 	}
-	float[] verts = [
-		-.5, .5, 0, -1, 1,
-		-.5, -.5, 0, -1, -1,
-		.5, -.5, 0, 1, -1,
+	Model model = Model(vertices, [3, 2]);
 
-		-.5, .5, 0, -1, 1,
-		.5, -.5, 0, 1, -1,
-		.5, .5, 0, 1, 1,];
-	Model model = Model(verts, [3, 2]);
-/+
-
-
-	Program prog = Program(q{#version 330 core
-layout (location = 0) in vec3 in_pos;
-layout (location = 1) in vec2 in_tex_coord;
-out vec2 tex_coord;
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-void main() {
-	vec4 x = projection * view * model * vec4(in_pos, 1.0);
-	if (x.z > 1) x.z = 1;
-	if (x.z < 1) x.z = -1;
-	gl_Position = x;
-	//gl_Position = vec4(in_pos, 1.0);
-
-	tex_coord = in_tex_coord;
-}}, q{#version 330 core
-out vec4 frag_colour;
-in vec2 tex_coord;
-
-uniform sampler2D wall_tex;
-uniform sampler2D face_tex;
-
-void main() {
-	//frag_colour = texture(tex, tex_coord);
-	frag_colour = mix(texture(wall_tex, tex_coord), texture(face_tex, vec2(-tex_coord.x, tex_coord.y)), 0.9);
-	//frag_colour = vertex_clr;
-	//frag_colour = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-}});
-
-	prog.upload_texture(0, new Texture("wall.jpg"));
-	prog.upload_texture(1, new Texture("dickbutt.jpg"));
-	prog.set_int("wall_tex", 0);
-	prog.set_int("face_tex", 1);
-	+/
 	upload_texture(0, new Texture("dickbutt.png", gfx.gfx_context));
 	prog.set_int("face_tex", 0);
 

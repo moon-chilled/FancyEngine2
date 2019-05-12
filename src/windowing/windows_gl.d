@@ -63,6 +63,9 @@ void post_window_setup(SDL_Window *window) {
 	}
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CW);
 
 	int w, h;
 	SDL_GL_GetDrawableSize(window, &w, &h);
