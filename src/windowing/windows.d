@@ -42,6 +42,10 @@ class GraphicsState {
 		this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window.win_width, window.win_height, win_flags);
 		if (!this.window) sdlerror;
 
+		// possibly redundant?
+		SDL_ShowWindow(this.window);
+		SDL_RaiseWindow(this.window);
+
 		gfx_context = setup_context(this.window);
 
 		post_window_setup(this.window);

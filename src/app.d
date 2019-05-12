@@ -180,28 +180,32 @@ int real_main(string[] args) {
 static if (gfx_backend == GfxBackend.OpenGL) {
 		Program prog = Program(q{#version 330 core
 			layout (location = 0) in vec3 in_pos;
-			layout (location = 1) in vec3 in_clr;
-			out vec4 colour;
+			layout (location = 1) in vec2 tex_coord;
+			out vec2 out_tex_coord;
+			uniform mat4 model;
+			uniform mat4 view;
+			uniform mat4 projection;
 			void main() {
-				gl_Position = vec4(in_pos, 1.0);
-				colour = vec4(in_clr, 1.0);
+				gl_Position = projection * view * model * vec4(in_pos, 1.0);
+				out_tex_coord = tex_coord;
 			}
 			}, q{#version 330 core
+			uniform sampler2D face_tex;
 			out vec4 FragColor;
-			in vec4 colour;
+			in vec2 out_tex_coord;
 			void main() {
-				FragColor = colour;
+				FragColor = texture(face_tex, out_tex_coord);
 			}}, gfx.gfx_context);
 	}
 	float[] verts = [
-		-.5, .5, 0, 1, 0, 0,
-		-.5, -.5, 0, 0, 1, 0,
-		.5, -.5, 0, 0, 0, 1,
+		-.5, .5, 0, -1, 1,
+		-.5, -.5, 0, -1, -1,
+		.5, -.5, 0, 1, -1,
 
-		-.5, .5, 0, 1, 1, 0,
-		.5, -.5, 0, 1, 0, 1,
-		.5, .5, 0, 0, 1, 1,];
-	Model model = Model(verts, [3, 3]);
+		-.5, .5, 0, -1, 1,
+		.5, -.5, 0, 1, -1,
+		.5, .5, 0, 1, 1,];
+	Model model = Model(verts, [3, 2]);
 /+
 
 
@@ -276,11 +280,9 @@ mainloop:
 		//               /
 		clear(gfx, r, g, b);
 
-		/+
 		prog.set_mat4("projection", state.projection);
 		prog.set_mat4("model", state.model);
 		prog.set_mat4("view", state.view);
-		+/
 		prog.blit(model);
 		gfx.blit();
 
