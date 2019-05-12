@@ -61,6 +61,9 @@ class GraphicsState {
 	void ungrab_mouse() {
 		if (SDL_SetRelativeMouseMode(SDL_FALSE) < 0) error("unable to ungrab mouse.  SDL says '%s'", SDL_GetError().dstr);
 	}
+	void set_title(string title) {
+		SDL_SetWindowTitle(window, title.cstr);
+	}
 
 	~this() {
 		gfx_end(gfx_context);

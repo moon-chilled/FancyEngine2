@@ -20,6 +20,7 @@ enum width = 1280, height = 720;
 enum aspect_ratio = cast(double)width/cast(double)height;
 enum fov = 90.0;
 enum speed = 0.1;
+enum physics_frame = 0.016666666666;
 
 bool done;
 bool paused = true;
@@ -203,8 +204,26 @@ static if (gfx_backend == GfxBackend.OpenGL) {
 	upload_texture(0, new Texture("dickbutt.png", gfx.gfx_context));
 	prog.set_int("face_tex", 0);
 
+	import std.datetime.stopwatch: StopWatch, AutoStart;
+
+	auto sw = StopWatch(AutoStart.yes);
+	float time_so_far = 0;
+	float fps = 1/physics_frame;
 mainloop:
 	while (!done) {
+		bool something_worth_framing;
+
+		float frame_time = sw.peek.total!"nsecs" / 1_000_000_000.0;
+		sw.reset;
+		time_so_far += frame_time;
+		fps = fps*0.9 + 0.1/frame_time;
+
+		if (time_so_far >= physics_frame) {
+			time_so_far -= physics_frame;
+			something_worth_framing = true;
+		}
+		if (something_worth_framing) gfx.set_title(format("%s %.f FPS ", title, fps));
+
 		if (!paused) frames++;
 		///////////////////////////////////
 		////EVENT HANDLING ////////////////
@@ -217,18 +236,20 @@ mainloop:
 		////  PHYSICS      ////////////////
 		///               /////////////////
 		//               /
-		r += 0.01;
-		g += 0.02;
-		b -= 0.01;
-		nice(r);
-		nice(g);
-		nice(b);
+		if (something_worth_framing) {
+			r += 0.01;
+			g += 0.02;
+			b -= 0.01;
+			nice(r);
+			nice(g);
+			nice(b);
 
-		state.cam_pos += state.velocity.z * state.cam_front;
-		state.cam_pos += state.cam_front.cross(state.cam_up).normalized * state.velocity.x;
+			state.cam_pos += state.velocity.z * state.cam_front;
+			state.cam_pos += state.cam_front.cross(state.cam_up).normalized * state.velocity.x;
 
-		if (!paused) state.model = mat4f.identity.rotation(frames*.05, vec3f(0.5, 1, 1));
-		state.view = mat4f.lookAt(state.cam_pos, state.cam_pos + state.cam_front, state.cam_up);
+			if (!paused) state.model = mat4f.identity.rotation(frames*.05, vec3f(0.5, 1, 1));
+			state.view = mat4f.lookAt(state.cam_pos, state.cam_pos + state.cam_front, state.cam_up);
+		}
 
 
 		///////////////////////////////////
@@ -245,7 +266,7 @@ mainloop:
 
 
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
-		audio.update(.0166666);
+		audio.update(frame_time);
 	}
 
 	return 0;
