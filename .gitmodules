@@ -19,3 +19,6 @@
 [submodule "deps/directx"]
 	path = deps/directx
 	url = https://github.com/evilrat666/directx-d
+[submodule "deps/toml"]
+	path = deps/toml
+	url = https://github.com/Kripth/toml

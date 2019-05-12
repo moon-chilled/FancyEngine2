@@ -1,0 +1,8 @@
+[Grahpics]
+width = 1280
+height = 720
+fullscreen = "none"
+borders = true
+vsync = true
+wireframe = false
+aa = 4

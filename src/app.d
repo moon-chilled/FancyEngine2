@@ -16,18 +16,20 @@ import scripting.ecl;
 
 import sound.gorilla;
 
-enum width = 1280, height = 720;
-enum aspect_ratio = cast(double)width/cast(double)height;
-enum fov = 90.0;
-enum speed = 0.1;
-enum physics_frame = 0.016666666666;
+import config;
+
+enum WIDTH = 1280, HEIGHT = 720;
+enum ASPECT_RATIO = cast(double)WIDTH/cast(double)HEIGHT;
+enum FOV = 90.0;
+enum SPEED = 0.1;
+enum PHYSICS_FRAME = 0.016666666666;
 
 bool done;
 bool paused = true;
 bool grabbed;
 
 struct ViewState {
-	mat4f projection = mat4f.perspective(to_rad(fov/2), aspect_ratio, 0.1, 100);
+	mat4f projection = mat4f.perspective(to_rad(FOV/2), ASPECT_RATIO, 0.1, 100);
 	mat4f view = mat4f.identity.translation(vec3f(0, 0, -6));
 	mat4f model = mat4f.identity.rotateX(to_rad(90));
 
@@ -42,20 +44,20 @@ void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state) {
 				switch (ev.key) {
 					case Key.space: paused = !paused; break;
 					case Key.enter: grabbed = !grabbed; break;
-					case Key.w: state.velocity.z += speed; break;
-					case Key.s: state.velocity.z -= speed; break;
-					case Key.a: state.velocity.x -= speed; break;
-					case Key.d: state.velocity.x += speed; break;
+					case Key.w: state.velocity.z += SPEED; break;
+					case Key.s: state.velocity.z -= SPEED; break;
+					case Key.a: state.velocity.x -= SPEED; break;
+					case Key.d: state.velocity.x += SPEED; break;
 					default: break;
 				}
 
 				break;
 			case Evtype.Keyup:
 				switch (ev.key) {
-					case Key.w: state.velocity.z -= speed; break;
-					case Key.s: state.velocity.z += speed; break;
-					case Key.a: state.velocity.x += speed; break;
-					case Key.d: state.velocity.x -= speed; break;
+					case Key.w: state.velocity.z -= SPEED; break;
+					case Key.s: state.velocity.z += SPEED; break;
+					case Key.a: state.velocity.x += SPEED; break;
+					case Key.d: state.velocity.x -= SPEED; break;
 					default: break;
 				}
 
@@ -95,7 +97,24 @@ int real_main(string[] args) {
 	} else static if (gfx_backend == GfxBackend.D3D11) {
 		string title = "FE2—Direct3D11";
 	}
-	scope GraphicsState gfx = new GraphicsState(WindowSpec(title, width, height, width, height, Fullscreenstate.None, true, false, false, 4));
+	WindowSpec ws;
+	string fs;
+	with (ws) Configure("prefs.toml",
+		Table("Graphics"),
+			"width", &win_width,
+			"height", &win_height,
+			"fullscreen", &fs,
+			"borders", &borders,
+			"vsync", &vsync,
+			"wireframe", &wireframe,
+			"aa", &aa_samples);
+	ws.fullscreen =	fs == "fullscreen" ? Fullscreenstate.Fullscreen :
+			fs == "desktop" ? Fullscreenstate.Desktop : Fullscreenstate.None;
+	ws.render_width = ws.win_width;
+	ws.render_height = ws.win_height;
+	ws.title = title;
+
+	scope GraphicsState gfx = new GraphicsState(ws);
 	scope GorillaAudio audio = new GorillaAudio();
 	//audio.play(audio.load_cache_sound("out.ogg"));
 
@@ -208,7 +227,7 @@ static if (gfx_backend == GfxBackend.OpenGL) {
 
 	auto sw = StopWatch(AutoStart.yes);
 	float time_so_far = 0;
-	float avg_frame_time = physics_frame;
+	float avg_frame_time = PHYSICS_FRAME;
 mainloop:
 	while (!done) {
 		bool something_worth_framing;
@@ -218,8 +237,8 @@ mainloop:
 		time_so_far += frame_time;
 		avg_frame_time = avg_frame_time*0.9 + 0.1*frame_time;
 
-		if (time_so_far >= physics_frame) {
-			time_so_far -= physics_frame;
+		if (time_so_far >= PHYSICS_FRAME) {
+			time_so_far -= PHYSICS_FRAME;
 			something_worth_framing = true;
 		}
 		if (something_worth_framing) gfx.set_title(format("%s %.f FPS", title, 1/avg_frame_time));
