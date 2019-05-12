@@ -48,12 +48,14 @@ if sys == 'win'
   foreach lib: ['ole32', 'oleaut32', 'strmiids', 'user32']
     link_args += '-L=' + lib + '.lib'
   endforeach
-  link_args += ['-L=/nodefaultlib:msvcrtd.lib', '-L=/nodefaultlib:msvcrt.lib', '-L=/nodefaultlib:vcruntime.lib']
+  link_args += ['-L=/nodefaultlib:msvcrtd.lib', '-L=/nodefaultlib:msvcrt.lib', '-L=/nodefaultlib:vcruntime.lib', '-mscrtlib=libcmt']
   if get_option('graphics_backend') == 'd3d11'
     link_args += ['-L=d3d11.lib', '-L=D3DCompiler.lib']
   endif
+  run_command('cmd', '/c', 'git rev-parse --short HEAD > src/.commit_hash.txt')
 else
   link_args += '-L-Llib/' + sys + '/'
+  run_command('sh', '-c', 'git rev-parse --short HEAD > src/.commit_hash.txt')
 endif
 
 

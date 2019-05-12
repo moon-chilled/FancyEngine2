@@ -1,5 +1,6 @@
 module logging;
 import stdlib;
+import cstdlib;
 
 import std.stdio: File, stderr;
 import std.string: format;
@@ -56,12 +57,11 @@ void handle_log(LogLevel ll, int line, string file, string func_name, string pre
 
 		new Thread({
 		import windowing.windows;
-		import std.string: toStringz;
 
 		string msgformatted_msg = format("An error was encountered!  Please report this to the developers:\n<%s>%s:%s: %s", import(".commit_hash.txt")[0 .. $-1], file, line, msg);
 		if (are_libraries_loaded) {
 			import derelict.sdl2.sdl;
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", msgformatted_msg.toStringz, null);
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", msgformatted_msg.cstr, null);
 		} else {
 			version(Windows) {
 				import core.sys.windows.winuser: MessageBox;
@@ -72,7 +72,7 @@ void handle_log(LogLevel ll, int line, string file, string func_name, string pre
 				writeln("TODO: print a message on macos");
 			} else {
 				import core.stdc.stdlib;
-				system(toStringz("xmessage '" ~ msgformatted_msg ~ "'"));
+				system(cstr("xmessage '" ~ msgformatted_msg ~ "'"));
 			}
 		}
 		}).start();
