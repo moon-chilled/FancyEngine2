@@ -1,1 +1,1 @@
-option('graphics_backend', type: 'combo', choices: ['opengl', 'd3d11'])
+option('graphics_backend', type: 'combo', choices: ['opengl', 'vulkan'])

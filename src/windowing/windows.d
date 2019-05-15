@@ -3,8 +3,8 @@ import stdlib;
 import cstdlib;
 
 import windowing.key;
-static if (gfx_backend == GfxBackend.D3D11) {
-	import windowing.windows_d3d11;
+static if (gfx_backend == GfxBackend.Vulkan) {
+	import windowing.windows_vk;
 } else static if (gfx_backend == GfxBackend.OpenGL) {
 	import windowing.windows_gl;
 }

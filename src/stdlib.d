@@ -23,17 +23,16 @@ version (_Build_type_is_dev) {
 }
 
 enum GfxBackend {
-	D3D11,
+	Vulkan,
 	OpenGL,
 }
-version (_Gfx_is_d3d11) {
-	enum gfx_backend = GfxBackend.D3D11;
+version (_Gfx_is_vulkan) {
+	enum gfx_backend = GfxBackend.Vulkan;
 } else version (_Gfx_is_opengl) {
 	enum gfx_backend = GfxBackend.OpenGL;
 } else {
 	static assert(0, "Must select graphics backend");
 }
-
 
 
 // !IMPORTANT!
@@ -70,7 +69,7 @@ version (Windows) {
 	} else {
 		static assert (false, "Only supported MSVCRT on windows");
 		// maybe someday this turns into mingw/gnu crt, when I have a better dev environment
-		// until then, I am sad
+		// until then, I will be sad
 	}
 } else version (OSX) {
 } else version (linux) {

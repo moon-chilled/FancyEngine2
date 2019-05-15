@@ -94,8 +94,8 @@ int real_main(string[] args) {
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2—OpenGL";
-	} else static if (gfx_backend == GfxBackend.D3D11) {
-		string title = "FE2—Direct3D11";
+	} else static if (gfx_backend == GfxBackend.Vulkan) {
+		string title = "FE2—Vulkan";
 	}
 	WindowSpec ws;
 	string fs;
