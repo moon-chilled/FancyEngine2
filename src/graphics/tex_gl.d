@@ -9,14 +9,21 @@ import derelict.opengl;
 
 private extern (C) ubyte *stbi_load(const(char) *filename, int *x, int *y, int *channels, int desired_channels);
 private extern (C) void stbi_image_free(void *retval_from_stbi_load);
+Texture[string] texture_cache;
 
 class Texture: Asset!(AssetType.Texture) {
 	uint w, h;
 	GLuint tex_id;
 
 	this(string fpath, GfxContext) {
-		import std.file: exists;
-		if (!fpath.exists) fatal("tried to read nonexistent texture '%s'", fpath);
+		if (fpath in texture_cache) {
+			w = texture_cache[fpath].w;
+			h = texture_cache[fpath].h;
+			tex_id = texture_cache[fpath].tex_id;
+			return;
+		}
+
+		if (!fpath.fexists) fatal("tried to read nonexistent texture '%s'", fpath);
 		int clr_depth;
 
 		int width;
@@ -47,6 +54,7 @@ class Texture: Asset!(AssetType.Texture) {
 
 		stbi_image_free(tex_data);
 
+		texture_cache[fpath] = this;
 	}
 }
 
