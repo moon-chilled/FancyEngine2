@@ -8,9 +8,9 @@ struct Table {
 }
 
 void Configure(S...)(string fname, S confs) {
-	import std.file: read, exists;
+	import std.file: read;
 
-	if (!exists(fname))
+	if (!fname.fexists)
 		fatal("File '%s' does not exist", fname);
 
 	TOMLDocument toml;

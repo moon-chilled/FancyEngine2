@@ -5,6 +5,7 @@ import stdmath;
 import windowing.windows;
 import windowing.key;
 
+import graphics.fancy_model;
 import graphics.model;
 import graphics.shading;
 import graphics.tex;
@@ -121,6 +122,9 @@ int real_main(string[] args) {
 	gfx.grab_mouse();
 
 
+	auto m = FancyModel("assets/model_nanosuit/nanosuit.obj");
+
+
 	float r = 0, g = 0, b = 0;
 	void nice(ref float f) {
 		if (f > 1)
@@ -201,27 +205,41 @@ int real_main(string[] args) {
 static if (gfx_backend == GfxBackend.OpenGL) {
 		Program prog = Program(q{#version 330 core
 			layout (location = 0) in vec3 in_pos;
-			layout (location = 1) in vec2 tex_coord;
-			out vec2 out_tex_coord;
+			layout (location = 1) in vec3 in_normal;
+			layout (location = 3) in vec2 in_tex_coord;
+			layout (location = 4) in vec3 in_tangent;
+			layout (location = 5) in vec3 in_bitangent;
+
+			out vec2 tex_coord;
+
 			uniform mat4 model;
 			uniform mat4 view;
 			uniform mat4 projection;
+
 			void main() {
 				gl_Position = projection * view * model * vec4(in_pos, 1.0);
-				out_tex_coord = tex_coord;
-			}
-			}, q{#version 330 core
-			uniform sampler2D face_tex;
+				tex_coord = in_tex_coord;
+			}}, q{#version 330 core
+
+			uniform sampler2D texture0;
+			uniform sampler2D texture1;
+			uniform sampler2D texture2;
+			uniform sampler2D texture3;
+			uniform sampler2D texture4;
+			uniform sampler2D texture5;
+			uniform sampler2D texture6;
+			uniform sampler2D texture7;
+
 			out vec4 FragColor;
 			in vec2 out_tex_coord;
 			void main() {
-				FragColor = texture(face_tex, out_tex_coord);
+				FragColor = vec4(1, 1, 1, 1);
 			}}, gfx.gfx_context);
 	}
-	Model model = Model(vertices, [3, 2]);
+	//Mesh model = Mesh(vertices, [3, 2]);
 
 	upload_texture(0, new Texture("dickbutt.png", gfx.gfx_context));
-	prog.set_int("face_tex", 0);
+	prog.set_int("texture0", 0);
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
 
@@ -280,7 +298,8 @@ mainloop:
 		prog.set_mat4("projection", state.projection);
 		prog.set_mat4("model", state.model);
 		prog.set_mat4("view", state.view);
-		prog.blit(model);
+		//prog.blit(model);
+		prog.blit(m);
 		gfx.blit();
 
 

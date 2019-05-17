@@ -3,10 +3,7 @@ import stdlib;
 import cstdlib;
 import derelict.opengl;
 
-struct Model {
-	@disable this();
-	@disable this(this);
-
+struct Mesh {
 	GLuint VAO, VBO;
 	uint num_verts;
 

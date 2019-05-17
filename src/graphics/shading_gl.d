@@ -6,6 +6,7 @@ import cstdlib;
 import windowing.windows_gl;
 import graphics.tex;
 import graphics.model;
+import graphics.fancy_model;
 
 import derelict.opengl;
 
@@ -55,12 +56,27 @@ struct Program {
 		glUniformMatrix4fv(glGetUniformLocation(program, id.cstr), 1, GL_TRUE, value.v.ptr);
 	}
 
-	void blit(const ref Model model) {
+	void blit(const ref Mesh model) {
 		glUseProgram(program);
 
 		glBindVertexArray(model.VAO);
 		glDrawArrays(GL_TRIANGLES, 0, model.num_verts);
 		glBindVertexArray(0);
+	}
+
+	// yes, I did.  What are you gonna do about it?
+	void blit(const ref FancyModel modél) {
+		foreach (i; 0 .. modél.retarted_meshes.length) {
+			const Mesh mesh = modél.retarted_meshes[i];
+			const Texture[] textures = modél.meta_textures[i];
+			uint num_indices = cast(uint)modél.meta_indices[i].length;
+
+			// TODO: textures
+			glUseProgram(program);
+			glBindVertexArray(mesh.VAO);
+			glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, null);
+			glBindVertexArray(0);
+		}
 	}
 
 	~this() {
