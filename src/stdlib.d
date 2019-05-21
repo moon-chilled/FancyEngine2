@@ -6,7 +6,7 @@ import std.math: abs, trunc; //more to follow as needed
 import std.container.array: ManArray = Array;
 import std.variant: Sum = Algebraic;
 import std.conv: to, tostr = text, towstr = wtext, todstr = dtext;
-import std.array: split;
+import std.array: split, join;
 import std.algorithm.comparison: min, max, clamp;
 import std.algorithm.iteration: reduce = fold, sum;
 import std.file: fexists = exists;

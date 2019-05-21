@@ -26,27 +26,37 @@ struct FancyModel {
 	 * ///||\\
 	 *///alas\\
 	Mesh[] retarted_meshes;
-	Texture[][] meta_textures;
+	Texture[][] meta_diffuse_textures;
+	Texture[][] meta_specular_textures;
 	uint[][] meta_indices;
 
 
-	this(string fname) {
-		if (!fname.fexists) fatal("File '%s' does not exist", fname);
+	this(string fpath) {
+		import std.file: getcwd, chdir;
 
-		const aiScene *scene = aiImportFile(fname.cstr, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_OptimizeMeshes | aiProcess_GenNormals);
+		if (!fpath.fexists) fatal("File '%s' does not exist", fpath);
+
+		const aiScene *scene = aiImportFile(fpath.cstr, aiProcess_Triangulate | aiProcess_OptimizeMeshes | aiProcess_GenNormals | aiProcess_FlipWindingOrder); // default winding order is counter-clockwise, we want clockwise
 		if (!scene || scene.mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene.mRootNode) {
-			fatal("Failed to properly load model '%s'.  AssImp says '%s'", fname, aiGetErrorString());
+			fatal("Failed to properly load model '%s'.  AssImp says '%s'", fpath, aiGetErrorString());
 		}
 
-		load_mesh(scene.mRootNode, scene);
-		assert (retarted_meshes.length == meta_textures.length && meta_textures.length == meta_indices.length);
+		string cwd = getcwd();
+		chdir(fpath.split("/")[0 .. $ - 1].join("/"));
+		load_meshes(scene.mRootNode, scene);
+		chdir(cwd);
+
+		assert (retarted_meshes.length == meta_diffuse_textures.length && meta_diffuse_textures.length == meta_specular_textures.length && meta_specular_textures.length == meta_indices.length);
+
+		trace("Loaded model %s with %s meshes", fpath, retarted_meshes.length);
 	}
 
-	void load_mesh(const aiNode *node, const aiScene *scene) {
+	void load_meshes(const aiNode *node, const aiScene *scene) {
 		foreach (sss; 0 .. node.mNumMeshes) {
 			const aiMesh *mesh = scene.mMeshes[node.mMeshes[sss]];
 			float[] vertices;
-			Texture[] textures;
+			Texture[] diffuse_textures;
+			Texture[] specular_textures;
 			uint[] indices;
 
 			foreach (i; 0 .. mesh.mNumVertices) {
@@ -63,7 +73,7 @@ struct FancyModel {
 				// tex coords
 				if (mesh.mTextureCoords[0]) {
 					vertices ~= mesh.mTextureCoords[0][i].x;
-					vertices ~= mesh.mTextureCoords[0][i].x;
+					vertices ~= mesh.mTextureCoords[0][i].y;
 				} else {
 					// for alignment:
 					vertices ~= 0;
@@ -91,6 +101,10 @@ struct FancyModel {
 				}
 			}
 
+			diffuse_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType_DIFFUSE);
+			specular_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType_SPECULAR);
+
+
 			retarted_meshes ~= Mesh(vertices, [3, 3, 2, 3, 3]);
 
 			GLuint EBO;
@@ -99,11 +113,23 @@ struct FancyModel {
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * indices[0].sizeof, indices.ptr, GL_STATIC_DRAW);
 			meta_indices ~= indices;
 
-			meta_textures ~= textures;
+			meta_diffuse_textures ~= diffuse_textures;
+			meta_specular_textures ~= specular_textures;
 		}
 
 		foreach (i; 0 .. node.mNumChildren) {
-			load_mesh(node.mChildren[i], scene);
+			load_meshes(node.mChildren[i], scene);
 		}
 	}
+}
+
+Texture[] load_materials(const aiMaterial *material, aiTextureType type) {
+	Texture[] ret;
+	foreach (i; 0 .. aiGetMaterialTextureCount(material, type)) {
+		aiString fpath;
+		aiGetMaterialTexture(material, type, i, &fpath);
+		ret ~= new Texture(fpath.data[0 .. fpath.length].idup);
+	}
+
+	return ret;
 }

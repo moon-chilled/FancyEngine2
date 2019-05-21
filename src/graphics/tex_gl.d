@@ -15,7 +15,7 @@ class Texture: Asset!(AssetType.Texture) {
 	uint w, h;
 	GLuint tex_id;
 
-	this(string fpath, GfxContext) {
+	this(string fpath) {
 		if (fpath in texture_cache) {
 			w = texture_cache[fpath].w;
 			h = texture_cache[fpath].h;
@@ -43,8 +43,8 @@ class Texture: Asset!(AssetType.Texture) {
 
 		glGenTextures(1, &tex_id);
 		glBindTexture(GL_TEXTURE_2D, tex_id);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 

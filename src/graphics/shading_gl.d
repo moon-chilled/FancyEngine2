@@ -68,8 +68,15 @@ struct Program {
 	void blit(const ref FancyModel modél) {
 		foreach (i; 0 .. modél.retarted_meshes.length) {
 			const Mesh mesh = modél.retarted_meshes[i];
-			const Texture[] textures = modél.meta_textures[i];
+			const Texture[] diffuse_textures = modél.meta_diffuse_textures[i];
 			uint num_indices = cast(uint)modél.meta_indices[i].length;
+
+			foreach (int j; 0 .. cast(int)diffuse_textures.length) {
+				glActiveTexture(GL_TEXTURE0 + j);
+				glBindTexture(GL_TEXTURE_2D, diffuse_textures[j].tex_id);
+				set_int("diffuse" ~ j.tostr, j);
+			}
+
 
 			// TODO: textures
 			glUseProgram(program);

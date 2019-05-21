@@ -32,7 +32,7 @@ bool grabbed;
 struct ViewState {
 	mat4f projection = mat4f.perspective(to_rad(FOV/2), ASPECT_RATIO, 0.1, 100);
 	mat4f view = mat4f.identity.translation(vec3f(0, 0, -6));
-	mat4f model = mat4f.identity.rotateX(to_rad(90));
+	mat4f model = mat4f.identity;
 
 	vec3f cam_pos = vec3f(0, 0, 3), cam_target = vec3f(), cam_front = vec3f(0, 0, -1), cam_up = vec3f(0, 1, 0);
 	vec3f velocity = vec3f(0, 0, 0);
@@ -206,9 +206,9 @@ static if (gfx_backend == GfxBackend.OpenGL) {
 		Program prog = Program(q{#version 330 core
 			layout (location = 0) in vec3 in_pos;
 			layout (location = 1) in vec3 in_normal;
-			layout (location = 3) in vec2 in_tex_coord;
-			layout (location = 4) in vec3 in_tangent;
-			layout (location = 5) in vec3 in_bitangent;
+			layout (location = 2) in vec2 in_tex_coord;
+			layout (location = 3) in vec3 in_tangent;
+			layout (location = 4) in vec3 in_bitangent;
 
 			out vec2 tex_coord;
 
@@ -221,24 +221,20 @@ static if (gfx_backend == GfxBackend.OpenGL) {
 				tex_coord = in_tex_coord;
 			}}, q{#version 330 core
 
-			uniform sampler2D texture0;
-			uniform sampler2D texture1;
-			uniform sampler2D texture2;
-			uniform sampler2D texture3;
-			uniform sampler2D texture4;
-			uniform sampler2D texture5;
-			uniform sampler2D texture6;
-			uniform sampler2D texture7;
+			uniform sampler2D diffuse0;
+			uniform sampler2D diffuse1;
+			uniform sampler2D specular0;
+			uniform sampler2D specular1;
 
 			out vec4 FragColor;
-			in vec2 out_tex_coord;
+			in vec2 tex_coord;
 			void main() {
-				FragColor = vec4(1, 1, 1, 1);
+				FragColor = texture(diffuse0, tex_coord);
 			}}, gfx.gfx_context);
 	}
 	//Mesh model = Mesh(vertices, [3, 2]);
 
-	upload_texture(0, new Texture("dickbutt.png", gfx.gfx_context));
+	upload_texture(0, new Texture("dickbutt.png"));
 	prog.set_int("texture0", 0);
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
