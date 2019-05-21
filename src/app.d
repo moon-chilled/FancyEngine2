@@ -19,24 +19,25 @@ import sound.gorilla;
 
 import config;
 
-enum WIDTH = 1280, HEIGHT = 720;
-enum ASPECT_RATIO = cast(double)WIDTH/cast(double)HEIGHT;
-enum FOV = 90.0;
 enum SPEED = 0.1;
-enum PHYSICS_FRAME = 0.016666666666;
 
 bool done;
 bool paused = true;
 bool grabbed;
 
 struct ViewState {
-	mat4f projection = mat4f.perspective(to_rad(FOV/2), ASPECT_RATIO, 0.1, 100);
+	mat4f projection;
 	mat4f view = mat4f.identity.translation(vec3f(0, 0, -6));
 	mat4f model = mat4f.identity;
 
 	vec3f cam_pos = vec3f(0, 0, 3), cam_target = vec3f(), cam_front = vec3f(0, 0, -1), cam_up = vec3f(0, 1, 0);
 	vec3f velocity = vec3f(0, 0, 0);
 	float pitch = 0, yaw = -90, roll = 0; // TODO: implement roll
+
+	this(uint width, uint height, uint fov) {
+		// divide fov by 2 because here it's from center of screen to edge, but as specified it's from edge to edge
+		projection = mat4f.perspective(to_rad(fov/2.0), cast(double)width/cast(double)height, 0.1, 100);
+	}
 }
 void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state) {
 	foreach (ev; evs) {
@@ -100,6 +101,8 @@ int real_main(string[] args) {
 	}
 	WindowSpec ws;
 	string fs;
+	uint fov;
+	float physics_fps;
 	with (ws) Configure("prefs.toml",
 		Table("Graphics"),
 			"width", &win_width,
@@ -108,12 +111,17 @@ int real_main(string[] args) {
 			"borders", &borders,
 			"vsync", &vsync,
 			"wireframe", &wireframe,
-			"aa", &aa_samples);
+			"aa", &aa_samples,
+			"fov", &fov,
+			"physics_fps", &physics_fps);
 	ws.fullscreen =	fs == "fullscreen" ? Fullscreenstate.Fullscreen :
 			fs == "desktop" ? Fullscreenstate.Desktop : Fullscreenstate.None;
 	ws.render_width = ws.win_width;
 	ws.render_height = ws.win_height;
 	ws.title = title;
+
+
+	ViewState state = ViewState(ws.render_width, ws.render_height, fov);
 
 	scope GraphicsState gfx = new GraphicsState(ws);
 	scope GorillaAudio audio = new GorillaAudio();
@@ -199,8 +207,6 @@ int real_main(string[] args) {
 
 	ulong frames;
 
-	ViewState state;
-
 
 static if (gfx_backend == GfxBackend.OpenGL) {
 		Program prog = Program(q{#version 330 core
@@ -239,9 +245,10 @@ static if (gfx_backend == GfxBackend.OpenGL) {
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
 
+	float physics_frame = 1 / physics_fps;
 	auto sw = StopWatch(AutoStart.yes);
 	float time_so_far = 0;
-	float avg_frame_time = PHYSICS_FRAME;
+	float avg_frame_time = physics_frame;
 mainloop:
 	while (!done) {
 		bool something_worth_framing;
@@ -251,8 +258,8 @@ mainloop:
 		time_so_far += frame_time;
 		avg_frame_time = avg_frame_time*0.9 + 0.1*frame_time;
 
-		if (time_so_far >= PHYSICS_FRAME) {
-			time_so_far -= PHYSICS_FRAME;
+		if (time_so_far >= physics_frame) {
+			time_so_far -= physics_frame;
 			something_worth_framing = true;
 		}
 		if (something_worth_framing) gfx.set_title(format("%s %.f FPS", title, 1/avg_frame_time));

@@ -6,3 +6,5 @@ borders = true
 vsync = false
 wireframe = false
 aa = 4
+fov = 90
+physics_fps = 60
