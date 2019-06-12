@@ -46,6 +46,7 @@ public class DerelictECLLoader: SharedLibLoader {
 		bindFunc(cast(void**)&ecl_process_env, "ecl_process_env");
 		bindFunc(cast(void**)&ecl_fits_in_base_string, "ecl_fits_in_base_string");
 		bindFunc(cast(void**)&cl_copy_seq, "cl_copy_seq");
+		bindFunc(cast(void**)&cl_cons, "cl_cons");
 	}
 }
 
@@ -68,6 +69,7 @@ __gshared extern (C) nothrow @nogc {
 	cl_env_struct *function() ecl_process_env;
 	int function(cl_object) ecl_fits_in_base_string;
 	cl_object function(cl_object) cl_copy_seq;
+	cl_object function(cl_object car, cl_object cdr) cl_cons;
 
 	pragma(inline, true) cl_object cl_safe_eval(cl_object form, cl_object env, cl_object value) { return si_safe_eval(3, form, env, value); }
 	pragma(inline, true) cl_object lsym(string s) { return si_string_to_object(1, s.lstr); }
@@ -1397,7 +1399,6 @@ extern(C) {
     cl_object cl_tailp(cl_lispunion*, cl_lispunion*) @nogc nothrow;
     cl_object si_memq(cl_lispunion*, cl_lispunion*) @nogc nothrow;
     cl_object cl_nreconc(cl_lispunion*, cl_lispunion*) @nogc nothrow;
-    cl_object cl_cons(cl_lispunion*, cl_lispunion*) @nogc nothrow;
     cl_object cl_acons(cl_lispunion*, cl_lispunion*, cl_lispunion*) @nogc nothrow;
     cl_object cl_list(c_long, ...) @nogc nothrow;
     cl_object cl_listX(c_long, ...) @nogc nothrow;

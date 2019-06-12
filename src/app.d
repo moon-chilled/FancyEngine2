@@ -85,14 +85,16 @@ void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state) {
 
 int real_main(string[] args) {
 	load_all_libraries();
-	/*
 	init_ecl();
 	scope(exit) shutdown_ecl();
 
 	auto faux = new ECLScript();
 	faux.expose_fun("traa", (ScriptVar[] args) { log("%s + %s => %s", args[0], args[1], args[0] ~ args[1]); return args[0] ~ args[1]; }, [ScriptVarType.Str, ScriptVarType.Str]);
-	log("%s", faux.eval("(traa \"hi┖\" \"therro\")"));
-	*/
+	log("%s", faux.eval("(traa \"hi\" \"therro\")"));
+	faux.eval(`(_dlog 2 "hii from ECL")`);
+	log("yay");
+	faux.load("test.lisp");
+	faux.call("bork", [ScriptVar(1L), ScriptVar(7L)]);
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2—OpenGL";

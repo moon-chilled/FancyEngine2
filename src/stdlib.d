@@ -1,5 +1,7 @@
 module stdlib;
 
+import std.typecons: Typedef;
+
 public:
 import logging;
 import std.math: abs, trunc; //more to follow as needed
@@ -11,6 +13,13 @@ import std.algorithm.comparison: min, max, clamp;
 import std.algorithm.iteration: reduce = fold, sum;
 import std.file: fexists = exists;
 
+// TODO: do we want negative values (for invalidation)?  Size_t so it can hold
+// a pointer?
+alias Handle = Typedef!uint;
+
+// Boring stuff: version flags are passed in as simple booleans, but we really
+// need them to be enums, so they're 1) always defined and 2) always have a
+// valid value
 enum BuildType {
 	Dev,
 	Release,
@@ -38,15 +47,16 @@ version (_Gfx_is_vulkan) {
 
 // !IMPORTANT!
 // size is NOT dependent on T.sizeof
-// this is to avoid confusion
+// this is to avoid confusion with the real memcpy
 // the only purpose of this function is to make it so you don't have to cast your pointers to void*
 pragma(inline, true) void memcpy(T, U)(T *dest, const U *src, size_t size) {
-	// print a message if T and U are different sizes, unless one is void
+	// complain if T and U are different sizes, unless one is void
 	static if ((T.sizeof != U.sizeof) && !(is(T == void)) && !(is(U == void))) {
 		import std.string: format;
 		pragma(msg, format("Unequal types %s (%s bytes) and %s (%s bytes) being catenated", T.stringof, T.sizeof, U.stringof, U.sizeof));
 	}
 
+	// has to be static because otherwise bare memcpy call would try to recurse
 	static import core.stdc.string;
 	core.stdc.string.memcpy(cast(void*)dest, cast(const void*)src, size);
 }
@@ -54,6 +64,7 @@ pragma(inline, true) void memcpy(T, U)(T *dest, const U *src, size_t size) {
 __gshared bool are_libraries_loaded;
 
 void segfault() {
+	// I had a cleverer way of segfaulting once, but can't find it now
 	int inner() {
 		import core.stdc.stdlib: malloc;
 
@@ -68,19 +79,19 @@ void segfault() {
 version (Windows) {
 	version (CRuntime_Microsoft) {
 	} else {
-		static assert (false, "Only supported MSVCRT on windows");
+		static assert (false, "On windows, only msvcrt is supported");
 		// maybe someday this turns into mingw/gnu crt, when I have a better dev environment
 		// until then, I will be sad
 	}
 } else version (OSX) {
 } else version (linux) {
 } else {
-	static assert (false, "Only supported windows, macos, or linux");
+	static assert (false, "Only windows, macos, or linux are supported");
 }
 
 
 version (X86_64) {
 	//yayy
 } else {
-	static assert (false, "Only supported x86_64");
+	static assert (false, "Only x86_64 is supported"); // sorry risc-v
 }

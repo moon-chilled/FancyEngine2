@@ -34,7 +34,7 @@ void set_msg_log_level(LogLevel ll) {
 	synchronized msg_log_level = ll;
 }
 
-void handle_log(LogLevel ll, int line, string file, string func_name, string pretty_func_name, string module_name, string msg) {
+void _real_log(LogLevel ll, int line, string file, string func_name, string pretty_func_name, string module_name, string msg) {
 	import std.datetime.systime: Clock;
 
 	string formatted_msg = format("\033[34m%s||%s||%s:%s\033[31m|$\033[0m %s\n", Clock.currTime.toISOExtString(),
@@ -91,7 +91,7 @@ template log_funf(LogLevel ll) {
 			string pretty_func_name = __PRETTY_FUNCTION__,
 			string module_name = __MODULE__, A...)
 		(string msg, A args) {
-			handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
+			_real_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
 		}
 
 	void log_funf(int line = __LINE__, string file = __FILE__,
@@ -100,7 +100,7 @@ template log_funf(LogLevel ll) {
 			string module_name = __MODULE__, A...)
 		(bool condition, string msg, A args) {
 			if (condition) {
-				handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
+				_real_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
 			}
 		}
 }
@@ -123,7 +123,7 @@ template log_funs(LogLevel ll) {
 			string pretty_func_name = __PRETTY_FUNCTION__,
 			string module_name = __MODULE__, A...)
 		(A args) if ((args.length > 0 && !is(Unqual!(A[0]) : bool)) || args.length == 0) {
-			handle_log(ll, line, file, func_name, pretty_func_name, module_name, text(args));
+			_real_log(ll, line, file, func_name, pretty_func_name, module_name, text(args));
 		}
 
 	void log_funs(int line = __LINE__, string file = __FILE__,
@@ -132,7 +132,7 @@ template log_funs(LogLevel ll) {
 			string module_name = __MODULE__, A...)
 		(bool condition, A args) {
 			if (condition) {
-				handle_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
+				_real_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
 			}
 		}
 }

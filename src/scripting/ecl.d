@@ -6,16 +6,20 @@ import scripting.ecl_lib_interface;
 
 import std.string: format;
 
+struct DFun {
+	string name;
+	ScriptFun fun;
+	ScriptVarType[] sig;
+}
 
-string[] _dont_gc_names;
-ScriptFun[] _dont_gc_funs;
-ScriptVarType[][] _dont_gc_argtypes;
+private __gshared DFun[] fun_tab;
+private __gshared Object fun_tab_lock = new Object;
 
 ScriptVarType cl_obj_type(cl_object lisp_obj) {
 	switch (lisp_obj.ecl_t_of) {
 		case cl_type.t_fixnum: return ScriptVarType.Int;
 		case cl_type.t_singlefloat, cl_type.t_doublefloat: return ScriptVarType.Real;
-		case cl_type.t_string: return ScriptVarType.Str;
+		case cl_type.t_string, cl_type.t_base_string: return ScriptVarType.Str;
 		default: return ScriptVarType.None;
 	}
 }
@@ -66,28 +70,43 @@ private cl_object script_to_cl(ScriptVar script_obj) {
 			(None) => Nil)();
 }
 
-
 class ECLScript: Scriptlang {
-	this(){
-		ScriptVar dlog(LogLevel ll)(ScriptVar[] s) {
-			log_funs!ll(s[0]);
+	private void introduce_loggers() {
+		import std.traits: EnumMembers;
+		ScriptVar dlog(ScriptVar[] s) {
+			_real_log(cast(LogLevel)*s[0].peek!long, 0, "lisp" /*file*/, "lisp" /*function*/, "lisp" /*pretty function*/, "lisp" /*module*/, *s[1].peek!string);
 			return None;
 		}
-		import std.traits: EnumMembers;
+		expose_fun("_dlog", &dlog, [ScriptVarType.Int, ScriptVarType.Str]);
 		static foreach (ll; EnumMembers!LogLevel[1 .. $]) {
-			expose_fun("_d" ~ ll.to!string, &(dlog!ll), [ScriptVarType.Str]);
-			eval("(defun log" ~ ll.to!string ~ " (&rest args) (_d" ~ ll.to!string ~ " (apply #'format (cons nil args))))");
+			eval("(defun log" ~ ll.to!string ~ " (&rest args) (_dlog " ~ ll.to!int.to!string ~ " (apply #'format (cons nil args))))");
 		}
 		/*
-		expose_fun("_dinfo", &(dlog!(LogLevel.info)), [ScriptVarType.Str]);
-		eval("(defun info (&rest args) (_dinfo (apply #'format (cons nil args))))");
+		eval("(defun loginfo (&rest args) (_dlog 2 (apply #'format (cons nil args))))");
 		*/
+	}
+
+	this() {
+		introduce_loggers();
 		eval(`(loginfo "hii from ECL")`);
 	}
 	~this(){}
 
 	ScriptVar eval(string text) {
 		return text.lsym.cl_eval.cl_to_script;
+	}
+
+	ScriptVar call(string fname, ScriptVar[] args) {
+		cl_object list = Nil;
+
+		foreach_reverse (arg; args) {
+			list = cl_cons(arg.script_to_cl, list);
+		}
+
+
+		list = cl_cons(fname.lsym, list);
+
+		return cl_eval(list).cl_to_script;
 	}
 
 	// A bit of explanation is due here.
@@ -97,23 +116,38 @@ class ECLScript: Scriptlang {
 	// but that function needs to be a closure (aka delegate) so it knows the address of the d function to call
 	// but we can't pass delegates into c functions
 	// so instead we name the real function _ecl_d_fancy_fn_<funname>
-	// and declare a *lisp* function that stores pointers to the 'closed over' variables as integers and passes those into the real wrapper function
+	// and declare a *lisp* function that stores a pointer to the 'closed over' context as an index into fun_tab, and passes that into the real wrapper function
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes) {
-		_dont_gc_names ~= name;
-		_dont_gc_funs ~= fun;
-		_dont_gc_argtypes ~= argtypes;
+		size_t our_fun_index;
+
+		// synchronized because otherwise this can happen:
+		/*
+		 * thread 1 sets our_fun_index to (say) fun_tab.length, say it's 5
+		 * fun_tab append begins
+		 * hasn't finished yet
+		 * thread 2 starts to expose a function, sets our_fun_index, but it's still 5
+		 * now both threads think their function is #5, even though they're different functions
+		 */
+		// now, thread 2 can't start until thread 1 finishes, so it always gets the right index value
+		synchronized (fun_tab_lock) {
+			our_fun_index = fun_tab.length;
+			fun_tab ~= DFun(name, fun, argtypes);
+		}
 
 		string real_fn_name = "_ecl_d_fancy_fn_" ~ name;
 		extern (C) cl_object real_fun(fixnum nargs, ...) {
 			import core.vararg;
-			assert (nargs >= 3);
+			assert (nargs >= 1); // have to have 1 arg which is a context pointer
 			va_list vargs; //(v)arargs
 			va_start(vargs, nargs);
 
-			string name = *(cast(string*)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
-			ScriptFun fun = *(cast(ScriptFun*)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
-			ScriptVarType[] argtypes = *(cast(ScriptVarType[]*)(*va_arg!cl_object(vargs).cl_to_script.peek!long));
-			nargs -= 3;
+			long fun_index = (*va_arg!cl_object(vargs).cl_to_script.peek!long);
+			assert (fun_index >= 0);
+
+			string name = fun_tab[fun_index].name;
+			ScriptFun fun = fun_tab[fun_index].fun;
+			ScriptVarType[] argtypes = fun_tab[fun_index].sig;
+			nargs -= 1;
 
 			if (nargs != argtypes.length) {
 				error("D function %s was passed %s arguments by ECL, wanted %s.", name, nargs, argtypes.length);
@@ -136,7 +170,16 @@ class ECLScript: Scriptlang {
 
 		ecl_def_c_function_va(real_fn_name.lsym, &real_fun);
 
-		this.eval(format("(defun %s (&rest args) (apply #'%s (cons %s (cons %s (cons %s args)))))", name, real_fn_name, cast(fixnum)(&name), cast(fixnum)(&fun), cast(fixnum)(&argtypes)));
+		this.eval(format("(defun %s (&rest args) (apply #'%s (cons %s args)))))", name, real_fn_name, our_fun_index));
+	}
+
+	bool can_be_loaded(string path) {
+		// TODO: add booleans and make this use bool
+		return *eval(format(`(if (compile-file "%s") 1 0)`, path)).peek!long ? true : false;
+	}
+
+	void load(string path) {
+		eval(format(`(load "%s")`, path));
 	}
 }
 
@@ -152,6 +195,8 @@ void init_ecl() {
 	ecl_set_option(ecl_option.trap_sigchld, 0);
 	ecl_set_option(ecl_option.trap_interrupt_signal, 0);
 
+	// cl_boot wants an argc and argv.  I have no interest in giving them
+	// to it, so I give it (1, [""]), which looks weird in d
 	cl_boot(1, cast(char**)[cast(char*)[0].ptr].ptr);
 	ecl_process_env().disable_interrupts = 1;
 	signal(SIGSEGV, SIG_DFL);
