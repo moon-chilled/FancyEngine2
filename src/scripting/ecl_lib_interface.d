@@ -37,7 +37,7 @@ public class DerelictECLLoader: SharedLibLoader {
 		bindFunc(cast(void**)&si_safe_eval, "si_safe_eval");
 		bindFunc(cast(void**)&cl_eval, "cl_eval");
 		bindFunc(cast(void**)&si_string_to_object, "si_string_to_object");
-		bindFunc(cast(void**)&ecl_make_constant_base_string, "ecl_make_constant_base_string");
+		//bindFunc(cast(void**)&ecl_make_constant_base_string, "ecl_make_constant_base_string");
 		bindFunc(cast(void**)&ecl_make_simple_base_string, "ecl_make_simple_base_string");
 		bindFunc(cast(void**)&ecl_make_double_float, "ecl_make_double_float");
 		bindFunc(cast(void**)&ecl_def_c_function_va, "ecl_def_c_function_va");

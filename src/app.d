@@ -85,16 +85,12 @@ void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state) {
 
 int real_main(string[] args) {
 	load_all_libraries();
+	/*
 	init_ecl();
 	scope(exit) shutdown_ecl();
 
 	auto faux = new ECLScript();
-	faux.expose_fun("traa", (ScriptVar[] args) { log("%s + %s => %s", args[0], args[1], args[0] ~ args[1]); return args[0] ~ args[1]; }, [ScriptVarType.Str, ScriptVarType.Str]);
-	log("%s", faux.eval("(traa \"hi\" \"therro\")"));
-	faux.eval(`(_dlog 2 "hii from ECL")`);
-	log("yay");
-	faux.load("test.lisp");
-	faux.call("bork", [ScriptVar(1L), ScriptVar(7L)]);
+	*/
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2—OpenGL";
@@ -123,89 +119,17 @@ int real_main(string[] args) {
 	ws.title = title;
 
 
-	ViewState state = ViewState(ws.render_width, ws.render_height, fov);
-
 	scope GraphicsState gfx = new GraphicsState(ws);
 	scope GorillaAudio audio = new GorillaAudio();
-	//audio.play(audio.load_cache_sound("out.ogg"));
+	audio.play(audio.load_cache_sound("out.ogg"));
 
 	gfx.grab_mouse();
 
 
 	auto m = FancyModel("assets/model_nanosuit/nanosuit.obj");
 
+	ViewState state = ViewState(ws.render_width, ws.render_height, fov);
 
-	float r = 0, g = 0, b = 0;
-	void nice(ref float f) {
-		if (f > 1)
-			f -= 1;
-		if (f < 0)
-			f = 1 - (trunc(f) - f);
-	}
-	float[180] vertices = [
-		///FRONT
-		0.5, 0.5, 0.5, 1., 1.,
-		0.5, -0.5, 0.5, 1., -1,
-		-0.5, 0.5, 0.5, -1, 1,
-
-		0.5, -0.5, 0.5, 1., -1,
-		-0.5, -0.5, 0.5, -1, -1,
-		-0.5, 0.5, 0.5, -1, 1,
-
-
-
-		///REAR
-		0.5, 0.5, -0.5, 1, 1,
-		-0.5, 0.5, -0.5, -1, 1,
-		0.5, -0.5, -0.5, 1, -1,
-
-		0.5, -0.5, -0.5, 1, -1,
-		-0.5, 0.5, -0.5, -1, 1,
-		-0.5, -0.5, -0.5, -1, -1,
-
-
-
-
-		///TOP
-		0.5, 0.5, 0.5, 1, 1,
-		-0.5, 0.5, 0.5, -1, 1,
-		0.5, 0.5, -0.5, 1, -1,
-
-		-0.5, 0.5, 0.5, -1, 1,
-		-0.5, 0.5, -0.5, -1, -1,
-		0.5, 0.5, -0.5, 1, -1,
-
-		///BOTTOM
-		0.5, -0.5, 0.5, 1, 1,
-		0.5, -0.5, -0.5, 1, -1,
-		-0.5, -0.5, 0.5, -1, 1,
-
-		-0.5, -0.5, 0.5, -1, 1,
-		0.5, -0.5, -0.5, 1, -1,
-		-0.5, -0.5, -0.5, -1, -1,
-
-
-
-		///RIGHT
-		0.5, -0.5, 0.5, 1, -1,
-		0.5, 0.5, 0.5, 1, 1,
-		0.5, 0.5, -0.5, -1, 1,
-
-		0.5, -0.5, 0.5, 1, -1,
-		0.5, 0.5, -0.5, -1, 1,
-		0.5, -0.5, -0.5, -1, -1,
-
-
-
-		///LEFT
-		-0.5, 0.5, 0.5, 1, 1,
-		-0.5, -0.5, 0.5, 1, -1,
-		-0.5, 0.5, -0.5, -1, 1,
-
-		-0.5, 0.5, -0.5, -1, 1,
-		-0.5, -0.5, 0.5, 1, -1,
-		-0.5, -0.5, -0.5, -1, -1,
-	];
 
 	ulong frames;
 
@@ -240,10 +164,6 @@ static if (gfx_backend == GfxBackend.OpenGL) {
 				FragColor = texture(diffuse0, tex_coord);
 			}}, gfx.gfx_context);
 	}
-	//Mesh model = Mesh(vertices, [3, 2]);
-
-	upload_texture(0, new Texture("dickbutt.png"));
-	prog.set_int("texture0", 0);
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
 
@@ -279,13 +199,6 @@ mainloop:
 		///               /////////////////
 		//               /
 		if (something_worth_framing) {
-			r += 0.01;
-			g += 0.02;
-			b -= 0.01;
-			nice(r);
-			nice(g);
-			nice(b);
-
 			state.cam_pos += state.velocity.z * state.cam_front;
 			state.cam_pos += state.cam_front.cross(state.cam_up).normalized * state.velocity.x;
 
@@ -298,7 +211,7 @@ mainloop:
 		////  RENDERING    ////////////////
 		///               /////////////////
 		//               /
-		clear(gfx, r, g, b);
+		clear(gfx, 0, 0, 0);
 
 		prog.set_mat4("projection", state.projection);
 		prog.set_mat4("model", state.model);
@@ -363,7 +276,7 @@ void set_lib_path() {
 		}
 	} else {
 		void set_env(const char *key, const char *value) {
-			import core.stdc.stdlib: setenv;
+			import core.sys.posix.stdlib: setenv;
 			setenv(key, value, 1); // 1: overwrite value if it already exists
 		}
 	}
@@ -384,7 +297,7 @@ void set_lib_path() {
 	set_env(plat_libpath_name, plat_lib_path);
 }
 
-static if (build_type == BuildType.Release) { version (Windows) {
+static if (build_type == BuildType.Release && build_target == OS.Windows) {
 	import core.runtime;
 	import core.sys.windows.windows;
 	import std.conv: text;
@@ -412,10 +325,11 @@ static if (build_type == BuildType.Release) { version (Windows) {
 	}
 } else {
 	int main(string[] args) {
-		return real_main(args);
-	}
-}} else {
-	int main(string[] args) {
-		return real_main(args);
+		try {
+			return real_main(args);
+		} catch (Throwable e) {
+			fatal(e.msg);
+			return 1;
+		}
 	}
 }

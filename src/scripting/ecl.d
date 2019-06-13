@@ -88,7 +88,6 @@ class ECLScript: Scriptlang {
 
 	this() {
 		introduce_loggers();
-		eval(`(loginfo "hii from ECL")`);
 	}
 	~this(){}
 
@@ -135,8 +134,10 @@ class ECLScript: Scriptlang {
 		}
 
 		string real_fn_name = "_ecl_d_fancy_fn_" ~ name;
+
+		// vararg import has to be here in order to declare the variadic function
+		import core.vararg;
 		extern (C) cl_object real_fun(fixnum nargs, ...) {
-			import core.vararg;
 			assert (nargs >= 1); // have to have 1 arg which is a context pointer
 			va_list vargs; //(v)arargs
 			va_start(vargs, nargs);

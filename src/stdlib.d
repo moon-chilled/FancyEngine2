@@ -44,6 +44,19 @@ version (_Gfx_is_vulkan) {
 	static assert(0, "Must select graphics backend");
 }
 
+enum OS {
+	Windows,
+	Mac,
+	Linux,
+}
+version (Windows) {
+	enum build_target = OS.Windows;
+} else version (OSX) {
+	enum build_target = OS.Mac;
+} else version (linux) {
+	enum build_target = OS.Linux;
+}
+
 
 // !IMPORTANT!
 // size is NOT dependent on T.sizeof

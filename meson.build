@@ -12,6 +12,7 @@ endif
 
 d_versions = []
 fancy_source = []
+dependencies = []
 
 subdir('deps')
 
@@ -53,7 +54,8 @@ if sys == 'win'
 else
   link_args += '-L-Llib/' + sys + '/'
   run_command('sh', '-c', 'git rev-parse --short HEAD > src/.commit_hash.txt')
+  dependencies += dependency('openal')
 endif
 
 
-executable('fancyengine2', fancy_source + dep_source, d_args: d_args, link_args: link_args, include_directories: include_dirs, d_module_versions: d_versions)
+executable('fancyengine2', fancy_source + dep_source, d_args: d_args, link_args: link_args, include_directories: include_dirs, d_module_versions: d_versions, dependencies: dependencies)

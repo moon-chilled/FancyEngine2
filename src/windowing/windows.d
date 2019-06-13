@@ -169,7 +169,7 @@ Key sdlmousetokey(SDL_D_MouseButton button) {
 	       SDL_BUTTON_X2: Key.mouse5][button];
 }
 Key sdltokey(SDL_Keycode sdl) {
-	return [SDLK_UNKNOWN: Key.unknown,
+	Key[SDL_Keycode] lis = [SDLK_UNKNOWN: Key.unknown,
 	       SDLK_RETURN: Key.enter,
 	       SDLK_ESCAPE: Key.escape,
 	       SDLK_BACKSPACE: Key.backspace,
@@ -415,5 +415,6 @@ Key sdltokey(SDL_Keycode sdl) {
 	       SDLK_KBDILLUMDOWN: Key.kbdillumdown,
 	       SDLK_KBDILLUMUP: Key.kbdillumup,
 	       SDLK_EJECT: Key.eject,
-	       SDLK_SLEEP: Key.sleep][sdl];
+	       SDLK_SLEEP: Key.sleep];
+	return sdl >= lis.length ? Key.unknown : lis[sdl];
 }
