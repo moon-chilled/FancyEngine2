@@ -416,5 +416,5 @@ Key sdltokey(SDL_Keycode sdl) {
 	       SDLK_KBDILLUMUP: Key.kbdillumup,
 	       SDLK_EJECT: Key.eject,
 	       SDLK_SLEEP: Key.sleep];
-	return sdl >= lis.length ? Key.unknown : lis[sdl];
+	return lis.get(sdl, Key.unknown);
 }
