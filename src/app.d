@@ -13,7 +13,7 @@ import graphics.tex;
 import asset;
 
 import scripting;
-import scripting.ecl;
+//import scripting.s7;
 
 import sound.gorilla;
 
@@ -86,10 +86,7 @@ void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state) {
 int real_main(string[] args) {
 	load_all_libraries();
 	/*
-	init_ecl();
-	scope(exit) shutdown_ecl();
-
-	auto faux = new ECLScript();
+	auto faux = new S7Script();
 	*/
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
@@ -231,7 +228,6 @@ mainloop:
 
 void load_all_libraries() {
 	import derelict.sdl2.sdl: DerelictSDL2;
-	import scripting.ecl_lib_interface: DerelictECLLoader;
 	import derelict.assimp3.assimp: DerelictASSIMP3;
 
 	set_lib_path();
@@ -249,12 +245,6 @@ void load_all_libraries() {
 		DerelictSDL2.load();
 	} catch(Throwable t) {
 		fatal("Error loading SDL2.  '%s'", t.msg);
-	}
-
-	try {
-		new DerelictECLLoader().load();
-	} catch(Throwable t) {
-		fatal("Error loading ECL.  '%s'", t.msg);
 	}
 
 	try {
