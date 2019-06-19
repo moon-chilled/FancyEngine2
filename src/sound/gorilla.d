@@ -41,11 +41,17 @@ private extern (C) {
 		OGG = 3,
 		WAV = 4,
 	}
+	enum HandleParam {
+		Unknown = 0,
+		Pan = 1,
+		Pitch = 2,
+		Gain = 3,
+	}
 
 	alias FinishCallback = void function(Handle *finished_handle, void *context);
 
-
 	// Opaque typesafe pointers
+	// Disallow creating or passing by value
 	struct Manager { @disable this(); @disable this(this); }
 	struct Mixer { @disable this(); @disable this(this); }
 	struct StreamManager { @disable this(); @disable this(this); }
@@ -73,6 +79,7 @@ private extern (C) {
 	int ga_handle_play(Handle *handle);
 	int ga_handle_playing(Handle *handle);
 	int ga_handle_tell(Handle* in_handle, TellType in_param);
+	int ga_handle_setParamf(Handle *handle, int param, float value);
 
 
 	void ga_sound_release(Sound *sound);
@@ -88,6 +95,10 @@ shared static ~this() {
 
 private class ISound(AssetType type): Asset!type {
 	package Handle *handle;
+
+	void set_volume(float vol) {
+		ga_handle_setParamf(handle, HandleParam.Gain, vol);
+	}
 }
 
 class BufferedSound: ISound!(AssetType.BufferedSound) {

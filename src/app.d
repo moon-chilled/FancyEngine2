@@ -98,6 +98,8 @@ int real_main(string[] args) {
 	string fs;
 	uint fov;
 	float physics_fps;
+	float master_vol, music_vol, effect_vol;
+
 	with (ws) Configure("prefs.toml",
 		Table("Graphics"),
 			"width", &win_width,
@@ -108,7 +110,19 @@ int real_main(string[] args) {
 			"wireframe", &wireframe,
 			"aa", &aa_samples,
 			"fov", &fov,
-			"physics_fps", &physics_fps);
+			"physics_fps", &physics_fps,
+		Table("Sound"),
+			"master_volume", &master_vol,
+			"music_volume", &music_vol,
+			"effect_volume", &effect_vol);
+
+	// volume in the config file has a range from 0..100, but internally we
+	// have a range of 0..1
+	master_vol /= 100;
+	music_vol /= 100;
+	effect_vol /= 100;
+
+
 	ws.fullscreen =	fs == "fullscreen" ? Fullscreenstate.Fullscreen :
 			fs == "desktop" ? Fullscreenstate.Desktop : Fullscreenstate.None;
 	ws.render_width = ws.win_width;
@@ -118,7 +132,8 @@ int real_main(string[] args) {
 
 	scope GraphicsState gfx = new GraphicsState(ws);
 	scope GorillaAudio audio = new GorillaAudio();
-	audio.play(audio.load_cache_sound("out.ogg"));
+	auto sound = audio.load_cache_sound("out.ogg");
+	audio.play(sound);
 
 	gfx.grab_mouse();
 
@@ -213,12 +228,15 @@ mainloop:
 		prog.set_mat4("projection", state.projection);
 		prog.set_mat4("model", state.model);
 		prog.set_mat4("view", state.view);
-		//prog.blit(model);
 		prog.blit(m);
 		gfx.blit();
 
 
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
+		// TODO: don't need to re-set volume every loop.  Put this into
+		// sound manager, make it set a flag so that next time it's
+		// updated, the volume is changed.
+		sound.set_volume(master_vol * music_vol);
 		audio.update(frame_time);
 	}
 

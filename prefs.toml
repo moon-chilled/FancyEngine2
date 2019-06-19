@@ -8,3 +8,8 @@ wireframe = false
 aa = 4
 fov = 90
 physics_fps = 60
+
+[Sound]
+master_volume = 100
+music_volume = 100
+effect_volume = 100
