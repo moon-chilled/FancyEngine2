@@ -5,5 +5,6 @@ derelict_source = ['deps/derelictsdl2/source/derelict/sdl2/config.d', 'deps/dere
 stb_source = ['deps/stb-image.c']
 gfm_source = ['deps/gfm/math/gfm/math/box.d', 'deps/gfm/math/gfm/math/funcs.d', 'deps/gfm/math/gfm/math/matrix.d', 'deps/gfm/math/gfm/math/package.d', 'deps/gfm/math/gfm/math/quaternion.d', 'deps/gfm/math/gfm/math/shapes.d', 'deps/gfm/math/gfm/math/vector.d']
 toml_source = ['deps/toml/src/toml/datetime.d', 'deps/toml/src/toml/package.d', 'deps/toml/src/toml/toml.d']
+s7_source = ['deps/s7.c']
 
-dep_source = derelict_source + stb_source + gfm_source + toml_source
+dep_source = derelict_source + stb_source + gfm_source + toml_source + s7_source
