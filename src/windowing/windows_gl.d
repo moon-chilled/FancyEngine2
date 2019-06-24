@@ -10,8 +10,12 @@ struct GfxContext {
 }
 
 
+// in order to do aa properly, we need to make sure we don't ask for more
+// samples than the card is willing to do, otherwise bad stuff happens.
+// However, in order to determine the maximum allowed number of samples, we
+// need to already have an open window.  The solution: open a window.
 private GLint max_aa_samples() {
-	SDL_Window *win = SDL_CreateWindow(":)".cstr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1, 1, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+	SDL_Window *win = SDL_CreateWindow("sneaky sneaky ;o".cstr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1, 1, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
 	SDL_GL_CreateContext(win);
 	GLint ret;
 	glGetIntegerv(GL_MAX_SAMPLES, &ret);

@@ -34,7 +34,7 @@ class GraphicsState {
 		SDL_WindowFlags win_flags = SDL_WINDOW_SHOWN;
 		if (!window.borders) win_flags |= SDL_WINDOW_BORDERLESS;
 		if (window.fullscreen == Fullscreenstate.Fullscreen) win_flags |= SDL_WINDOW_FULLSCREEN;
-		if (window.fullscreen == Fullscreenstate.Desktop) win_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+		else if (window.fullscreen == Fullscreenstate.Desktop) win_flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 		win_flags |= auxiliary_sdl_window_flags;
 		set_fullscreen(window.fullscreen == Fullscreenstate.Fullscreen);
 
