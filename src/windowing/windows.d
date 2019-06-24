@@ -19,7 +19,7 @@ class GraphicsState {
 	WindowSpec window_spec;
 
 	this(WindowSpec window) {
-		with (window) trace("Opening %s window titled '%s' (%sx%s, render resolution %sx%s), fullscreen state %s, with%s vsync", borders ? "bordered" : "borderless", title, win_width, win_height, render_width, render_height, window.fullscreen, vsync ? "" : "out");
+		with (window) info("Opening %s window titled '%s' (%sx%s, render resolution %sx%s), in %s mode, with%s vsync", borders ? "bordered" : "borderless", title, win_width, win_height, render_width, render_height, [Fullscreenstate.None: "windowed", Fullscreenstate.Desktop: "borderless fullscreen", Fullscreenstate.Fullscreen: "true fullscreen"][window.fullscreen], vsync ? "" : "out");
 
 		this.window_spec = window;
 
@@ -45,6 +45,8 @@ class GraphicsState {
 		// possibly redundant?
 		SDL_ShowWindow(this.window);
 		SDL_RaiseWindow(this.window);
+
+		SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
 
 		gfx_context = setup_context(this.window);
 

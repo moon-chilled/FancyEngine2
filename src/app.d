@@ -123,8 +123,12 @@ int real_main(string[] args) {
 	effect_vol /= 100;
 
 
-	ws.fullscreen =	fs == "fullscreen" ? Fullscreenstate.Fullscreen :
-			fs == "desktop" ? Fullscreenstate.Desktop : Fullscreenstate.None;
+	switch (fs) {
+		case "fullscreen": ws.fullscreen = Fullscreenstate.Fullscreen; break;
+		case "desktop": ws.fullscreen = Fullscreenstate.Desktop; break;
+		case "none": ws.fullscreen = Fullscreenstate.None; break;
+		default: fatal("config error: unable to load option 'fullscreen': invalid value '%s'", fs); assert(0);
+	}
 	ws.render_width = ws.win_width;
 	ws.render_height = ws.win_height;
 	ws.title = title;
@@ -327,6 +331,7 @@ static if (build_type == BuildType.Release && build_target == OS.Windows) {
 			Runtime.terminate();
 			return res;
 		} catch (Throwable e) {
+			// ditto with (down there) (TODO)
 			fatal(e.msg);
 			return 1;
 		}
@@ -336,6 +341,7 @@ static if (build_type == BuildType.Release && build_target == OS.Windows) {
 		try {
 			return real_main(args);
 		} catch (Throwable e) {
+			// TODO: find a way not to print the terminal control codes here
 			fatal(e.msg);
 			return 1;
 		}

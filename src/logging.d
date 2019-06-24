@@ -20,6 +20,8 @@ shared static this() {
 	}
 }
 
+// strip off the final newline
+private enum git_commit_hash = import(".commit_hash.txt")[0 .. $-1];
 private File[] log_targets;
 private LogLevel min_log_level = LogLevel.info; // logs must be >this to be logged
 private LogLevel msg_log_level = LogLevel.error; // if logs are >this, show a message box
@@ -38,7 +40,7 @@ void _real_log(LogLevel ll, int line, string file, string func_name, string pret
 	import std.datetime.systime: Clock;
 
 	string formatted_msg = format("\033[34m%s||%s||%s:%s\033[31m|$\033[0m %s\n", Clock.currTime.toISOExtString(),
-			import(".commit_hash.txt")[0 .. $-1],
+			git_commit_hash,
 			file[3 .. $],
 			line,
 			msg);
@@ -58,7 +60,7 @@ void _real_log(LogLevel ll, int line, string file, string func_name, string pret
 		new Thread({
 		import windowing.windows;
 
-		string msgformatted_msg = format("An error was encountered!  Please report this to the developers:\n<%s>%s:%s: %s", import(".commit_hash.txt")[0 .. $-1], file, line, msg);
+		string msgformatted_msg = format("An error was encountered!  Please report this to the developers:\n<%s>%s:%s: %s", git_commit_hash, file, line, msg);
 		if (are_libraries_loaded) {
 			import derelict.sdl2.sdl;
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", msgformatted_msg.cstr, null);
