@@ -57,6 +57,15 @@ version (Windows) {
 	enum build_target = OS.Linux;
 }
 
+T *Alloc(T)(size_t amount = 1) {
+	import core.stdc.stdlib: calloc;
+	return cast(T*)calloc(amount, T.sizeof);
+}
+void Free(T)(T *val) {
+	import core.stdc.stdlib: free;
+	free(val);
+}
+
 
 // !IMPORTANT!
 // size is NOT dependent on T.sizeof
