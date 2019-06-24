@@ -142,7 +142,7 @@ int real_main(string[] args) {
 	gfx.grab_mouse();
 
 
-	auto m = FancyModel("assets/model_nanosuit/nanosuit.obj");
+	//auto m = FancyModel("assets/model_nanosuit/nanosuit.obj");
 
 	ViewState state = ViewState(ws.render_width, ws.render_height, fov);
 
@@ -229,10 +229,12 @@ mainloop:
 		//               /
 		clear(gfx, 0, 0, 0);
 
+		/*
 		prog.set_mat4("projection", state.projection);
 		prog.set_mat4("model", state.model);
 		prog.set_mat4("view", state.view);
 		prog.blit(m);
+		*/
 		gfx.blit();
 
 
@@ -254,7 +256,21 @@ void load_all_libraries() {
 
 	set_lib_path();
 
-	static if (gfx_backend == GfxBackend.OpenGL) {
+	static if (gfx_backend == GfxBackend.Vulkan) {
+		import erupted.vulkan_lib_loader;
+
+		// TODO: figure out a way to get at the error messages.
+		// Currently, they're written to a file pointer you pass to
+		// that function, which is really inconvenient.  I tried making
+		// a pipe, but that didn't seem to work, and I don't want to
+		// use an actual file, because finding a place to put it would
+		// be a complete pain in the arse
+		if (!loadGlobalLevelFunctions()) {
+			fatal("Unknown error loading Vulkan (do you have it installed?)");
+		}
+		//TODO: figure out a place to do this
+		//freeVulkanLib();
+	} else static if (gfx_backend == GfxBackend.OpenGL) {
 		import derelict.opengl: DerelictGL3;
 		try {
 			DerelictGL3.load();

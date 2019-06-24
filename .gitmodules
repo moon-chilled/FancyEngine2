@@ -19,3 +19,6 @@
 [submodule "deps/toml"]
 	path = deps/toml
 	url = https://github.com/Kripth/toml
+[submodule "deps/erupted"]
+	path = deps/erupted
+	url = https://github.com/ParticlePeter/ErupteD
