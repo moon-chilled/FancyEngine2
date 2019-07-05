@@ -2,3 +2,4 @@
 * Braces on the same line
 * All files should start with a module declaration followed by 'import stdlib'.  'import stdmath' or 'import cstdlib' should follow if necessary, in that order.
 * Excessively long lines of code should be broken up sensibly.  There is no set limit.  Comments should wrap at 80 columns.  Text- or data-files should not be manually wrapped.
+* auto should be used sparingly, except in vulkan code, where it should be used wherever possible

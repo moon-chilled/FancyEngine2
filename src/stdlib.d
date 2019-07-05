@@ -1,17 +1,20 @@
 module stdlib;
 
 import std.typecons: Typedef;
+import std.traits: ReturnType, Unqual;
 
 public:
 import logging;
-import std.math: abs, trunc; //more to follow as needed
-import std.container.array: ManArray = Array;
-import std.variant: Sum = Algebraic;
-import std.conv: to, tostr = text, towstr = wtext, todstr = dtext;
-import std.array: split, join;
+
+import std.algorithm: contains = canFind;
 import std.algorithm.comparison: min, max, clamp;
 import std.algorithm.iteration: reduce = fold, sum;
+import std.array: split, join;
+import std.container.array: ManArray = Array;
+import std.conv: to, tostr = text, towstr = wtext, todstr = dtext;
 import std.file: fexists = exists;
+import std.math: abs, trunc; //more to follow as needed
+import std.variant: Sum = Algebraic;
 
 // TODO: do we want negative values (for invalidation)?  Size_t so it can hold
 // a pointer?
@@ -82,6 +85,31 @@ pragma(inline, true) void memcpy(T, U)(T *dest, const U *src, size_t size) {
 	static import core.stdc.string;
 	core.stdc.string.memcpy(cast(void*)dest, cast(const void*)src, size);
 }
+
+// alphaglosined was here
+//TODO: why doesn't T = ReturnType!fun work?
+T[] map(alias fun, F, T = typeof(fun(F.init)))(F[] arr) {
+	Unqual!T[] ret = new Unqual!T[arr.length];
+
+	foreach (i; 0 .. arr.length) {
+		ret[i] = fun(arr[i]);
+	}
+
+	return ret;
+}
+T[] filter(alias fun, T)(T[] original) {
+	Unqual!T[] ret;
+
+	foreach (item; original) {
+		if (fun(item)) {
+			ret ~= item;
+		}
+	}
+
+	return ret;
+}
+
+
 
 __gshared bool are_libraries_loaded;
 

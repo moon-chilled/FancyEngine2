@@ -200,6 +200,7 @@ mainloop:
 			time_so_far -= physics_frame;
 			something_worth_framing = true;
 		}
+		import std.string: format;
 		if (something_worth_framing) gfx.set_title(format("%s %.f FPS", title, 1/avg_frame_time));
 
 		if (!paused) frames++;
