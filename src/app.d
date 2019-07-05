@@ -326,6 +326,19 @@ void set_lib_path() {
 	set_env(plat_libpath_name, plat_lib_path);
 }
 
+// On laptops with hybrid graphics (one dedicated card, one integrated),
+// setting these variables is a hint to the driver to give us the dedicated
+// card.  Source: https://redd.it/bk7xbe
+version (Windows) {
+	import core.sys.windows.windows;
+
+	//TODO: should this be extern (Windows)
+	export { extern (C) {
+		DWORD NvOptimusEnablement = 0x00000001;
+		int AmdPowerXpressRequestHighPerformance = 1;
+	}}
+}
+
 static if (build_type == BuildType.Release && build_target == OS.Windows) {
 	import core.runtime;
 	import core.sys.windows.windows;
