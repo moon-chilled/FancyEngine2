@@ -13,7 +13,7 @@ import graphics.tex;
 import asset;
 
 import scripting;
-//import scripting.s7;
+import scripting.s7;
 
 import sound.gorilla;
 
@@ -85,9 +85,8 @@ void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state) {
 
 int real_main(string[] args) {
 	load_all_libraries();
-	/*
 	auto faux = new S7Script();
-	*/
+	scope (exit) faux.close();
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2—OpenGL";
@@ -142,7 +141,7 @@ int real_main(string[] args) {
 	gfx.grab_mouse();
 
 
-	//auto m = FancyModel("assets/model_nanosuit/nanosuit.obj");
+	auto m = FancyModel("assets/model_nanosuit/nanosuit.obj");
 
 	ViewState state = ViewState(ws.render_width, ws.render_height, fov);
 
@@ -230,12 +229,10 @@ mainloop:
 		//               /
 		clear(gfx, 0, 0, 0);
 
-		/*
 		prog.set_mat4("projection", state.projection);
 		prog.set_mat4("model", state.model);
 		prog.set_mat4("view", state.view);
 		prog.blit(m);
-		*/
 		gfx.blit();
 
 

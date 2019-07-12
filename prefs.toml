@@ -10,6 +10,6 @@ fov = 90
 physics_fps = 60
 
 [Sound]
-master_volume = 100
-music_volume = 100
-effect_volume = 100
+master_volume = 0
+music_volume = 0
+effect_volume = 0

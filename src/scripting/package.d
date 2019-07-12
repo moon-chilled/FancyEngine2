@@ -7,10 +7,11 @@ enum ScriptVarType {
 	Int,
 	Real,
 	Str,
+	Bool,
 	None,
 	Any,
 }
-alias ScriptVar = Sum!(long, double, string, NoneType);
+alias ScriptVar = Sum!(long, double, string, bool, NoneType);
 alias ScriptFun = ScriptVar delegate(ScriptVar[] args);
 ScriptVar None;
 shared static this() {
@@ -18,6 +19,7 @@ shared static this() {
 }
 
 interface Scriptlang {
+	void close();
 	ScriptVar eval(string text);
 	ScriptVar call(string name, ScriptVar[] args);
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes);
