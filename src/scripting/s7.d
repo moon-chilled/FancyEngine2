@@ -5,7 +5,7 @@ import cstdlib;
 import scripting;
 import scripting.s7_lib_interface;
 
-ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
+private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 	if (s7_is_null(s7, ptr)) {
 		return None;
 	} else if (s7_is_boolean(ptr)) {
@@ -14,10 +14,10 @@ ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 		return ScriptVar(s7_string(ptr).dstr);
 	} else if (s7_is_integer(ptr)) {
 		return ScriptVar(s7_integer(ptr));
-	} else if (s7_is_real(ptr)) {
-		return ScriptVar(s7_real(ptr));
 	} else if (s7_is_ratio(ptr)) {
 		return ScriptVar(cast(double)s7_numerator(ptr) / cast(double)s7_denominator(ptr));
+	} else if (s7_is_real(ptr)) {
+		return ScriptVar(s7_real(ptr));
 	} else {
 		fatal("Got unknown scheme value with value %s", s7_object_to_c_string(s7, ptr).dstr);
 		assert(0);
@@ -29,7 +29,7 @@ class S7Script: Scriptlang {
 
 	this() {
 		s7 = s7_init();
-		s7_eval_c_string(s7, `(format #t "Successfully booted ~a~%" (s7-version))`.cstr);
+		log("Successfully booted %s", eval("(s7-version)"));
 	}
 
 	void close() {
