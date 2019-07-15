@@ -1,0 +1,7 @@
+Need:
+
+- D compiler, C compiler
+- git
+- meson, ninja
+- innoextract, 7-zip, wget
+- On unix: assimp, SDL, and OpenAL need to be in the system
