@@ -36,12 +36,17 @@ void set_msg_log_level(LogLevel ll) {
 	synchronized msg_log_level = ll;
 }
 
+import std.exception: basicExceptionCtors;
+class FatalAssertionError: Exception {
+	mixin basicExceptionCtors;
+}
+
 void _real_log(LogLevel ll, int line, string file, string func_name, string pretty_func_name, string module_name, string msg) {
 	import std.datetime.systime: Clock;
 
 	string formatted_msg = format("\033[34m%s||%s||%s:%s\033[31m|$\033[0m %s\n", Clock.currTime.toISOExtString(),
 			git_commit_hash,
-			file[3 .. $],
+			file[7 .. $],
 			line,
 			msg);
 
@@ -60,7 +65,7 @@ void _real_log(LogLevel ll, int line, string file, string func_name, string pret
 		new Thread({
 		import windowing.windows;
 
-		string msgformatted_msg = format("An error was encountered!  Please report this to the developers:\n<%s>%s:%s: %s", git_commit_hash, file, line, msg);
+		string msgformatted_msg = format("An error was encountered!  Please report this to the developers:\n<%s>%s:%s: %s", git_commit_hash, file[7 .. $], line, msg);
 		if (are_libraries_loaded) {
 			import derelict.sdl2.sdl;
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", msgformatted_msg.cstr, null);
@@ -81,7 +86,7 @@ void _real_log(LogLevel ll, int line, string file, string func_name, string pret
 	}
 
 	if (ll == LogLevel.fatal) {
-		throw new Exception("Fatal message logged: " ~ formatted_msg);
+		throw new FatalAssertionError("Fatal message logged: " ~ formatted_msg);
 	}
 }
 

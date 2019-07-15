@@ -367,8 +367,11 @@ static if (build_type == BuildType.Release && build_target == OS.Windows) {
 	int main(string[] args) {
 		try {
 			return real_main(args);
+		// Don't fatal() on assertion errors; fatal has already been
+		// called, we don't want a duplicate error message window
+		} catch (FatalAssertionError) {
+			return 1;
 		} catch (Throwable e) {
-			// TODO: find a way not to print the terminal control codes here
 			fatal(e.msg);
 			return 1;
 		}
