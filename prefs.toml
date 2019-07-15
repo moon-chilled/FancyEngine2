@@ -5,7 +5,7 @@ fullscreen = "none"
 borders = true
 vsync = true
 wireframe = false
-aa = 4
+msaa = 2
 fov = 90
 physics_fps = 60
 

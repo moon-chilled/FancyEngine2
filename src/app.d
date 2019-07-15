@@ -107,7 +107,7 @@ int real_main(string[] args) {
 			"borders", &borders,
 			"vsync", &vsync,
 			"wireframe", &wireframe,
-			"aa", &aa_samples,
+			"msaa", &aa_samples,
 			"fov", &fov,
 			"physics_fps", &physics_fps,
 		Table("Sound"),
