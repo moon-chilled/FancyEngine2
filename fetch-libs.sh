@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-SDL2_VER="2.0.9"
+SDL2_VER="2.0.10"
 SDL2_WIN_FNAME="SDL2-$SDL2_VER-win32-x64.zip"
 SDL2_URL_BASE="https://www.libsdl.org/release/"
 GORILLA_WIN_URL="https://github.com/Elronnd/gorilla-audio/releases/download/v0.3.3/gorilla.lib"
 GORILLA_LIN_URL="https://github.com/Elronnd/gorilla-audio/releases/download/v0.3.3/libgorilla.a"
 ASSIMP_WIN_URL="https://github.com/assimp/assimp/releases/download/v4.1.0/assimp-sdk-4.1.0-setup.exe"
+
+S7_FNAME="s7.tar.gz"
+S7_URL="ftp://ccrma-ftp.stanford.edu/pub/Lisp/$S7_FNAME"
 
 fetch-win() {
 	mkdir lib/win
@@ -33,8 +36,21 @@ fetch-linux() {
 
 	popd
 }
+fetch-src() {
+	pushd deps
+
+	rm -f s7.c s7.h
+	wget $S7_URL
+	tar xf $S7_FNAME s7/s7.c s7/s7.h
+	mv s7/s7.c s7/s7.h .
+	rmdir s7
+	rm -f $S7_FNAME
+
+	popd
+}
 
 rm -rf lib
 mkdir lib
 fetch-win
 fetch-linux
+fetch-src
