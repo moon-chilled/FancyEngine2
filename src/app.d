@@ -240,7 +240,7 @@ mainloop:
 		// TODO: don't need to re-set volume every loop.  Put this into
 		// sound manager, make it set a flag so that next time it's
 		// updated, the volume is changed.
-		sound.set_volume(master_vol * music_vol);
+		audio.set_volume(sound, master_vol * music_vol);
 		audio.update(frame_time);
 	}
 

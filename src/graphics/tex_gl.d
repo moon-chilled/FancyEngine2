@@ -11,7 +11,9 @@ private extern (C) ubyte *stbi_load(const(char) *filename, int *x, int *y, int *
 private extern (C) void stbi_image_free(void *retval_from_stbi_load);
 Texture[string] texture_cache;
 
-class Texture: Asset!(AssetType.Texture) {
+class Texture: Asset {
+	AssetType asset_type = AssetType.Texture;
+
 	uint w, h;
 	GLuint tex_id;
 

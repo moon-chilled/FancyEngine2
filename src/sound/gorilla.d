@@ -71,6 +71,7 @@ private extern (C) {
 	StreamManager *gau_manager_streamManager(Manager *mgr);
 	Sound *gau_load_sound_file(const char *fname, const AudioType format);
 	void gau_on_finish_destroy(Handle *finished_handle, void *context);
+	int ga_handle_destroy(Handle* in_handle);
 	Handle *gau_create_handle_memory(Mixer *mixer, Memory *memory, AudioType format, FinishCallback callback, void *context, SampleSourceLoop **loop_src);
 	Handle *gau_create_handle_sound(Mixer *mixer, Sound *sound, FinishCallback callback, void *context, SampleSourceLoop **loop_src);
 	Handle* gau_create_handle_buffered_file(Mixer *mixer, StreamManager *in_streamMgr, const char *filename, AudioType format, FinishCallback callback, void *in_context, SampleSourceLoop **loop_src);
@@ -93,19 +94,18 @@ shared static ~this() {
 }
 
 
-private class ISound(AssetType type): Asset!type {
-	package Handle *handle;
-
-	void set_volume(float vol) {
-		ga_handle_setParamf(handle, HandleParam.Gain, vol);
-	}
+private abstract class ISound: Asset {
+	package:
+	Handle *handle;
+	bool live = true;
 }
 
-class BufferedSound: ISound!(AssetType.BufferedSound) {
+class BufferedSound: ISound {
+	AssetType asset_type = AssetType.BufferedSound;
 }
-class CachedSound: ISound!(AssetType.CachedSound) {
+class CachedSound: ISound {
+	AssetType asset_type = AssetType.CachedSound;
 }
-
 
 class GorillaAudio {
 	private Manager *mgr;
@@ -139,7 +139,7 @@ class GorillaAudio {
 	BufferedSound load_buf_sound(string fpath) {
 		BufferedSound ret = new BufferedSound();
 
-		Handle *handle = gau_create_handle_buffered_file(mixer, stream_mgr, fpath.cstr, AudioType.OGG, &gau_on_finish_destroy, null, null);
+		Handle *handle = gau_create_handle_buffered_file(mixer, stream_mgr, fpath.cstr, AudioType.OGG, null, null, null);
 		if (!handle) { error("unable to load sound '%s'", fpath); return null; }
 
 		ret.handle = handle;
@@ -151,7 +151,7 @@ class GorillaAudio {
 
 		Sound *sound = gau_load_sound_file(fpath.cstr, AudioType.OGG);
 		if (!sound) { error("unable to load sound '%s'", fpath); return null; }
-		Handle *handle = gau_create_handle_sound(mixer, sound, &gau_on_finish_destroy, null, null); //TODO: need to handle looping here for some reason (unless I pass in a function pointer that gets a pointer to the loop param and auto-restarts it if it should loop?
+		Handle *handle = gau_create_handle_sound(mixer, sound, null, null, null);
 		if (!handle) error("unable to process sound '%s'", fpath);
 
 		ret.handle = handle;
@@ -159,13 +159,29 @@ class GorillaAudio {
 	}
 
 	// TODO: use pos
-	void play(AssetType s)(ISound!s sound, vec3f pos = vec3f(0, 0, 0)) {
+	void play(ISound sound, vec3f pos = vec3f(0, 0, 0)) {
 		if (sound is null) {
 			error("tried to play null sound!");
 			return;
 		}
+		if (!sound.live) {
+			error("tried to play dead sound!");
+		}
 
 		int res = ga_handle_play(sound.handle);
 		if (res == 0) error("error playing sound");
+	}
+
+	void kill(ISound snd) {
+		snd.live = false;
+		ga_handle_destroy(snd.handle);
+	}
+
+	void set_volume(ISound snd, float vol) {
+		if (!snd.live) {
+			error("tried to set volume of dead sound!");
+		}
+
+		ga_handle_setParamf(snd.handle, HandleParam.Gain, vol);
 	}
 }

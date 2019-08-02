@@ -8,11 +8,12 @@ enum AssetType {
 	Texture,
 }
 
-interface Asset(AssetType asset_type)  {
-	enum type = asset_type;
+abstract class Asset {
+	AssetType asset_type;
 }
 
-class Data: Asset!(AssetType.Data) {
+class Data: Asset {
+	AssetType asset_type = AssetType.Data;
 	private ubyte[] data;
 	this(string fpath) {
 		import std.file: read;
