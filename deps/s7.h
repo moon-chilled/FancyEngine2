@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "8.5"
-#define S7_DATE "23-May-19"
+#define S7_VERSION "8.8"
+#define S7_DATE "30-Jul-19"
 
 #include <stdint.h>           /* for int64_t */
 
@@ -72,6 +72,11 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir);      /* (set! *l
 s7_pointer s7_autoload(s7_scheme *sc, s7_pointer symbol, s7_pointer file_or_function);  /* (autoload symbol file-or-function) */
 
   /* the load path is a list of directories to search if load can't find the file passed as its argument.
+   *
+   *   s7_load and s7_load_with_environment can load shared object files as well as scheme code.
+   *   The scheme (load "somelib.so" (inlet 'init_func 'somelib_init)) is equivalent to
+   *     s7_load_with_environment(s7, "somelib.so", s7_inlet(s7, s7_list(s7, 2, s7_make_symbol(s7, "init_func"), s7_make_symbol(s7, "somelib_init"))))
+   *   s7_load_with_environment returns NULL if it can't load the file.
    */
 void s7_quit(s7_scheme *sc);
   /* this tries to break out of the current evaluation, leaving everything else intact */
@@ -528,6 +533,7 @@ s7_pointer s7_apply_function_star(s7_scheme *sc, s7_pointer fnc, s7_pointer args
 
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
 s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args, const char *caller, const char *file, s7_int line);
+s7_pointer s7_call_with_catch(s7_scheme *sc, s7_pointer tag, s7_pointer body, s7_pointer error_handler);
   
   /* s7_call takes a Scheme function (e.g. g_car above), and applies it to 'args' (a list of arguments) returning the result.
    *   s7_integer(s7_call(s7, g_car, s7_cons(s7, s7_make_integer(s7, 123), s7_nil(s7))));
@@ -536,6 +542,8 @@ s7_pointer s7_call_with_location(s7_scheme *sc, s7_pointer func, s7_pointer args
    * s7_call_with_location passes some information to the error handler.
    * s7_call makes sure some sort of catch exists if an error occurs during the call, but
    *   s7_apply_function does not -- it assumes the catch has been set up already.
+   * s7_call_with_catch wraps an explicit catch around a function call ("body" above);
+   *   s7_call_with_catch(sc, tag, body, err) is equivalent to (catch tag body err).
    */
 
 bool s7_is_dilambda(s7_pointer obj);
@@ -855,6 +863,9 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
  * 
  *        s7 changes
  *
+ * 30-Jul:    define-expansion*.
+ * 12-Jul:    s7_call_with_catch, s7_load now returns NULL if file not found (rather than raise an error).
+ * 8-July:    most-positive-fixnum and most-negative-fixnum moved to *s7*.
  * 23-May:    added s7_scheme argument to s7_c_object_set_let.
  * 19-May:    s7_gc_stats renamed s7_set_gc_stats.
  * 7-May:     s7_gc_unprotect_via_stack and s7_gc_(un)protect_via_location.
