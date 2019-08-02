@@ -52,7 +52,7 @@ class S7Script: Scriptlang {
 		s7_eval_c_string(s7, text.cstr);
 	}
 	ScriptVar call(string name, ScriptVar[] args) {
-		s7_pointer funcptr = s7_eval_c_string(s7, name.cstr); // lisp-1 ftw!
+		s7_pointer funcptr = s7_name_to_value(s7, name.cstr); // lisp-1 ftw!
 		s7_pointer argsptr = s7_nil(s7);
 		foreach_reverse(arg; args) {
 			argsptr = s7_cons(s7, script_to_s7(s7, arg), argsptr);
@@ -61,7 +61,10 @@ class S7Script: Scriptlang {
 		return s7_to_script(s7, s7_call(s7, funcptr, argsptr));
 	}
 
-	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtyeps) {
+	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes) {
+		//s7_define_function(s7, name, fun, argtypes.length, 0, false, "".cstr);
+		// s7, name, function, required args, optional args, rest (variadic?) args, docstring
+		
 	}
 
 	bool can_be_loaded(string path) {
