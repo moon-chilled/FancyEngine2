@@ -21,6 +21,8 @@ alias s7_pointer = s7_cell*;
 s7_scheme *s7_init();
 void s7_quit(s7_scheme *sc);
 s7_pointer s7_eval_c_string(s7_scheme *sc, in char *str);
+s7_pointer s7_car(s7_pointer p);
+s7_pointer s7_cdr(s7_pointer p);
 
 bool s7_is_null(s7_scheme *sc, s7_pointer p);
 bool s7_is_boolean(s7_pointer x);
@@ -38,12 +40,13 @@ s7_int s7_numerator(s7_pointer x);
 s7_int s7_denominator(s7_pointer x);
 
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);
-s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
+s7_pointer s7_name_to_value(s7_scheme *sc, in char *name);
 
 s7_pointer s7_make_integer(s7_scheme *sc, s7_int num);
 s7_pointer s7_make_real(s7_scheme *sc, s7_double num);
 s7_pointer s7_make_string_with_length(s7_scheme *sc, in char *str, s7_int len);
 s7_pointer s7_make_boolean(s7_scheme *sc, bool x);
+s7_pointer s7_define_function(s7_scheme *sc, in char *name, s7_pointer function(s7_scheme*, s7_pointer) fnc, s7_int required_args, s7_int optional_args, bool rest_arg, in char *doc);
 
 s7_pointer s7_nil(s7_scheme *sc);
 s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);

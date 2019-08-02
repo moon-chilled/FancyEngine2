@@ -33,12 +33,55 @@ private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var) {
 			(None) => s7_nil(s7))();
 }
 
+struct S7Fun {
+	string name;
+	ScriptFun fun;
+	ScriptVarType[] argtypes;
+}
+__gshared S7Fun[] s7funs;
+private __gshared Object s7funslock = new Object;
+
 class S7Script: Scriptlang {
 	s7_scheme *s7;
 
 	this() {
 		s7 = s7_init();
 		log("Successfully booted %s", eval("(s7-version)"));
+
+		extern (C) s7_pointer s7_funcwrapper(s7_scheme *sc, s7_pointer args) {
+			S7Fun fun = s7funs[s7_integer(s7_car(args))];
+
+			args = s7_cdr(args);
+
+			ScriptVar[] fargs;
+			while (args != s7_nil(sc)) {
+				fargs ~= s7_to_script(sc, s7_car(args));
+				args = s7_cdr(args);
+			}
+
+			bool bad_call;
+
+			if (fargs.length != fun.argtypes.length) {
+				bad_call = true;
+			}
+
+			foreach (i; 0 .. fargs.length) {
+				if (script_typeof(fargs[i]) != fun.argtypes[i]) {
+					bad_call = true;
+					break;
+				}
+			}
+
+			if (bad_call) {
+				error("D function %s was passed arguments %s but required types %s", fun.name, fargs, fun.argtypes);
+			}
+
+
+			return script_to_s7(sc, fun.fun(fargs));
+		}
+
+		s7_define_function(s7, "__s7_funcwrapper", &s7_funcwrapper, 0, 0, true, "—".cstr);
+		// s7, name, function, required args, optional args, rest (variadic?) args, docstring
 	}
 
 	void close() {
@@ -62,9 +105,14 @@ class S7Script: Scriptlang {
 	}
 
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes) {
-		//s7_define_function(s7, name, fun, argtypes.length, 0, false, "".cstr);
-		// s7, name, function, required args, optional args, rest (variadic?) args, docstring
-		
+		long new_index;
+		synchronized (s7funslock) {
+			new_index = s7funs.length++;
+		}
+		s7funs[new_index] = S7Fun(name, fun, argtypes);
+
+		import std.string: format;
+		exec(format("(define (%s . args) (apply __s7_funcwrapper (cons %s args)))", name, new_index));
 	}
 
 	bool can_be_loaded(string path) {

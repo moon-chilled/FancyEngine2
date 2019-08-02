@@ -18,6 +18,16 @@ shared static this() {
 	None = ScriptVar(NoneType());
 }
 
+ScriptVarType script_typeof(ScriptVar v) {
+	import std.variant: visit;
+	return v.visit!(
+			(long l) => ScriptVarType.Int,
+			(double d) => ScriptVarType.Real,
+			(string s) => ScriptVarType.Str,
+			(bool b) => ScriptVarType.Bool,
+			(NoneType) => ScriptVarType.None)();
+}
+
 interface Scriptlang {
 	void close();
 	ScriptVar eval(string text);
