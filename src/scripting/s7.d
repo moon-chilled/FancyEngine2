@@ -74,6 +74,7 @@ class S7Script: Scriptlang {
 
 			if (bad_call) {
 				error("D function %s was passed arguments %s but required types %s", fun.name, fargs, fun.argtypes);
+				return s7_nil(sc);
 			}
 
 
@@ -113,6 +114,36 @@ class S7Script: Scriptlang {
 
 		import std.string: format;
 		exec(format("(define (%s . args) (apply __s7_funcwrapper (cons %s args)))", name, new_index));
+	}
+	void expose_fun(R, A...)(string name, R delegate(A) fun) {
+		ScriptVarType[] signature;
+
+		static foreach (T; A) {
+			signature ~= script_typeof!T;
+		}
+
+		enum mixin_str = {
+			import std.conv: to;
+			string ret = "fun(";
+			static foreach (i; 0 .. A.length) {
+				ret ~= "*args[" ~ i.to!string ~ "].peek!" ~ A[i].stringof ~ ", ";
+			}
+			ret ~= ")";
+			return ret;
+		}();
+
+		static if (is(R == void)) {
+			expose_fun(name,
+					(ScriptVar[] args) {
+						mixin(mixin_str ~ ";");
+						return None;
+					}, signature);
+		} else {
+			expose_fun(name,
+					(ScriptVar[] args) {
+						return ScriptVar(mixin(mixin_str));
+					}, signature);
+		}
 	}
 
 	bool can_load(string path) {
