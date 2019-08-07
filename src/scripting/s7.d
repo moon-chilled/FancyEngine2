@@ -115,9 +115,15 @@ class S7Script: Scriptlang {
 		exec(format("(define (%s . args) (apply __s7_funcwrapper (cons %s args)))", name, new_index));
 	}
 
-	bool can_be_loaded(string path) {
-		return false;
+	bool can_load(string path) {
+		auto s7_obj = s7_eval_c_string_with_environment(s7, (`
+(catch 'read-error
+ (lambda () (load "` ~ path ~ `") #t)
+ (lambda args
+  #f))`).cstr, s7_inlet(s7, s7_nil(s7)));
+		return *s7_to_script(s7, s7_obj).peek!bool;
 	}
 	void load(string path) {
+		s7_load(s7, path.cstr);
 	}
 }
