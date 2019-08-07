@@ -87,6 +87,8 @@ int real_main(string[] args) {
 	load_all_libraries();
 	auto faux = new S7Script();
 	scope (exit) faux.close();
+	faux.load("game.scm");
+	faux.call("init");
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2—OpenGL";
@@ -140,6 +142,7 @@ int real_main(string[] args) {
 
 	gfx.grab_mouse();
 
+	// START SECTION TO BE REPLACE BY SCRIPTS {{{
 
 	auto m = FancyModel("assets/model_nanosuit/nanosuit.obj");
 
@@ -180,6 +183,8 @@ static if (gfx_backend == GfxBackend.OpenGL) {
 			}}, gfx.gfx_context);
 	}
 
+// END }}}
+
 	import std.datetime.stopwatch: StopWatch, AutoStart;
 
 	float physics_frame = 1 / physics_fps;
@@ -210,10 +215,13 @@ mainloop:
 		poll_events().dispatch(gfx, state);
 
 
+		//ALSO ALL THIS SHIT THROUGH SOUND
+
 		///////////////////////////////////
 		////  PHYSICS      ////////////////
 		///               /////////////////
 		//               /
+		faux.call("update");
 		if (something_worth_framing) {
 			state.cam_pos += state.velocity.z * state.cam_front;
 			state.cam_pos += state.cam_front.cross(state.cam_up).normalized * state.velocity.x;

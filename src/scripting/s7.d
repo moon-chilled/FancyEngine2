@@ -95,7 +95,7 @@ class S7Script: Scriptlang {
 	void exec(string text) {
 		s7_eval_c_string(s7, text.cstr);
 	}
-	ScriptVar call(string name, ScriptVar[] args) {
+	ScriptVar call(string name, ScriptVar[] args = []) {
 		s7_pointer funcptr = s7_name_to_value(s7, name.cstr); // lisp-1 ftw!
 		s7_pointer argsptr = s7_nil(s7);
 		foreach_reverse(arg; args) {

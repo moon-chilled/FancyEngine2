@@ -47,7 +47,7 @@ interface Scriptlang {
 	void close();
 	ScriptVar eval(string text);
 	void exec(string text); //TODO: remove this.  It's a temporary kludge; even eval shouldn't really be allowed
-	ScriptVar call(string name, ScriptVar[] args);
+	ScriptVar call(string name, ScriptVar[] args = []);
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes);
 	void expose_fun(R, A...)(string name, R delegate(A...) fun);
 	bool can_load(string path);
