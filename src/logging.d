@@ -44,7 +44,9 @@ class FatalAssertionError: Exception {
 void _real_log(LogLevel ll, int line, string file, string func_name, string pretty_func_name, string module_name, string msg) {
 	import std.datetime.systime: Clock;
 
-	string formatted_msg = format("\033[34m%s||%s||%s:%s\033[31m|$\033[0m %s\n", Clock.currTime.toISOExtString(),
+	auto now = Clock.currTime;
+
+	string formatted_msg = format("\033[34m%04d-%02d-%02dT%02d:%02d.%02dm%03d||%s||%s:%s\033[31m|$\033[0m %s\n", now.year, now.month, now.day, now.hour, now.minute, now.second, now.fracSecs.total!"msecs",
 			git_commit_hash,
 			file[7 .. $],
 			line,

@@ -5,3 +5,6 @@ Need:
 - meson, ninja
 - innoextract, 7-zip, wget
 - On unix: assimp, SDL, and OpenAL need to be in the system
+
+
+Copy the 'dist' folder into any game.
