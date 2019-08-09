@@ -28,11 +28,11 @@ ScriptVarType script_typeof(ScriptVar v) {
 			(NoneType) => ScriptVarType.None)();
 }
 ScriptVarType script_typeof(T)() {
-	static if (is(T == long)) {
+	static if (isIntegral!T) {
 		return ScriptVarType.Int;
-	} else static if (is(T == double)) {
+	} else static if (isFloatingPoint!T) {
 		return ScriptVarType.Real;
-	} else static if (is(T == string)) {
+	} else static if (isSomeString!T) {
 		return ScriptVarType.Str;
 	} else static if (is(T == bool)) {
 		return ScriptVarType.Bool;

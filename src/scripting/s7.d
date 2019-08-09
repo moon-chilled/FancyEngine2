@@ -48,6 +48,12 @@ class S7Script: Scriptlang {
 		s7 = s7_init();
 		log("Successfully booted %s", eval("(s7-version)"));
 
+		void real_log(long ll, long line, string file, string func_name, string pretty_func_name, string module_name, string msg) { _real_log(cast(LogLevel)ll, cast(int)line, file, func_name, pretty_func_name, module_name, msg); }
+
+		expose_fun("_real_push_log_msg", &_real_push_log_msg);
+		s7_add_to_load_path(s7, "dist/scheme".cstr);
+		load("stdlib.scm");
+
 		extern (C) s7_pointer s7_funcwrapper(s7_scheme *sc, s7_pointer args) {
 			S7Fun fun = s7funs[s7_integer(s7_car(args))];
 
@@ -112,8 +118,7 @@ class S7Script: Scriptlang {
 		}
 		s7funs[new_index] = S7Fun(name, fun, argtypes);
 
-		import std.string: format;
-		exec(format("(define (%s . args) (apply __s7_funcwrapper (cons %s args)))", name, new_index));
+		exec(strfmt("(define (%s . args) (apply __s7_funcwrapper (cons %s args)))", name, new_index));
 	}
 	void expose_fun(R, A...)(string name, R delegate(A) fun) {
 		ScriptVarType[] signature;
@@ -124,9 +129,11 @@ class S7Script: Scriptlang {
 
 		enum mixin_str = {
 			import std.conv: to;
+			import std.traits: OriginalType;
+
 			string ret = "fun(";
 			static foreach (i; 0 .. A.length) {
-				ret ~= "*args[" ~ i.to!string ~ "].peek!" ~ A[i].stringof ~ ", ";
+				ret ~= "cast(" ~ A[i].stringof ~ ")*args[" ~ i.to!string ~ "].peek!" ~ OriginalType!(A[i]).stringof ~ ", ";
 			}
 			ret ~= ")";
 			return ret;
@@ -144,6 +151,10 @@ class S7Script: Scriptlang {
 						return ScriptVar(mixin(mixin_str));
 					}, signature);
 		}
+	}
+
+	void expose_fun(R, A...)(string name, R function(A) fun) {
+		expose_fun(name, toDelegate(fun));
 	}
 
 	bool can_load(string path) {

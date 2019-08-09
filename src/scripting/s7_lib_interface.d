@@ -27,6 +27,7 @@ s7_pointer s7_cdr(s7_pointer p);
 
 s7_pointer s7_load(s7_scheme *sc, in char *file);
 s7_pointer s7_load_with_environment(s7_scheme *sc, in char *filename, s7_pointer e);
+s7_pointer s7_add_to_load_path(s7_scheme *sc, in char *dir);
 
 bool s7_is_null(s7_scheme *sc, s7_pointer p);
 bool s7_is_boolean(s7_pointer x);

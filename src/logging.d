@@ -3,10 +3,9 @@ import stdlib;
 import cstdlib;
 
 import std.stdio: File, stderr;
-import std.string: format;
 
 
-enum LogLevel {
+enum LogLevel: long {
 	all, // pseudo-loglevel, just so you can set set_min_log_level(LogLevel.all)
 	trace, info, log, warning, error, critical, fatal
 }
@@ -41,21 +40,10 @@ class FatalAssertionError: Exception {
 	mixin basicExceptionCtors;
 }
 
-void _real_log(LogLevel ll, int line, string file, string func_name, string pretty_func_name, string module_name, string msg) {
-	import std.datetime.systime: Clock;
-
-	auto now = Clock.currTime;
-
-	string formatted_msg = format("\033[34m%04d-%02d-%02dT%02d:%02d.%02dm%03d||%s||%s%s%s\033[31m|$\033[0m %s\n", now.year, now.month, now.day, now.hour, now.minute, now.second, now.fracSecs.total!"msecs",
-			git_commit_hash,
-			file[7 .. $],
-			line ? ":" : "",
-			line,
-			msg);
-
+void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 	if (ll >= min_log_level) {
 		foreach (target; log_targets) {
-			target.write(formatted_msg);
+			target.write(str);
 			target.flush();
 		}
 	}
@@ -68,29 +56,47 @@ void _real_log(LogLevel ll, int line, string file, string func_name, string pret
 		new Thread({
 		import windowing.windows;
 
-		string msgformatted_msg = format("An error was encountered!  Please report this to the developers:\n<%s>%s:%s: %s", git_commit_hash, file[7 .. $], line, msg);
 		if (are_libraries_loaded) {
 			import derelict.sdl2.sdl;
-			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", msgformatted_msg.cstr, null);
+			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", basic_str.cstr, null);
 		} else {
 			version(Windows) {
 				import core.sys.windows.winuser: MessageBox;
 				import std.conv: to;
-				MessageBox(null, (msgformatted_msg.to!wstring.dup ~ '\0').ptr, null, 0);
+				MessageBox(null, (basic_str.to!wstring.dup ~ '\0').ptr, null, 0);
 			} else version (OSX) {
 				import std.stdio: writeln;
 				writeln("TODO: print a message on macos");
 			} else {
 				import core.stdc.stdlib;
-				system(cstr("xmessage '" ~ msgformatted_msg ~ "'"));
+				system(cstr("xmessage '" ~ basic_str ~ "'"));
 			}
 		}
 		}).start();
 	}
 
 	if (ll == LogLevel.fatal) {
-		throw new FatalAssertionError("Fatal message logged: " ~ formatted_msg);
+		throw new FatalAssertionError("Fatal message logged: " ~ str);
 	}
+}
+
+
+void _real_log(LogLevel ll, int line, string file, string func_name, string pretty_func_name, string module_name, string msg) {
+	if (ll < min_log_level) return;
+
+	import std.datetime.systime: Clock;
+
+	auto now = Clock.currTime;
+
+	string formatted_msg = strfmt("\033[34m%04d-%02d-%02dT%02d:%02d.%02dm%03d||%s||%s:%s\033[31m|$\033[0m %s\n", now.year, now.month, now.day, now.hour, now.minute, now.second, now.fracSecs.total!"msecs",
+			git_commit_hash,
+			file[7 .. $],
+			line,
+			msg);
+
+	string basicformatted_msg = strfmt("<%s>%s:%s: %s", git_commit_hash, file[7 .. $], line, msg);
+
+	_real_push_log_msg(ll, formatted_msg, basicformatted_msg);
 }
 
 
@@ -99,19 +105,8 @@ template log_funf(LogLevel ll) {
 	void log_funf(int line = __LINE__, string file = __FILE__,
 			string func_name = __FUNCTION__,
 			string pretty_func_name = __PRETTY_FUNCTION__,
-			string module_name = __MODULE__, A...)
-		(string msg, A args) {
-			_real_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
-		}
-
-	void log_funf(int line = __LINE__, string file = __FILE__,
-			string func_name = __FUNCTION__,
-			string pretty_func_name = __PRETTY_FUNCTION__,
-			string module_name = __MODULE__, A...)
-		(bool condition, string msg, A args) {
-			if (condition) {
-				_real_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
-			}
+			string module_name = __MODULE__, A...)(string fmt, A args) {
+			_real_log(ll, line, file, func_name, pretty_func_name, module_name, strfmt(fmt, args));
 		}
 }
 
@@ -131,19 +126,8 @@ template log_funs(LogLevel ll) {
 	void log_funs(int line = __LINE__, string file = __FILE__,
 			string func_name = __FUNCTION__,
 			string pretty_func_name = __PRETTY_FUNCTION__,
-			string module_name = __MODULE__, A...)
-		(A args) if ((args.length > 0 && !is(Unqual!(A[0]) : bool)) || args.length == 0) {
+			string module_name = __MODULE__, A...)(A args) {
 			_real_log(ll, line, file, func_name, pretty_func_name, module_name, text(args));
-		}
-
-	void log_funs(int line = __LINE__, string file = __FILE__,
-			string func_name = __FUNCTION__,
-			string pretty_func_name = __PRETTY_FUNCTION__,
-			string module_name = __MODULE__, A...)
-		(bool condition, A args) {
-			if (condition) {
-				_real_log(ll, line, file, func_name, pretty_func_name, module_name, format(msg, args));
-			}
 		}
 }
 

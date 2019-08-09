@@ -13,7 +13,10 @@ import std.array: split, join;
 import std.container.array: ManArray = Array;
 import std.conv: to, tostr = text, towstr = wtext, todstr = dtext;
 import std.file: fexists = exists;
-import std.math: abs, trunc; //more to follow as needed
+import std.functional: toDelegate;
+import std.math: abs, trunc;
+import std.string: strfmt = format;
+import std.traits: isFloatingPoint, isIntegral, isNumeric, isSomeString;
 import std.variant: Sum = Algebraic;
 
 // TODO: do we want negative values (for invalidation)?  Size_t so it can hold
@@ -77,8 +80,7 @@ void Free(T)(T *val) {
 pragma(inline, true) void memcpy(T, U)(T *dest, const U *src, size_t size) {
 	// complain if T and U are different sizes, unless one is void
 	static if ((T.sizeof != U.sizeof) && !(is(T == void)) && !(is(U == void))) {
-		import std.string: format;
-		pragma(msg, format("Unequal types %s (%s bytes) and %s (%s bytes) being catenated", T.stringof, T.sizeof, U.stringof, U.sizeof));
+		pragma(msg, strfmt("Unequal types %s (%s bytes) and %s (%s bytes) being catenated", T.stringof, T.sizeof, U.stringof, U.sizeof));
 	}
 
 	// has to be static because otherwise bare memcpy call would try to recurse

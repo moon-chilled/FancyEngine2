@@ -52,9 +52,6 @@ void Configure(S...)(string fname, S confs) {
 }
 
 private void _Configure(S)(TOMLDocument toml, string table, string index, S *conf) {
-	import std.traits: isNumeric, isFloatingPoint;
-
-
 	alias T = typeof(*conf);
 
 	static if (is(T == bool)) {

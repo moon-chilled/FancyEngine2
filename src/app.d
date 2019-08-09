@@ -204,8 +204,7 @@ mainloop:
 			time_so_far -= physics_frame;
 			something_worth_framing = true;
 		}
-		import std.string: format;
-		if (something_worth_framing) gfx.set_title(format("%s %.f FPS", title, 1/avg_frame_time));
+		if (something_worth_framing) gfx.set_title(strfmt("%s %.f FPS", title, 1/avg_frame_time));
 
 		if (!paused) frames++;
 		///////////////////////////////////
@@ -378,9 +377,6 @@ static if (build_type == BuildType.Release && build_target == OS.Windows) {
 		// Don't fatal() on assertion errors; fatal has already been
 		// called, we don't want a duplicate error message window
 		} catch (FatalAssertionError) {
-			return 1;
-		} catch (Throwable e) {
-			fatal(e.msg);
 			return 1;
 		}
 	}
