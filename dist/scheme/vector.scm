@@ -21,10 +21,10 @@
                   (- (* x (get-y r)) (* y (get-x r))))))
 
 (define (vec3-dot l r)
-  (vec3-dec l
-            (vec3 (* x (get-x r))
-                  (* y (get-y r))
-                  (* z (get-z r)))))
+  (+
+    (* (get-x l) (get-x r))
+    (* (get-y l) (get-y r))
+    (* (get-z l) (get-z r))))
 
 (define (vec3-normalize vec)
   (vec3-dec vec
@@ -33,3 +33,29 @@
               (vec3 (* x inv-mag)
                     (* y inv-mag)
                     (* z inv-mag)))))
+
+(define (vec3- l . extra)
+  (if (null? extra)
+
+      (vec3- (vec3 0 0 0) l)
+
+      (vec3-dec l (let ((ret (vec3
+                               (- x (get-x (car extra)))
+                               (- y (get-y (car extra)))
+                               (- z (get-z (car extra))))))
+                    (if (null? (cdr extra))
+                        ret
+                        (apply vec3- (cons ret (cdr extra))))))))
+
+(define (vec3+ l . extra)
+  (if (null? extra)
+
+      l
+
+      (vec3-dec l (let ((ret (vec3
+                               (+ x (get-x (car extra)))
+                               (+ y (get-y (car extra)))
+                               (+ z (get-z (car extra))))))
+                    (if (null? (cdr extra))
+                        ret
+                        (apply vec3+ (cons ret (cdr extra))))))))

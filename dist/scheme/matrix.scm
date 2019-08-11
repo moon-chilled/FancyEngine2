@@ -57,12 +57,11 @@
                 0 0 0 1))))
 
 (define (matx-lookat eye target up)
-  (let ((Z (vec3-normalize (vec3- eye target)))
-        (X (vec3-normalize (vec3-cross (vec3- `#(0 0 0) up) Z)))
-        (Y (vec3-cross Z (- x))))
+  (let* ((Z (vec3-normalize (vec3- eye target)))
+         (X (vec3-normalize (vec3-cross (vec3- up) Z)))
+         (Y (vec3-cross Z (vec3- X))))
     (matx
       (- (get-x X)) (- (get-y X)) (- (get-z X)) (vec3-dot X eye)
       (get-x Y) (get-y Y) (get-z Y) (- (vec3-dot Y eye))
       (get-x Z) (get-y Z) (get-z Z) (- (vec3-dot Z eye))
       0 0 0 1)))
-

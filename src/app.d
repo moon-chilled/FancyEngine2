@@ -149,6 +149,7 @@ int real_main(string[] args) {
 	auto m = FancyModel("assets/model_nanosuit/nanosuit.obj");
 
 	ViewState state = ViewState(ws.render_width, ws.render_height, fov);
+	state.projection = *faux.call("matx-perspective", [ScriptVar(to_rad(fov/2.0)), ScriptVar(cast(float)ws.render_width/cast(float)ws.render_height), ScriptVar(cast(float)0.1), ScriptVar(100L)]).peek!mat4f;
 	state.cam_up = *faux.eval("(vec3 0 1 0)").peek!vec3f;
 
 
@@ -226,12 +227,14 @@ mainloop:
 		faux.call("update");
 		if (something_worth_framing) {
 			state.cam_pos += state.velocity.z * state.cam_front;
-			state.cam_pos += state.cam_front.cross(state.cam_up).normalized * state.velocity.x;
+			//state.cam_pos += state.cam_front.cross(state.cam_up).normalized * state.velocity.x;
+			state.cam_pos += faux.call("vec3-cross", [ScriptVar(state.cam_front), ScriptVar(state.cam_up)]).peek!vec3f.normalized * state.velocity.x;
 
 			//if (!paused) state.model = mat4f.identity.rotation(frames*.05, vec3f(0.5, 1, 1));
 			if (!paused) state.model = *faux.call("matx-rotation", [ScriptVar(cast(float)(frames*.05)), ScriptVar(vec3f(0.5, 1, 1))]).peek!mat4f;
 
-			state.view = mat4f.lookAt(state.cam_pos, state.cam_pos + state.cam_front, state.cam_up);
+			//state.view = mat4f.lookAt(state.cam_pos, state.cam_pos + state.cam_front, state.cam_up);
+			state.view = *faux.call("matx-lookat", [ScriptVar(state.cam_pos), ScriptVar(state.cam_pos + state.cam_front), ScriptVar(state.cam_up)]).peek!mat4f;
 		}
 
 
