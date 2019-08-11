@@ -46,6 +46,8 @@ fetch-src() {
 	rmdir s7
 	rm -f $S7_FNAME
 
+	sed -i 's/typedef double s7_double/typedef float s7_double/g' s7.h
+
 	popd
 }
 
