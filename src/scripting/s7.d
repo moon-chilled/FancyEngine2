@@ -1,5 +1,6 @@
 module scripting.s7;
 import stdlib;
+import stdmath;
 import cstdlib;
 
 import scripting;
@@ -15,21 +16,42 @@ private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 	} else if (s7_is_integer(ptr)) {
 		return ScriptVar(s7_integer(ptr));
 	} else if (s7_is_ratio(ptr)) {
-		return ScriptVar(cast(double)s7_numerator(ptr) / cast(double)s7_denominator(ptr));
+		return ScriptVar(cast(float)s7_numerator(ptr) / cast(float)s7_denominator(ptr));
 	} else if (s7_is_real(ptr)) {
 		return ScriptVar(s7_real(ptr));
+	} else if (s7_is_float_vector(ptr)) {
+		if (s7_vector_length(ptr) == 3) {
+			vec3f ret;
+			ret.v[] = s7_float_vector_elements(ptr)[0 .. 3];
+			return ScriptVar(ret);
+		} else if (s7_vector_length(ptr) == 16) {
+			mat4f ret;
+			ret.v = s7_float_vector_elements(ptr)[0 .. 16];
+			return ScriptVar(ret);
+		} else {
+			fatal("Got scheme float vector %s; not of length 3 or 16, so not a vec3 or matrix", s7_float_vector_elements(ptr)[0 .. s7_vector_length(ptr)]);
+			assert(0);
+		}
 	} else {
 		fatal("Got unknown scheme value with value %s", s7_object_to_c_string(s7, ptr).dstr);
 		assert(0);
+	}
+}
+
+private void copy_to_s7_vec(float *dest, float[] src) {
+	foreach (i; 0 .. src.length) {
+		dest[i] = src[i];
 	}
 }
 private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var) {
 	import std.variant: visit;
 	return var.visit!(
 			(long l) => s7_make_integer(s7, l),
-			(double d) => s7_make_real(s7, d),
+			(float d) => s7_make_real(s7, d),
 			(string s) => s7_make_string_with_length(s7, s.ptr, s.length),
 			(bool b) => s7_make_boolean(s7, b),
+			(vec3f v) { s7_pointer ret = s7_make_float_vector(s7, 3, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v); return ret; },
+			(mat4f m) { s7_pointer ret = s7_make_float_vector(s7, 16, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), m.v); return ret; },
 			(None) => s7_nil(s7))();
 }
 
@@ -52,7 +74,7 @@ class S7Script: Scriptlang {
 
 		expose_fun("_real_push_log_msg", &_real_push_log_msg);
 		s7_add_to_load_path(s7, "dist/scheme".cstr);
-		load("stdlib.scm");
+		load("prelude.scm");
 
 		extern (C) s7_pointer s7_funcwrapper(s7_scheme *sc, s7_pointer args) {
 			S7Fun fun = s7funs[s7_integer(s7_car(args))];

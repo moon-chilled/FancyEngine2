@@ -7,7 +7,7 @@
 #include <stdint.h>           /* for int64_t */
 
 typedef int64_t s7_int;       /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
-typedef double s7_double;     /*   similarly for Scheme reals; only double works in C++ */
+typedef float s7_double;     /*   similarly for Scheme reals; only double works in C++ */
 
 #ifndef __cplusplus
 #ifndef _MSC_VER

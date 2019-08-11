@@ -87,6 +87,8 @@ int real_main(string[] args) {
 	load_all_libraries();
 	auto faux = new S7Script();
 	scope (exit) faux.close();
+	faux.load("stdlib.scm");
+
 	faux.load("game.scm");
 	faux.call("init");
 
@@ -147,6 +149,7 @@ int real_main(string[] args) {
 	auto m = FancyModel("assets/model_nanosuit/nanosuit.obj");
 
 	ViewState state = ViewState(ws.render_width, ws.render_height, fov);
+	state.cam_up = *faux.eval("(vec3 0 1 0)").peek!vec3f;
 
 
 	ulong frames;
@@ -225,7 +228,9 @@ mainloop:
 			state.cam_pos += state.velocity.z * state.cam_front;
 			state.cam_pos += state.cam_front.cross(state.cam_up).normalized * state.velocity.x;
 
-			if (!paused) state.model = mat4f.identity.rotation(frames*.05, vec3f(0.5, 1, 1));
+			//if (!paused) state.model = mat4f.identity.rotation(frames*.05, vec3f(0.5, 1, 1));
+			if (!paused) state.model = *faux.call("matx-rotation", [ScriptVar(cast(float)(frames*.05)), ScriptVar(vec3f(0.5, 1, 1))]).peek!mat4f;
+
 			state.view = mat4f.lookAt(state.cam_pos, state.cam_pos + state.cam_front, state.cam_up);
 		}
 
