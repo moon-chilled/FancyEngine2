@@ -298,11 +298,11 @@ shared static this() {
 	}
 }
 
-pragma(inline, true) string tostr(Key key) {
+pragma(inline, true) string key_to_str(Key key) {
 	return key_to_string[key];
 }
 
-pragma(inline, true) Key tokey(string str) {
+pragma(inline, true) Key str_to_key(string str) {
 	Key *ret = str in string_to_key;
 
 	return (ret !is null) ? *ret : Key.unknown;

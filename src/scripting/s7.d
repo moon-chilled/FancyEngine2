@@ -63,16 +63,16 @@ struct S7Fun {
 __gshared S7Fun[] s7funs;
 private __gshared Object s7funslock = new Object;
 
-class S7Script: Scriptlang {
+class S7Script: ScriptlangImpl {
 	s7_scheme *s7;
 
 	this() {
 		s7 = s7_init();
 		log("Successfully booted %s", eval("(s7-version)"));
 
-		void real_log(long ll, long line, string file, string func_name, string pretty_func_name, string module_name, string msg) { _real_log(cast(LogLevel)ll, cast(int)line, file, func_name, pretty_func_name, module_name, msg); }
+		void real_push_log_msg(long ll, string str, string basic_str) { _real_push_log_msg(cast(LogLevel)ll, str, basic_str); }
 
-		expose_fun("_real_push_log_msg", &_real_push_log_msg);
+		super.expose_fun("_real_push_log_msg", &real_push_log_msg);
 		s7_add_to_load_path(s7, "dist/scheme".cstr);
 		load("prelude.scm");
 
@@ -94,7 +94,7 @@ class S7Script: Scriptlang {
 			}
 
 			foreach (i; 0 .. fargs.length) {
-				if (script_typeof(fargs[i]) != fun.argtypes[i]) {
+				if ((script_typeof(fargs[i]) != fun.argtypes[i]) && (fun.argtypes[i] != ScriptVarType.Any)) {
 					bad_call = true;
 					break;
 				}
@@ -111,6 +111,8 @@ class S7Script: Scriptlang {
 
 		s7_define_function(s7, "__s7_funcwrapper", &s7_funcwrapper, 0, 0, true, "—".cstr);
 		// s7, name, function, required args, optional args, rest (variadic?) args, docstring
+
+		super();
 	}
 
 	void close() {
@@ -142,42 +144,6 @@ class S7Script: Scriptlang {
 
 		exec(strfmt("(define (%s . args) (apply __s7_funcwrapper (cons %s args)))", name, new_index));
 	}
-	void expose_fun(R, A...)(string name, R delegate(A) fun) {
-		ScriptVarType[] signature;
-
-		static foreach (T; A) {
-			signature ~= script_typeof!T;
-		}
-
-		enum mixin_str = {
-			import std.conv: to;
-			import std.traits: OriginalType;
-
-			string ret = "fun(";
-			static foreach (i; 0 .. A.length) {
-				ret ~= "cast(" ~ A[i].stringof ~ ")*args[" ~ i.to!string ~ "].peek!" ~ OriginalType!(A[i]).stringof ~ ", ";
-			}
-			ret ~= ")";
-			return ret;
-		}();
-
-		static if (is(R == void)) {
-			expose_fun(name,
-					(ScriptVar[] args) {
-						mixin(mixin_str ~ ";");
-						return None;
-					}, signature);
-		} else {
-			expose_fun(name,
-					(ScriptVar[] args) {
-						return ScriptVar(mixin(mixin_str));
-					}, signature);
-		}
-	}
-
-	void expose_fun(R, A...)(string name, R function(A) fun) {
-		expose_fun(name, toDelegate(fun));
-	}
 
 	bool can_load(string path) {
 		auto s7_obj = s7_eval_c_string_with_environment(s7, (`
@@ -189,5 +155,9 @@ class S7Script: Scriptlang {
 	}
 	void load(string path) {
 		s7_load(s7, path.cstr);
+	}
+
+	bool has_symbol(string name) {
+		return s7_symbol_table_find_name(s7, name.cstr) ? true : false;
 	}
 }

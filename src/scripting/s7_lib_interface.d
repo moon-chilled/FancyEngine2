@@ -29,6 +29,8 @@ s7_pointer s7_load(s7_scheme *sc, in char *file);
 s7_pointer s7_load_with_environment(s7_scheme *sc, in char *filename, s7_pointer e);
 s7_pointer s7_add_to_load_path(s7_scheme *sc, in char *dir);
 
+s7_pointer s7_symbol_table_find_name(s7_scheme *sc, in char *name);
+
 bool s7_is_null(s7_scheme *sc, s7_pointer p);
 bool s7_is_boolean(s7_pointer x);
 bool s7_is_list(s7_scheme *sc, s7_pointer p);

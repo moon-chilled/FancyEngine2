@@ -31,40 +31,32 @@ struct ViewState {
 	mat4f model = mat4f.identity;
 
 	vec3f cam_pos = vec3f(0, 0, 3), cam_target = vec3f(), cam_front = vec3f(0, 0, -1), cam_up = vec3f(0, 1, 0);
-	vec3f velocity = vec3f(0, 0, 0);
+	ScriptVar velocity;
 	float pitch = 0, yaw = -90, roll = 0; // TODO: implement roll
 
 	this(uint width, uint height, uint fov) {
 		// divide fov by 2 because here it's from center of screen to edge, but as specified it's from edge to edge
 		projection = mat4f.perspective(to_rad(fov/2.0), cast(double)width/cast(double)height, 0.1, 100);
+		velocity = ScriptVar(vec3f(0, 0, 0));
 	}
 }
-void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state) {
+void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state, Scriptlang script) {
+	bool have_keyhandler = script.has_symbol("keyhandler");
+
 	foreach (ev; evs) {
 		final switch (ev.type) {
 			case Evtype.Keydown:
 				switch (ev.key) {
 					case Key.space: paused = !paused; break;
 					case Key.enter: grabbed = !grabbed; break;
-					case Key.w: state.velocity.z += SPEED; break;
-					case Key.s: state.velocity.z -= SPEED; break;
-					case Key.a: state.velocity.x -= SPEED; break;
-					case Key.d: state.velocity.x += SPEED; break;
 					default: break;
 				}
 
+				script.call("keyhandler", [ScriptVar(ev.key.key_to_str), ScriptVar(true)]);
 				break;
 			case Evtype.Keyup:
-				switch (ev.key) {
-					case Key.w: state.velocity.z -= SPEED; break;
-					case Key.s: state.velocity.z += SPEED; break;
-					case Key.a: state.velocity.x += SPEED; break;
-					case Key.d: state.velocity.x -= SPEED; break;
-					default: break;
-				}
-
+				script.call("keyhandler", [ScriptVar(ev.key.key_to_str), ScriptVar(false)]);
 				break;
-
 			case Evtype.Mousemove:
 				float sense = 0.3;
 				state.pitch = clamp(state.pitch - ev.mouse.deltay * sense, -89, 89);
@@ -130,7 +122,7 @@ int real_main(string[] args) {
 		case "fullscreen": ws.fullscreen = Fullscreenstate.Fullscreen; break;
 		case "desktop": ws.fullscreen = Fullscreenstate.Desktop; break;
 		case "none": ws.fullscreen = Fullscreenstate.None; break;
-		default: fatal("config error: unable to load option 'fullscreen': invalid value '%s'", fs); assert(0);
+		default: error("config error: unable to load option 'fullscreen': invalid value '%s'.  Defaulting to windowed mode.", fs); ws.fullscreen = Fullscreenstate.None; break;
 	}
 	ws.render_width = ws.win_width;
 	ws.render_height = ws.win_height;
@@ -140,6 +132,7 @@ int real_main(string[] args) {
 	scope GraphicsState gfx = new GraphicsState(ws);
 	scope GorillaAudio audio = new GorillaAudio();
 	auto sound = audio.load_cache_sound("out.ogg");
+	audio.set_volume(sound, master_vol * music_vol);
 	audio.play(sound);
 
 	gfx.grab_mouse();
@@ -151,7 +144,7 @@ int real_main(string[] args) {
 	ViewState state = ViewState(ws.render_width, ws.render_height, fov);
 	state.projection = *faux.call("matx-perspective", [ScriptVar(to_rad(fov/2.0)), ScriptVar(cast(float)ws.render_width/cast(float)ws.render_height), ScriptVar(cast(float)0.1), ScriptVar(100L)]).peek!mat4f;
 	state.cam_up = *faux.eval("(vec3 0 1 0)").peek!vec3f;
-
+	faux.expose_var("velocity", state.velocity);
 
 	ulong frames;
 
@@ -215,7 +208,7 @@ mainloop:
 		////EVENT HANDLING ////////////////
 		///               /////////////////
 		//               /
-		poll_events().dispatch(gfx, state);
+		poll_events().dispatch(gfx, state, faux);
 
 
 		//ALSO ALL THIS SHIT THROUGH SOUND
@@ -226,9 +219,9 @@ mainloop:
 		//               /
 		faux.call("update");
 		if (something_worth_framing) {
-			state.cam_pos += state.velocity.z * state.cam_front;
+			state.cam_pos += state.velocity.peek!vec3f.z * state.cam_front;
 			//state.cam_pos += state.cam_front.cross(state.cam_up).normalized * state.velocity.x;
-			state.cam_pos += faux.call("vec3-cross", [ScriptVar(state.cam_front), ScriptVar(state.cam_up)]).peek!vec3f.normalized * state.velocity.x;
+			state.cam_pos += faux.call("vec3-cross", [ScriptVar(state.cam_front), ScriptVar(state.cam_up)]).peek!vec3f.normalized * state.velocity.peek!vec3f.x;
 
 			//if (!paused) state.model = mat4f.identity.rotation(frames*.05, vec3f(0.5, 1, 1));
 			if (!paused) state.model = *faux.call("matx-rotation", [ScriptVar(cast(float)(frames*.05)), ScriptVar(vec3f(0.5, 1, 1))]).peek!mat4f;
