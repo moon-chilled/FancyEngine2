@@ -3,8 +3,11 @@ Need:
 - D compiler, C compiler
 - git
 - meson, ninja
-- innoextract, 7-zip, wget
+- innoextract, 7-zip, wget (for dependencies)
 - On unix: assimp, SDL, and OpenAL need to be in the system
 
 
-Copy the 'dist' folder into any game.
+Copy/symlink the 'dist' folder into any game.
+
+
+SadIron runs assimp3 as a git submodule, but it doesn't actually work at the moment.  Need to modify assimp.d to look for libassimp.so instead of libassimp.so.3 (and same for dylib).  Not making a new repository that contains that change because it's not a real fix--I'm pretty sure the API changed between assimp3 and 5.  Just, the parts SI uses are close enough that it still works.
