@@ -4,6 +4,7 @@
 [submodule "deps/derelictsdl2"]
 	path = deps/derelictsdl2
 	url = https://github.com/derelictorg/derelictsdl2
+	branch = 3.1
 [submodule "deps/derelictutil"]
 	path = deps/derelictutil
 	url = https://github.com/derelictorg/derelictutil
