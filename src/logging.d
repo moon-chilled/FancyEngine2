@@ -23,7 +23,7 @@ shared static this() {
 private enum git_commit_hash = import(".commit_hash.txt")[0 .. $-1];
 private File[] log_targets;
 private LogLevel min_log_level = LogLevel.info; // logs must be >this to be logged
-private LogLevel msg_log_level = LogLevel.error; // if logs are >this, show a message box
+private LogLevel msg_log_level = LogLevel.warning; // if logs are >this, show a message box
 
 void set_logger_targets(File[] files) {
 	synchronized log_targets = files;

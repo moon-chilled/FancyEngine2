@@ -48,7 +48,13 @@ void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state, Scriptlang sc
 			case Evtype.Keydown:
 				switch (ev.key) {
 					case Key.space: paused = !paused; break;
-					case Key.enter: grabbed = !grabbed; break;
+					case Key.enter:
+							grabbed = !grabbed;
+							if (grabbed)
+								gfx.grab_mouse();
+							else
+								gfx.ungrab_mouse();
+							break;
 					default: break;
 				}
 
@@ -106,6 +112,7 @@ int real_main(string[] args) {
 			"msaa", &aa_samples,
 			"fov", &fov,
 			"physics_fps", &physics_fps,
+			"monitor_index", &monitor_index,
 		Table("Sound"),
 			"master_volume", &master_vol,
 			"music_volume", &music_vol,

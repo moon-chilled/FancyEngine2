@@ -38,8 +38,16 @@ class GraphicsState {
 		win_flags |= auxiliary_sdl_window_flags;
 		set_fullscreen(window.fullscreen == Fullscreenstate.Fullscreen);
 
+		int num_displays = SDL_GetNumVideoDisplays();
+		if (num_displays < 0) {
+			window.monitor_index = 0;
+		} else if (window.monitor_index > num_displays-1) {
+			warning("Tried to open on monitor #%s, but only have %s monitors; defaulting to monitor #1", window.monitor_index+1, num_displays);
+			window.monitor_index = 0;
+		}
+
 		// 0, 0: window position
-		this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, window.win_width, window.win_height, win_flags);
+		this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED_DISPLAY(window.monitor_index), SDL_WINDOWPOS_UNDEFINED_DISPLAY(window.monitor_index), window.win_width, window.win_height, win_flags);
 		if (!this.window) sdlerror;
 
 		// possibly redundant?
@@ -87,6 +95,7 @@ struct WindowSpec {
 	bool borders, vsync;
 	bool wireframe;
 	int aa_samples;
+	uint monitor_index;
 }
 private void sdlerror() {
 	fatal("SDL Error: %s", SDL_GetError().dstr);
