@@ -59,3 +59,8 @@
                     (if (null? (cdr extra))
                         ret
                         (apply vec3+ (cons ret (cdr extra))))))))
+(define (vec3* scalar vec)
+  (vec3-dec vec
+            (vec3 (* x scalar)
+                  (* y scalar)
+                  (* z scalar))))

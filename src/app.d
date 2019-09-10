@@ -25,22 +25,7 @@ bool done;
 bool paused = true;
 bool grabbed;
 
-struct ViewState {
-	mat4f projection;
-	mat4f view = mat4f.identity.translation(vec3f(0, 0, -6));
-	mat4f model = mat4f.identity;
-
-	vec3f cam_pos = vec3f(0, 0, 3), cam_target = vec3f(), cam_front = vec3f(0, 0, -1), cam_up = vec3f(0, 1, 0);
-	ScriptVar velocity;
-	float pitch = 0, yaw = -90, roll = 0; // TODO: implement roll
-
-	this(uint width, uint height, uint fov) {
-		// divide fov by 2 because here it's from center of screen to edge, but as specified it's from edge to edge
-		projection = mat4f.perspective(to_rad(fov/2.0), cast(double)width/cast(double)height, 0.1, 100);
-		velocity = ScriptVar(vec3f(0, 0, 0));
-	}
-}
-void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state, Scriptlang script) {
+void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
 	bool have_keyhandler = script.has_symbol("keyhandler");
 
 	foreach (ev; evs) {
@@ -64,6 +49,7 @@ void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state, Scriptlang sc
 				script.call("keyhandler", [ScriptVar(ev.key.key_to_str), ScriptVar(false)]);
 				break;
 			case Evtype.Mousemove:
+			/+
 				float sense = 0.3;
 				state.pitch = clamp(state.pitch - ev.mouse.deltay * sense, -89, 89);
 				state.yaw += sense * ev.mouse.deltax;
@@ -74,6 +60,7 @@ void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state, Scriptlang sc
 
 
 				break;
+			+/
 			case Evtype.Keypress: break;
 			case Evtype.Quit:
 				done = true;
@@ -93,6 +80,7 @@ int real_main(string[] args) {
 	 */
 	faux.expose_fun("blit", (Shader s, FancyModel m) => s.blit(m));
 	faux.expose_fun("make_fancy_model", (string s) => FancyModel(s));
+	faux.expose_fun("shader_set_mat4f", (Shader s, string name, mat4f mat) => s.set_mat4(name, mat));
 
 	faux.load("stdlib.scm");
 
@@ -151,11 +139,6 @@ int real_main(string[] args) {
 	gfx.grab_mouse();
 
 	// START SECTION TO BE REPLACE BY SCRIPTS {{{
-
-	ViewState state = ViewState(ws.render_width, ws.render_height, fov);
-	state.projection = *faux.call("matx-perspective", [ScriptVar(to_rad(fov/2.0)), ScriptVar(cast(float)ws.render_width/cast(float)ws.render_height), ScriptVar(cast(float)0.1), ScriptVar(100L)]).peek!mat4f;
-	state.cam_up = *faux.eval("(vec3 0 1 0)").peek!vec3f;
-	faux.expose_var("velocity", state.velocity);
 
 	ulong frames;
 
@@ -225,7 +208,7 @@ mainloop:
 		////EVENT HANDLING ////////////////
 		///               /////////////////
 		//               /
-		poll_events().dispatch(gfx, state, faux);
+		poll_events().dispatch(gfx, faux);
 
 
 		//ALSO ALL THIS SHIT THROUGH SOUND
@@ -234,17 +217,9 @@ mainloop:
 		////  PHYSICS      ////////////////
 		///               /////////////////
 		//               /
-		faux.call("update");
 		if (something_worth_framing) {
-			state.cam_pos += state.velocity.peek!vec3f.z * state.cam_front;
-			//state.cam_pos += state.cam_front.cross(state.cam_up).normalized * state.velocity.x;
-			state.cam_pos += faux.call("vec3-cross", [ScriptVar(state.cam_front), ScriptVar(state.cam_up)]).peek!vec3f.normalized * state.velocity.peek!vec3f.x;
-
+			faux.call("update");
 			//if (!paused) state.model = mat4f.identity.rotation(frames*.05, vec3f(0.5, 1, 1));
-			if (!paused) state.model = *faux.call("matx-rotation", [ScriptVar(cast(float)(frames*.05)), ScriptVar(vec3f(0.5, 1, 1))]).peek!mat4f;
-
-			//state.view = mat4f.lookAt(state.cam_pos, state.cam_pos + state.cam_front, state.cam_up);
-			state.view = *faux.call("matx-lookat", [ScriptVar(state.cam_pos), ScriptVar(state.cam_pos + state.cam_front), ScriptVar(state.cam_up)]).peek!mat4f;
 		}
 
 
@@ -254,9 +229,6 @@ mainloop:
 		//               /
 		clear(gfx, 0, 0, 0);
 
-		prog.peek!Shader.set_mat4("projection", state.projection);
-		prog.peek!Shader.set_mat4("model", state.model);
-		prog.peek!Shader.set_mat4("view", state.view);
 		faux.call("graphics-update");
 		gfx.blit();
 

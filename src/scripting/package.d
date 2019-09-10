@@ -108,7 +108,7 @@ interface Scriptlang {
 				static if (is(A[i] == ScriptVar)) {
 					ret ~= "args[" ~ i.to!string ~ "], ";
 				} else {
-					ret ~= "cast(" ~ A[i].stringof ~ ")*args[" ~ i.to!string ~ "].peek!" ~ OriginalType!(A[i]).stringof ~ ", ";
+					ret ~= "cast(" ~ A[i].stringof ~ ")*args[" ~ i.to!string ~ "].peek!(" ~ OriginalType!(A[i]).stringof ~ "), ";
 				}
 			}
 			ret ~= ")";

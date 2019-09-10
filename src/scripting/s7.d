@@ -64,8 +64,8 @@ private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var) {
 			(bool b) => s7_make_boolean(s7, b),
 			(vec3f v) { s7_pointer ret = s7_make_float_vector(s7, 3, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v); return ret; },
 			(mat4f m) { s7_pointer ret = s7_make_float_vector(s7, 16, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), m.v); return ret; },
-			(FancyModel f) => s7_make_c_pointer(s7, new ScriptVar(f)),
-			(Shader s) => s7_make_c_pointer(s7, new ScriptVar(s)),
+			(FancyModel f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
+			(Shader s) => s7_make_c_pointer(s7, New!ScriptVar(s)),
 			(None) => s7_nil(s7))();
 }
 

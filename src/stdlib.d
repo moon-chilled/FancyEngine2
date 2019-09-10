@@ -5,6 +5,7 @@ import std.traits: ReturnType, Unqual;
 
 public:
 import logging;
+import stdmem;
 
 import std.algorithm: contains = canFind;
 import std.algorithm.comparison: min, max, clamp;
@@ -18,10 +19,6 @@ import std.math: abs, trunc;
 import std.string: strfmt = format;
 import std.traits: isFloatingPoint, isIntegral, isNumeric, isSomeString;
 import std.variant: Sum = Algebraic;
-
-// TODO: do we want negative values (for invalidation)?  Size_t so it can hold
-// a pointer?
-alias Handle = Typedef!uint;
 
 // Boring stuff: version flags are passed in as simple booleans, but we really
 // need them to be enums, so they're 1) always defined and 2) always have a
@@ -62,16 +59,6 @@ version (Windows) {
 } else version (linux) {
 	enum build_target = OS.Linux;
 }
-
-T *Alloc(T)(size_t amount = 1) {
-	import core.stdc.stdlib: calloc;
-	return cast(T*)calloc(amount, T.sizeof);
-}
-void Free(T)(T *val) {
-	import core.stdc.stdlib: free;
-	free(val);
-}
-
 
 // !IMPORTANT!
 // size is NOT dependent on T.sizeof
