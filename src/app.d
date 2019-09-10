@@ -83,12 +83,18 @@ void dispatch(Event[] evs, GraphicsState gfx, ref ViewState state, Scriptlang sc
 
 int real_main(string[] args) {
 	load_all_libraries();
-	auto faux = new S7Script();
+	Scriptlang faux = new S7Script();
 	scope (exit) faux.close();
-	faux.load("stdlib.scm");
 
-	faux.load("game.scm");
-	faux.call("init");
+	// TODO: move these somewhere better.
+	/* TODO: perl6 and lisp use kebab-case, but most others use snek_case.
+	 *       Make a system where some symbol (maybe '$') is replaced by a separator
+	 *       (or should I not do that, make snek definitions here, and have each language's stdlib redefine the names?
+	 */
+	faux.expose_fun("blit", (Shader s, FancyModel m) => s.blit(m));
+	faux.expose_fun("make_fancy_model", (string s) => FancyModel(s));
+
+	faux.load("stdlib.scm");
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2—OpenGL";
@@ -146,8 +152,6 @@ int real_main(string[] args) {
 
 	// START SECTION TO BE REPLACE BY SCRIPTS {{{
 
-	auto m = FancyModel("assets/model_nanosuit/nanosuit.obj");
-
 	ViewState state = ViewState(ws.render_width, ws.render_height, fov);
 	state.projection = *faux.call("matx-perspective", [ScriptVar(to_rad(fov/2.0)), ScriptVar(cast(float)ws.render_width/cast(float)ws.render_height), ScriptVar(cast(float)0.1), ScriptVar(100L)]).peek!mat4f;
 	state.cam_up = *faux.eval("(vec3 0 1 0)").peek!vec3f;
@@ -157,7 +161,7 @@ int real_main(string[] args) {
 
 
 static if (gfx_backend == GfxBackend.OpenGL) {
-		Program prog = Program(q{#version 330 core
+		ScriptVar prog = Shader(q{#version 330 core
 			layout (location = 0) in vec3 in_pos;
 			layout (location = 1) in vec3 in_normal;
 			layout (location = 2) in vec2 in_tex_coord;
@@ -186,8 +190,14 @@ static if (gfx_backend == GfxBackend.OpenGL) {
 				FragColor = texture(diffuse0, tex_coord);
 			}}, gfx.gfx_context);
 	}
+	faux.expose_var("shader", prog);
+
 
 // END }}}
+
+
+	faux.load("game.scm");
+	faux.call("init");
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
 
@@ -244,10 +254,10 @@ mainloop:
 		//               /
 		clear(gfx, 0, 0, 0);
 
-		prog.set_mat4("projection", state.projection);
-		prog.set_mat4("model", state.model);
-		prog.set_mat4("view", state.view);
-		prog.blit(m);
+		prog.peek!Shader.set_mat4("projection", state.projection);
+		prog.peek!Shader.set_mat4("model", state.model);
+		prog.peek!Shader.set_mat4("view", state.view);
+		faux.call("graphics-update");
 		gfx.blit();
 
 

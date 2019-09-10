@@ -2,19 +2,33 @@ module scripting;
 import stdlib;
 import stdmath;
 
+import graphics.fancy_model;
+import graphics.shading;
+
 struct NoneType{}
 
 enum ScriptVarType {
+	// normal objects
+	//integral types:
 	Int,
 	Real,
 	Str,
 	Bool,
+
+	// math:
 	Vec3,
 	Matx4,
+
+	// graphics:
+	FancyModel,
+	Shader,
+
+	// special
+	OpaquePtr,
 	None,
 	Any,
 }
-alias ScriptVar = Sum!(long, float, string, bool, vec3f, mat4f, NoneType);
+alias ScriptVar = Sum!(long, float, string, bool, vec3f, mat4f, FancyModel, Shader, void*, NoneType);
 alias ScriptFun = ScriptVar delegate(ScriptVar[] args);
 ScriptVar None;
 shared static this() {
@@ -30,8 +44,15 @@ ScriptVarType script_typeof(ScriptVar v) {
 			(bool b) => ScriptVarType.Bool,
 			(vec3f v) => ScriptVarType.Vec3,
 			(mat4f m) => ScriptVarType.Matx4,
+			(FancyModel f) => ScriptVarType.FancyModel,
+			(Shader s) => ScriptVarType.Shader,
+
+			(void *v) => ScriptVarType.OpaquePtr,
 			(NoneType) => ScriptVarType.None)();
 }
+
+// TODO: should this function use std.traits: Unqual(ified)?
+// (that template removes qualifications from a type like const, shared, etc.
 ScriptVarType script_typeof(T)() {
 	static if (isIntegral!T) {
 		return ScriptVarType.Int;
@@ -45,6 +66,13 @@ ScriptVarType script_typeof(T)() {
 		return ScriptVarType.Vec3;
 	} else static if (is(T == mat4f)) {
 		return ScriptVarType.Matx4;
+	} else static if (is(T == FancyModel)) {
+		return ScriptVarType.FancyModel;
+	} else static if (is(T == Shader)) {
+		return ScriptVarType.Shader;
+
+	} else static if (is(T == void*)) {
+		return ScriptVarType.OpaquePtr;
 	} else static if (is(T == void)) {
 		return ScriptVarType.NoneType;
 	} else static if (is(T == ScriptVar)) {
@@ -60,7 +88,7 @@ interface Scriptlang {
 	void exec(string text); //TODO: remove this.  It's a temporary kludge; even eval shouldn't really be allowed
 	ScriptVar call(string name, ScriptVar[] args = []);
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes);
-	void expose_fun(R, A...)(string name, R delegate(A...) fun);
+
 	final void expose_fun(R, A...)(string name, R function(A...) fun) {
 		expose_fun(name, toDelegate(fun));
 	}

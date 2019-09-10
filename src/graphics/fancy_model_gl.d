@@ -9,7 +9,6 @@ import graphics.tex;
 
 struct FancyModel {
 	@disable this();
-	@disable this(this);
 
 	/// SOA ftw!  Yeah I hate it ;<
 	// Imagine this is:

@@ -21,9 +21,8 @@ void upload_texture(uint pos, Texture tex) {
 	glBindTexture(GL_TEXTURE_2D, tex.tex_id);
 } //TODO: move this to another file
 
-struct Program {
+struct Shader {
 	@disable this();
-	@disable this(this);
 
 	private GLuint program;
 
@@ -86,7 +85,7 @@ struct Program {
 		}
 	}
 
-	~this() {
+	void destruct() {
 		glDeleteProgram(program);
 	}
 }

@@ -6,6 +6,10 @@ import cstdlib;
 import scripting;
 import scripting.s7_lib_interface;
 
+import graphics.fancy_model;
+import graphics.shading;
+
+
 private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 	if (s7_is_null(s7, ptr)) {
 		return None;
@@ -32,6 +36,14 @@ private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 			fatal("Got scheme float vector %s; not of length 3 or 16, so not a vec3 or matrix", s7_float_vector_elements(ptr)[0 .. s7_vector_length(ptr)]);
 			assert(0);
 		}
+	} else if (s7_is_c_pointer(ptr)) {
+		//!WARNING!XXX
+		// this is actually a little bit dangerous
+		// because anything could be in a c pointer
+		// we provide the following assurance
+
+		// Please do not construct c-pointers in s7 unless you are making them from ScriptVars.  Thank you!
+		return *cast(ScriptVar*)s7_c_pointer(ptr);
 	} else {
 		fatal("Got unknown scheme value with value %s", s7_object_to_c_string(s7, ptr).dstr);
 		assert(0);
@@ -52,6 +64,8 @@ private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var) {
 			(bool b) => s7_make_boolean(s7, b),
 			(vec3f v) { s7_pointer ret = s7_make_float_vector(s7, 3, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v); return ret; },
 			(mat4f m) { s7_pointer ret = s7_make_float_vector(s7, 16, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), m.v); return ret; },
+			(FancyModel f) => s7_make_c_pointer(s7, new ScriptVar(f)),
+			(Shader s) => s7_make_c_pointer(s7, new ScriptVar(s)),
 			(None) => s7_nil(s7))();
 }
 
