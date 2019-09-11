@@ -25,8 +25,8 @@
 
                  ,(cons `begin code)))
 
-(define (matx-translate matx trans)
-  (matx-dec matx
+(define (matx-translate matrix trans)
+  (matx-dec matrix
             (vec3-dec trans
                       (matx v0 v1 v2 (+ v3 x)
                             v4 v5 v6 (+ v7 y)
