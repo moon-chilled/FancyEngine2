@@ -73,17 +73,6 @@ int real_main(string[] args) {
 	Scriptlang faux = new S7Script();
 	scope (exit) faux.close();
 
-	// TODO: move these somewhere better.
-	/* TODO: perl6 and lisp use kebab-case, but most others use snek_case.
-	 *       Make a system where some symbol (maybe '$') is replaced by a separator
-	 *       (or should I not do that, make snek definitions here, and have each language's stdlib redefine the names?
-	 */
-	faux.expose_fun("blit", (Shader s, FancyModel m) => s.blit(m));
-	faux.expose_fun("make_fancy_model", (string s) => FancyModel(s));
-	faux.expose_fun("shader_set_mat4f", (Shader s, string name, mat4f mat) => s.set_mat4(name, mat));
-
-	faux.load("stdlib.scm");
-
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2—OpenGL";
 	} else static if (gfx_backend == GfxBackend.Vulkan) {
@@ -138,43 +127,23 @@ int real_main(string[] args) {
 
 	gfx.grab_mouse();
 
+
+	// TODO: move these somewhere better.
+	/* TODO: perl6 and lisp use kebab-case, but most others use snek_case.
+	 *       Make a system where some symbol (maybe '$') is replaced by a separator
+	 *       (or should I not do that, make snek definitions here, and have each language's stdlib redefine the names?
+	 */
+	faux.expose_fun("blit", (Shader s, FancyModel m) => s.blit(m));
+	faux.expose_fun("make_fancy_model", (string s) => FancyModel(s));
+	faux.expose_fun("make_shader", (string path) => Shader(fslurp(path ~ ".vert"), fslurp(path ~ ".frag"), gfx.gfx_context));
+	faux.expose_fun("shader_set_mat4f", (Shader s, string name, mat4f mat) => s.set_mat4(name, mat));
+
+	faux.load("stdlib.scm");
+
+
 	// START SECTION TO BE REPLACE BY SCRIPTS {{{
 
 	ulong frames;
-
-
-static if (gfx_backend == GfxBackend.OpenGL) {
-		ScriptVar prog = Shader(q{#version 330 core
-			layout (location = 0) in vec3 in_pos;
-			layout (location = 1) in vec3 in_normal;
-			layout (location = 2) in vec2 in_tex_coord;
-			layout (location = 3) in vec3 in_tangent;
-			layout (location = 4) in vec3 in_bitangent;
-
-			out vec2 tex_coord;
-
-			uniform mat4 model;
-			uniform mat4 view;
-			uniform mat4 projection;
-
-			void main() {
-				gl_Position = projection * view * model * vec4(in_pos, 1.0);
-				tex_coord = in_tex_coord;
-			}}, q{#version 330 core
-
-			uniform sampler2D diffuse0;
-			uniform sampler2D diffuse1;
-			uniform sampler2D specular0;
-			uniform sampler2D specular1;
-
-			out vec4 FragColor;
-			in vec2 tex_coord;
-			void main() {
-				FragColor = texture(diffuse0, tex_coord);
-			}}, gfx.gfx_context);
-	}
-	faux.expose_var("shader", prog);
-
 
 // END }}}
 

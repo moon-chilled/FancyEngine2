@@ -99,6 +99,13 @@ T[] filter(alias fun, T)(T[] original) {
 }
 
 
+string fslurp(string fname) {
+	import std.file: read;
+	if (!fexists(fname)) {
+		fatal("Unable to read file %s", fname);
+	}
+	return cast(string)read(fname);
+}
 
 __gshared bool are_libraries_loaded;
 
