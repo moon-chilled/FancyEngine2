@@ -291,10 +291,10 @@ private __gshared string[Key] key_to_string;
 private __gshared Key[string] string_to_key;
 shared static this() {
 	static foreach (asstr; [__traits(allMembers, Key)]) {
-		mixin("key_to_string[Key." ~ asstr ~ "] = \"" ~ asstr ~ "\";");
+		mixin("key_to_string[Key." ~ asstr ~ "] = \"" ~ (asstr == "key_delete" ? "delete" : asstr) ~ "\";");
 	}
 	static foreach (asstr; [__traits(allMembers, Key)]) {
-		mixin("string_to_key[\"" ~ asstr ~ "\"] = Key." ~ asstr ~ ";");
+		mixin("string_to_key[\"" ~ (asstr == "key_delete" ? "delete" : asstr) ~ "\"] = Key." ~ asstr ~ ";");
 	}
 }
 

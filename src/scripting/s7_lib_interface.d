@@ -40,6 +40,7 @@ bool s7_is_null(s7_scheme *sc, s7_pointer p);
 bool s7_is_ratio(s7_pointer arg); 
 bool s7_is_real(s7_pointer p);
 bool s7_is_string(s7_pointer p);
+bool s7_is_unspecified(s7_scheme *sc, s7_pointer val);
 
 s7_pointer s7_make_boolean(s7_scheme *sc, bool x);
 s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);

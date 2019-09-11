@@ -11,7 +11,7 @@ import graphics.shading;
 
 
 private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
-	if (s7_is_null(s7, ptr)) {
+	if (s7_is_null(s7, ptr) || s7_is_unspecified(s7, ptr)) {
 		return None;
 	} else if (s7_is_boolean(ptr)) {
 		return ScriptVar(s7_boolean(s7, ptr));

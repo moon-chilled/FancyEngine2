@@ -22,8 +22,6 @@ import config;
 enum SPEED = 0.1;
 
 bool done;
-bool paused = true;
-bool grabbed;
 
 void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
 	bool have_keyhandler = script.has_symbol("keyhandler");
@@ -31,18 +29,6 @@ void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
 	foreach (ev; evs) {
 		final switch (ev.type) {
 			case Evtype.Keydown:
-				switch (ev.key) {
-					case Key.space: paused = !paused; break;
-					case Key.enter:
-							grabbed = !grabbed;
-							if (grabbed)
-								gfx.grab_mouse();
-							else
-								gfx.ungrab_mouse();
-							break;
-					default: break;
-				}
-
 				script.call("keyhandler", [ScriptVar(ev.key.key_to_str), ScriptVar(true)]);
 				break;
 			case Evtype.Keyup:
@@ -137,6 +123,8 @@ int real_main(string[] args) {
 	faux.expose_fun("make_fancy_model", (string s) => FancyModel(s));
 	faux.expose_fun("make_shader", (string path) => Shader(fslurp(path ~ ".vert"), fslurp(path ~ ".frag"), gfx.gfx_context));
 	faux.expose_fun("shader_set_mat4f", (Shader s, string name, mat4f mat) => s.set_mat4(name, mat));
+	faux.expose_fun("grab_mouse", &gfx.grab_mouse);
+	faux.expose_fun("ungrab_mouse", &gfx.ungrab_mouse);
 
 	faux.load("stdlib.scm");
 
@@ -174,7 +162,6 @@ mainloop:
 		}
 		if (something_worth_framing) gfx.set_title(strfmt("%s %.f FPS", title, 1/avg_frame_time));
 
-		if (!paused) frames++;
 		///////////////////////////////////
 		////EVENT HANDLING ////////////////
 		///               /////////////////
@@ -190,7 +177,6 @@ mainloop:
 		//               /
 		if (something_worth_framing) {
 			faux.call("update");
-			//if (!paused) state.model = mat4f.identity.rotation(frames*.05, vec3f(0.5, 1, 1));
 		}
 
 
