@@ -19,8 +19,6 @@ import sound.gorilla;
 
 import config;
 
-enum SPEED = 0.1;
-
 bool done;
 
 void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
@@ -35,18 +33,9 @@ void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
 				script.call("keyhandler", [ScriptVar(ev.key.key_to_str), ScriptVar(false)]);
 				break;
 			case Evtype.Mousemove:
-			/+
-				float sense = 0.3;
-				state.pitch = clamp(state.pitch - ev.mouse.deltay * sense, -89, 89);
-				state.yaw += sense * ev.mouse.deltax;
-				state.cam_front = vec3f(cos(state.pitch.to_rad) * cos(state.yaw.to_rad),
-						sin(state.pitch.to_rad),
-						cos(state.pitch.to_rad) * sin(state.yaw.to_rad));
-				state.cam_front.normalize();
-
-
+				//TODO: remove need for casts
+				script.call("mousehandler", [ScriptVar(cast(long)ev.mouse.deltay), ScriptVar(cast(long)ev.mouse.deltax), ScriptVar(cast(long)ev.mouse.ypos), ScriptVar(cast(long)ev.mouse.xpos)]);
 				break;
-			+/
 			case Evtype.Keypress: break;
 			case Evtype.Quit:
 				done = true;

@@ -1,5 +1,8 @@
 (define (vec3 x y z)
   (float-vector x y z))
+; Generate and (n)ormalize a vector
+(define (vec3n x y z)
+  (vec3-normalize (float-vector x y z)))
 
 (define (get-x vec) (float-vector-ref vec 0))
 (define (get-r vec) (float-vector-ref vec 0))
