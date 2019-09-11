@@ -7,6 +7,7 @@ public:
 import logging;
 import stdmem;
 
+import core.sync.mutex: Mutex;
 import std.algorithm: contains = canFind;
 import std.algorithm.comparison: min, max, clamp;
 import std.algorithm.iteration: reduce = fold, sum;
@@ -108,6 +109,11 @@ string fslurp(string fname) {
 }
 
 __gshared bool are_libraries_loaded;
+__gshared Mutex global_pause_mutex;
+
+__gshared static this() {
+	global_pause_mutex = new Mutex;
+}
 
 void segfault() {
 	// I had a cleverer way of segfaulting once, but can't find it now

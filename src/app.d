@@ -159,6 +159,8 @@ int real_main(string[] args) {
 	float avg_frame_time = physics_frame;
 mainloop:
 	while (!done) {
+		global_pause_mutex.lock();
+
 		bool something_worth_framing;
 
 		float frame_time = sw.peek.total!"nsecs" / 1_000_000_000.0;
@@ -208,6 +210,8 @@ mainloop:
 		// updated, the volume is changed.
 		audio.set_volume(sound, master_vol * music_vol);
 		audio.update(frame_time);
+
+		global_pause_mutex.unlock();
 	}
 
 	return 0;

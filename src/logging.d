@@ -54,6 +54,7 @@ void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 
 
 		new Thread({
+		global_pause_mutex.lock();
 		import windowing.windows;
 
 		if (are_libraries_loaded) {
@@ -72,6 +73,7 @@ void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 				system(cstr("xmessage '" ~ basic_str ~ "'"));
 			}
 		}
+		global_pause_mutex.unlock();
 		}).start();
 	}
 
