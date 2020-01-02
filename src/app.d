@@ -55,7 +55,6 @@ int real_main(string[] args) {
 	}
 	WindowSpec ws;
 	string fs;
-	uint fov;
 	float physics_fps;
 	float master_vol, music_vol, effect_vol;
 
@@ -68,7 +67,6 @@ int real_main(string[] args) {
 			"vsync", &vsync,
 			"wireframe", &wireframe,
 			"msaa", &aa_samples,
-			"fov", &fov,
 			"physics_fps", &physics_fps,
 			"monitor_index", &monitor_index,
 		Table("Sound"),
@@ -115,15 +113,17 @@ int real_main(string[] args) {
 	faux.expose_fun("grab_mouse", &gfx.grab_mouse);
 	faux.expose_fun("ungrab_mouse", &gfx.ungrab_mouse);
 
+	{
+		auto ww = ScriptVar(cast(long)ws.win_width);
+		auto wh = ScriptVar(cast(long)ws.win_height);
+		faux.expose_var("window-width", ww);
+		faux.expose_var("window-height", wh);
+	}
+
 	faux.load("stdlib.scm");
 
 
-	// START SECTION TO BE REPLACE BY SCRIPTS {{{
-
 	ulong frames;
-
-// END }}}
-
 
 	faux.load("game.scm");
 	faux.call("init");

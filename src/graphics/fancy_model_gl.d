@@ -127,7 +127,8 @@ Texture[] load_materials(const aiMaterial *material, aiTextureType type) {
 	foreach (i; 0 .. aiGetMaterialTextureCount(material, type)) {
 		aiString fpath;
 		aiGetMaterialTexture(material, type, i, &fpath);
-		ret ~= new Texture(fpath.data[0 .. fpath.length].idup);
+		//ret ~= new Texture(fpath.data[0 .. fpath.length].idup);
+		ret ~= new Texture(fpath.data.dstr); // aiString.length is corrupted for some reason?
 	}
 
 	return ret;
