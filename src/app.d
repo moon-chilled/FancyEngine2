@@ -195,9 +195,16 @@ mainloop:
 
 void load_all_libraries() {
 	import derelict.sdl2.sdl: DerelictSDL2;
-	import derelict.assimp3.assimp: DerelictASSIMP3;
+	import bindbc.assimp: AssimpSupport, loadAssimp;
 
 	set_lib_path();
+
+	try {
+		DerelictSDL2.load();
+	} catch(Throwable t) {
+		fatal("Error loading SDL2.  '%s'", t.msg);
+	}
+	synchronized is_sdl_loaded = true;
 
 	static if (gfx_backend == GfxBackend.Vulkan) {
 		import erupted.vulkan_lib_loader;
@@ -222,19 +229,21 @@ void load_all_libraries() {
 		}
 	}
 
-	try {
-		DerelictSDL2.load();
-	} catch(Throwable t) {
-		fatal("Error loading SDL2.  '%s'", t.msg);
+	{
+		AssimpSupport status = loadAssimp();
+		final switch (status) {
+			case AssimpSupport.noLibrary:
+				fatal("The assimp library file could not be found.  Have you moved (or removed) the DLL?");
+				assert(0);
+			case AssimpSupport.badLibrary:
+				error("The assimp library file appears to be corrupt.");
+				//assert(0);
+				break;
+			case AssimpSupport.assimp500:
+				// cool
+				break;
+		}
 	}
-
-	try {
-		DerelictASSIMP3.load();
-	} catch (Throwable t) {
-		fatal("Error loading ASSIMP 3.  '%s'", t.msg);
-	}
-
-	synchronized are_libraries_loaded = true;
 }
 
 // really, it returns errno_t, but that's the same as int

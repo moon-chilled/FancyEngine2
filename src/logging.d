@@ -57,7 +57,7 @@ void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 		global_pause_mutex.lock();
 		import windowing.windows;
 
-		if (are_libraries_loaded) {
+		if (is_sdl_loaded) {
 			import derelict.sdl2.sdl;
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", basic_str.cstr, null);
 		} else {

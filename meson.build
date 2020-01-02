@@ -35,7 +35,7 @@ endif
 
 
 fancy_source += ['src/app.d', 'src/asset.d', 'src/config.d', 'src/cstdlib.d', 'src/logging.d', 'src/stdlib.d', 'src/stdmem.d', 'src/stdmath.d', 'src/sound/gorilla.d', 'src/graphics/fancy_model.d', 'src/graphics/model.d', 'src/graphics/shading.d', 'src/graphics/tex.d', 'src/scripting/package.d', 'src/scripting/s7.d', 'src/scripting/s7_lib_interface.d', 'src/windowing/key.d', 'src/windowing/windows.d']
-include_dirs = include_directories('src', 'deps/derelictgl3/source', 'deps/erupted/source', 'deps/derelictsdl2/source', 'deps/derelictutil/source', 'deps/gfm/math', 'deps/derelictassimp3/source', 'deps/toml/src')
+include_dirs = include_directories('src', 'deps/derelictgl3/source', 'deps/erupted/source', 'deps/derelictsdl2/source', 'deps/derelictutil/source', 'deps/gfm/math', 'deps/bindbc-assimp/source', 'deps/bindbc-loader/source', 'deps/toml/src')
 link_args = ['../lib/' + sys + '/gorilla.lib']
 
 

@@ -108,7 +108,7 @@ string fslurp(string fname) {
 	return cast(string)read(fname);
 }
 
-__gshared bool are_libraries_loaded;
+__gshared bool is_sdl_loaded;
 __gshared Mutex global_pause_mutex;
 
 __gshared static this() {

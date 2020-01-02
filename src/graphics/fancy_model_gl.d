@@ -2,7 +2,7 @@ module graphics.fancy_model_gl;
 import stdlib;
 import cstdlib;
 import derelict.opengl;
-import derelict.assimp3.assimp;
+import bindbc.assimp;
 
 import graphics.model;
 import graphics.tex;
@@ -35,7 +35,7 @@ struct FancyModel {
 
 		if (!fpath.fexists) fatal("File '%s' does not exist", fpath);
 
-		const aiScene *scene = aiImportFile(fpath.cstr, aiProcess_Triangulate | aiProcess_OptimizeMeshes | aiProcess_GenNormals | aiProcess_FlipWindingOrder); // default winding order is counter-clockwise, we want clockwise
+		const aiScene *scene = aiImportFile(fpath.cstr, aiPostProcessSteps.Triangulate | aiPostProcessSteps.OptimizeMeshes | aiPostProcessSteps.GenNormals | aiPostProcessSteps.FlipWindingOrder); // default winding order is counter-clockwise, we want clockwise
 		if (!scene || scene.mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene.mRootNode) {
 			fatal("Failed to properly load model '%s'.  AssImp says '%s'", fpath, aiGetErrorString());
 		}
@@ -100,8 +100,8 @@ struct FancyModel {
 				}
 			}
 
-			diffuse_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType_DIFFUSE);
-			specular_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType_SPECULAR);
+			diffuse_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.DIFFUSE);
+			specular_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.SPECULAR);
 
 
 			retarted_meshes ~= Mesh(vertices, [3, 3, 2, 3, 3]);
@@ -126,9 +126,17 @@ Texture[] load_materials(const aiMaterial *material, aiTextureType type) {
 	Texture[] ret;
 	foreach (i; 0 .. aiGetMaterialTextureCount(material, type)) {
 		aiString fpath;
-		aiGetMaterialTexture(material, type, i, &fpath);
-		//ret ~= new Texture(fpath.data[0 .. fpath.length].idup);
-		ret ~= new Texture(fpath.data.dstr); // aiString.length is corrupted for some reason?
+		/+
+		aiTextureMapping tex_mapping;
+		uint uv_index;
+		ai_real blend;
+		aiTextureOp tex_op;
+		aiTextureMapMode mode;
+		uint flags;
+		+/
+
+		aiGetMaterialTexture(material, type, i, &fpath, null, null, null, null, null, null);
+		ret ~= new Texture(fpath.data[0 .. fpath.length].idup);
 	}
 
 	return ret;

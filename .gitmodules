@@ -14,12 +14,15 @@
 [submodule "deps/gfm"]
 	path = deps/gfm
 	url = https://github.com/d-gamedev-team/gfm
-[submodule "deps/derelictassimp3"]
-	path = deps/derelictassimp3
-	url = https://github.com/DerelictOrg/derelictassimp3
 [submodule "deps/toml"]
 	path = deps/toml
 	url = https://github.com/Kripth/toml
 [submodule "deps/erupted"]
 	path = deps/erupted
 	url = https://github.com/ParticlePeter/ErupteD
+[submodule "deps/bindbc-assimp"]
+	path = deps/bindbc-assimp
+	url = https://github.com/Sobaya007/bindbc-assimp
+[submodule "deps/bindbc-loader"]
+	path = deps/bindbc-loader
+	url = https://github.com/BindBC/bindbc-loader
