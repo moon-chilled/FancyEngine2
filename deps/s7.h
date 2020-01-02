@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "8.8"
-#define S7_DATE "30-Jul-19"
+#define S7_VERSION "8.11"
+#define S7_DATE "2020-1-2"
 
 #include <stdint.h>           /* for int64_t */
 
@@ -90,7 +90,7 @@ void s7_set_begin_hook(s7_scheme *sc, void (*hook)(s7_scheme *sc, bool *val));
 s7_pointer s7_eval(s7_scheme *sc, s7_pointer code, s7_pointer e);    /* (eval code e) -- e is the optional environment */
 void s7_provide(s7_scheme *sc, const char *feature);                 /* add feature (as a symbol) to the *features* list */
 bool s7_is_provided(s7_scheme *sc, const char *feature);             /* (provided? feature) */
-
+void s7_repl(s7_scheme *sc);
 
 s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info);
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, s7_int arg_n, s7_pointer arg, const char *descr);
@@ -844,18 +844,14 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
 typedef s7_int s7_Int;
 typedef s7_double s7_Double;
 
-#define s7_is_object                  s7_is_c_object
-#define s7_object_type                s7_c_object_type
-#define s7_object_value               s7_c_object_value
-#define s7_make_object                s7_make_c_object
-#define s7_mark_object                s7_mark
-#define s7_UNSPECIFIED(Sc)            s7_unspecified(Sc)
-#define s7_NIL(Sc)                    s7_nil(Sc)
+#define s7_is_object          s7_is_c_object
+#define s7_object_type        s7_c_object_type
+#define s7_object_value       s7_c_object_value
+#define s7_make_object        s7_make_c_object
+#define s7_mark_object        s7_mark
+#define s7_UNSPECIFIED(Sc)    s7_unspecified(Sc)
+#define s7_NIL(Sc)            s7_nil(Sc)
 #define s7_new_type(Name, Print, GC_Free, Equal, Mark, Ref, Set) s7_new_type_1(s7, Name, Print, GC_Free, Equal, Mark, Ref, Set)
-
-#define s7_gc_stats(Sc, On)           s7_set_gc_stats(Sc, On)
-
-void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
 #endif
 
 
@@ -863,6 +859,8 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
  * 
  *        s7 changes
  *
+ * 2-Nov:     s7_repl.
+ * 30-Oct:    change S7_DATE format, and start updating it to reflect s7.c.
  * 30-Jul:    define-expansion*.
  * 12-Jul:    s7_call_with_catch, s7_load now returns NULL if file not found (rather than raise an error).
  * 8-July:    most-positive-fixnum and most-negative-fixnum moved to *s7*.
