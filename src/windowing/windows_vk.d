@@ -19,7 +19,7 @@ enum auxiliary_sdl_window_flags = SDL_WINDOW_VULKAN;
 
 GfxContext setup_context(SDL_Window *window) {
 	static if (build_type == BuildType.Dev) {
-		string[] desired_validation_layers = ["VK_LAYER_KHRONOS_validation"];
+		string[] desired_validation_layers = [/*"VK_LAYER_KHRONOS_validation"*/];
 	} else {
 		string[] desired_validation_layers = [];
 	}
