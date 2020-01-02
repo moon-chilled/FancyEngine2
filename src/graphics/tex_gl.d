@@ -5,7 +5,7 @@ import cstdlib;
 import asset;
 import windowing.windows_gl;
 
-import derelict.opengl;
+import bindbc.opengl;
 
 private extern (C) ubyte *stbi_load(const(char) *filename, int *x, int *y, int *channels, int desired_channels);
 private extern (C) void stbi_image_free(void *retval_from_stbi_load);

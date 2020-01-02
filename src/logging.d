@@ -58,7 +58,7 @@ void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 		import windowing.windows;
 
 		if (is_sdl_loaded) {
-			import derelict.sdl2.sdl;
+			import bindbc.sdl;
 			SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "ERROR", basic_str.cstr, null);
 		} else {
 			version(Windows) {

@@ -2,8 +2,8 @@ module windowing.windows_gl;
 import stdlib;
 import cstdlib;
 
-import derelict.sdl2.sdl;
-import derelict.opengl;
+import bindbc.sdl;
+import bindbc.opengl;
 
 struct GfxContext {
 	SDL_GLContext gl_context;
@@ -60,10 +60,15 @@ GfxContext setup_context(SDL_Window *window) {
 }
 
 void post_window_setup(SDL_Window *window) {
-	try {
-		DerelictGL3.reload();
-	} catch(Throwable t) {
-		fatal("Error loading OpenGL (mark II).  '%s'", t.msg);
+	GLSupport status = loadOpenGL();
+	if (status == GLSupport.noContext) {
+		fatal("Unable to configure OpenGL context.");
+	} else if (status == GLSupport.noLibrary) {
+		fatal("The OpenGL library file could not be found.  Have you moved (or removed) the DLL?");
+	} else if (status == GLSupport.badLibrary) {
+		fatal("The OpenGL library file appears to be corrupt");
+	} else {
+		info("Successfully booted OpenGL (mark II)");
 	}
 
 	glEnable(GL_DEPTH_TEST);

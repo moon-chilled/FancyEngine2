@@ -1,7 +1,7 @@
 module graphics.fancy_model_gl;
 import stdlib;
 import cstdlib;
-import derelict.opengl;
+import bindbc.opengl;
 import bindbc.assimp;
 
 import graphics.model;

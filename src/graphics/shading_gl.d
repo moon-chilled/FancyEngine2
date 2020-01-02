@@ -8,7 +8,7 @@ import graphics.tex;
 import graphics.model;
 import graphics.fancy_model;
 
-import derelict.opengl;
+import bindbc.opengl;
 
 
 enum ShaderType: GLuint {

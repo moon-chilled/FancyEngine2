@@ -9,7 +9,7 @@ static if (gfx_backend == GfxBackend.Vulkan) {
 	import windowing.windows_gl;
 }
 
-import derelict.sdl2.sdl;
+import bindbc.sdl;
 
 class GraphicsState {
 	GfxContext gfx_context;
@@ -46,8 +46,10 @@ class GraphicsState {
 			window.monitor_index = 0;
 		}
 
-		// 0, 0: window position
-		this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED_DISPLAY(window.monitor_index), SDL_WINDOWPOS_UNDEFINED_DISPLAY(window.monitor_index), window.win_width, window.win_height, win_flags);
+		//this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED_DISPLAY(window.monitor_index), SDL_WINDOWPOS_UNDEFINED_DISPLAY(window.monitor_index), window.win_width, window.win_height, win_flags);
+		// SDL_WINDOWPOS_UNDEFINED_DISPLAY works only at compile-time in bindbc-sdl
+		this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED_MASK | window.monitor_index, SDL_WINDOWPOS_UNDEFINED_MASK | window.monitor_index, window.win_width, window.win_height, win_flags);
+
 		if (!this.window) sdlerror;
 
 		// possibly redundant?
@@ -154,10 +156,10 @@ Event[] poll_events() {
 				}
 				break;
 			case SDL_MOUSEBUTTONDOWN:
-				ret ~= Event(Evtype.Keydown, sdlmousetokey(cast(SDL_D_MouseButton)sdl_ev.button.button));
+				ret ~= Event(Evtype.Keydown, sdlmousetokey(sdl_ev.button.button));
 				break;
 			case SDL_MOUSEBUTTONUP:
-				ret ~= Event(Evtype.Keyup, sdlmousetokey(cast(SDL_D_MouseButton)sdl_ev.button.button));
+				ret ~= Event(Evtype.Keyup, sdlmousetokey(sdl_ev.button.button));
 				break;
 			case SDL_QUIT:
 				ret ~= Event(Evtype.Quit);
@@ -172,7 +174,7 @@ Event[] poll_events() {
 	return ret;
 }
 
-Key sdlmousetokey(SDL_D_MouseButton button) {
+Key sdlmousetokey(ubyte button) {
 	return [SDL_BUTTON_LEFT: Key.mouse1,
 	       SDL_BUTTON_MIDDLE: Key.mouse2,
 	       SDL_BUTTON_RIGHT: Key.mouse3,

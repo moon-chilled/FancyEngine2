@@ -194,19 +194,32 @@ mainloop:
 
 
 void load_all_libraries() {
-	import derelict.sdl2.sdl: DerelictSDL2;
-	import bindbc.assimp: AssimpSupport, loadAssimp;
-
 	set_lib_path();
 
-	try {
-		DerelictSDL2.load();
-	} catch(Throwable t) {
-		fatal("Error loading SDL2.  '%s'", t.msg);
+	{
+		import bindbc.sdl;
+		SDLSupport status = loadSDL();
+		if (status == SDLSupport.noLibrary) {
+			fatal("The SDL library file could not be found.  Have you moved (or removed) the DLL?");
+		}
+
+		if (status == SDLSupport.badLibrary) {
+			fatal("The SDL library file appears to be corrupt");
+		}
+
+		static if (gfx_backend == GfxBackend.Vulkan) {
+			if (status < SDLSupport.sdl208) {
+				fatal("SDL 2.0.8 or better is required for Vulkan support");
+			}
+		}
+
+		SDL_version ver;
+		SDL_GetVersion(&ver);
+		info("Successfully booted SDL %s.%s.%s", ver.major, ver.minor, ver.patch);
 	}
 	synchronized is_sdl_loaded = true;
 
-	static if (gfx_backend == GfxBackend.Vulkan) {
+	static if (gfx_backend == GfxBackend.Vulkan) {{
 		import erupted.vulkan_lib_loader;
 
 		// TODO: figure out a way to get at the error messages.
@@ -220,23 +233,35 @@ void load_all_libraries() {
 		}
 		//TODO: figure out a place to do this
 		//freeVulkanLib();
-	} else static if (gfx_backend == GfxBackend.OpenGL) {
-		import derelict.opengl: DerelictGL3;
-		try {
-			DerelictGL3.load();
-		} catch(Throwable t) {
-			fatal("Error loading OpenGL (mark I).  '%s'", t.msg);
+	}} else static if (gfx_backend == GfxBackend.OpenGL) {{
+		import bindbc.opengl: GLSupport, loadOpenGL;
+		GLSupport status = loadOpenGL();
+
+		// No OpenGL context has been made yet (good!), this is just to
+		// make sure the library is present and set up correctly.
+		if (status != GLSupport.noContext) {
+			if (status == GLSupport.noLibrary) {
+				fatal("The OpenGL library file could not be found.  Have you moved (or removed) the DLL?");
+			} else if (status == GLSupport.badLibrary) {
+				fatal("The OpenGL library file appears to be corrupt");
+			} else {
+				// actually loaded opengl ???
+				fatal("Something is horribly wrong with your system");
+			}
+		} else {
+			info("Successfully booted OpenGL (mark I)");
 		}
-	}
+	}}
 
 	{
+		import bindbc.assimp: AssimpSupport, loadAssimp;
 		AssimpSupport status = loadAssimp();
 		final switch (status) {
 			case AssimpSupport.noLibrary:
 				fatal("The assimp library file could not be found.  Have you moved (or removed) the DLL?");
 				assert(0);
 			case AssimpSupport.badLibrary:
-				error("The assimp library file appears to be corrupt.");
+				error("The assimp library file appears to be corrupt");
 				//assert(0);
 				break;
 			case AssimpSupport.assimp500:
@@ -248,7 +273,7 @@ void load_all_libraries() {
 
 // really, it returns errno_t, but that's the same as int
 version (Windows) private extern (C) int _putenv_s(const char*, const char*);
-// setup LD_LIBRARY_PATH (or equivalent) so derelict (or something else) can find libraries
+// setup LD_LIBRARY_PATH (or equivalent) so bindbc (or something else) can find libraries
 void set_lib_path() {
 	version (Windows) {
 		void set_env(const char *key, const char *value) {

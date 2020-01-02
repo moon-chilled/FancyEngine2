@@ -1,7 +1,7 @@
 module graphics.model_gl;
 import stdlib;
 import cstdlib;
-import derelict.opengl;
+import bindbc.opengl;
 
 struct Mesh {
 	GLuint VAO, VBO;

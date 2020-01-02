@@ -2,7 +2,7 @@ module windowing.windows_vk;
 import stdlib;
 import cstdlib;
 
-import derelict.sdl2.sdl;
+import bindbc.sdl;
 import erupted;
 
 struct GfxContext {

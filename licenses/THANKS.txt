@@ -2,7 +2,7 @@ This program may contain the following external libraries:
 
 * SDL2, licensed under the zlib license.  Source code is available at https://www.libsdl.org/release/SDL2-2.0.9.tar.gz.
 * libogg and libvorbis, licensed under the BSD 3-clause license.  Source available at https://git.xiph.org/?p=ogg.git, https://git.xiph.org/?p=vorbis.git.
-* Derelict utils and wrappers for SDL2, OpenGL, and assimp, licensed under the boost license.  Source code for these is available at https://github.com/DerelictOrg/DerelictUtil, https://github.com/DerelictOrg/DerelictSDL2, https://github.com/DerelictOrg/DerelictGL3, and https://github.com/DerelictOrg/DerelictASSIMP3.
+* BindBC utils and wrappers for SDL2, OpenGL, and Assimp, licensed under the boost license.  Source code for these is available at https://github.com/BindBC/bindbc-loader, https://github.com/BindBC/bindbc-sdl, https://github.com/BindBC/bindbc-opengl, and https://github.com/Sobaya007/bindbc-assimp.
 * GFM, licensed under the unlicense, or public domain.  Source code available at https://github.com/d-gamedev-team/gfm
 * Gorilla audio, licensed under the MIT license, originally maintained by Final Form games.  Original source available at https://code.google.com/archive/p/gorilla-audio/, code for this versiona available at https://github.com/Elronnd/gorilla-audio.
 * assimp, licensed under the 3-clause BSD license.  Source code available at https://github.com/assimp/assimp.

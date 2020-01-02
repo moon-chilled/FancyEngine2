@@ -10,10 +10,11 @@ and Vorbis
 which are truly unique
 
 and
-the Derelict people
+the BindBC people
 for their binding tools
 and their bindings to
 SDL2
+ASSimp
 and OpenGL
 
 and
