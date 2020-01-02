@@ -27,7 +27,7 @@ if get_option('graphics_backend') == 'opengl'
   fancy_source += gl_source
 elif get_option('graphics_backend') == 'vulkan'
   d_versions += '_Gfx_is_vulkan'
-  d_versions += 'SDL_208'
+  d_versions += 'SDL_206'
   fancy_source += ['src/graphics/fancy_model_vk.d', 'src/graphics/model_vk.d', 'src/graphics/shading_vk.d', 'src/graphics/tex_vk.d', 'src/windowing/windows_vk.d']
   fancy_source += ['src/windowing/windows_vk.d']
   fancy_source += vk_source

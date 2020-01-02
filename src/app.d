@@ -208,8 +208,8 @@ void load_all_libraries() {
 		}
 
 		static if (gfx_backend == GfxBackend.Vulkan) {
-			if (status < SDLSupport.sdl208) {
-				fatal("SDL 2.0.8 or better is required for Vulkan support");
+			if (status < SDLSupport.sdl206) {
+				fatal("SDL 2.0.6 or better is required for Vulkan support");
 			}
 		}
 
