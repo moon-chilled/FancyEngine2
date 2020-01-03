@@ -261,9 +261,8 @@ void load_all_libraries() {
 				fatal("The assimp library file could not be found.  Have you moved (or removed) the DLL?");
 				assert(0);
 			case AssimpSupport.badLibrary:
-				error("The assimp library file appears to be corrupt");
-				//assert(0);
-				break;
+				fatal("The assimp library file appears to be corrupt");
+				assert(0);
 			case AssimpSupport.assimp500:
 				// cool
 				break;
