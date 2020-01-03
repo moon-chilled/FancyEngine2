@@ -315,40 +315,51 @@ version (Windows) {
 }
 
 static if (build_type == BuildType.Release && build_target == OS.Windows) {
-	import core.runtime;
-	import core.sys.windows.windows;
-	import std.conv: text;
+import core.runtime;
+import core.sys.windows.windows;
+import std.conv: text;
 
-	extern (Windows) int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-		try {
-			int res;
-			Runtime.initialize();
-			wchar *args_unparsed = GetCommandLine();
-			wchar **wargs = CommandLineToArgvW(args_unparsed, &res);
-			string[] args;
-			foreach (i; 0 .. res) {
-				args ~= wargs[i].dstr.text;
-			}
-			LocalFree(wargs);
-
-			res = real_main(args);
-
-			Runtime.terminate();
-			return res;
-		} catch (Throwable e) {
-			// ditto with (down there) (TODO)
-			fatal(e.msg);
-			return 1;
+extern (Windows) int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+	int ret;
+	try {
+		int res;
+		Runtime.initialize();
+		wchar *args_unparsed = GetCommandLine();
+		wchar **wargs = CommandLineToArgvW(args_unparsed, &res);
+		string[] args;
+		foreach (i; 0 .. res) {
+			args ~= wargs[i].dstr.text;
 		}
+		LocalFree(wargs);
+
+		ret = real_main(args);
+
+		Runtime.terminate();
+	} catch (Throwable e) {
+		// ditto with (down there) (TODO)
+		fatal(e.msg);
+		ret = 1;
 	}
+
+	// ensure no other threads are still running
+	global_pause_mutex.lock();
+
+	return ret;
+}
 } else {
-	int main(string[] args) {
-		try {
-			return real_main(args);
-		// Don't fatal() on assertion errors; fatal has already been
-		// called, we don't want a duplicate error message window
-		} catch (FatalAssertionError) {
-			return 1;
-		}
+int main(string[] args) {
+	int ret;
+	try {
+		ret = real_main(args);
+	// Don't fatal() on assertion errors; fatal has already been
+	// called, we don't want a duplicate error message window
+	} catch (FatalAssertionError) {
+		ret = 1;
 	}
+
+	// ensure no other threads are still running
+	global_pause_mutex.lock();
+
+	return ret;
+}
 }
