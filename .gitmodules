@@ -22,3 +22,6 @@
 [submodule "deps/bindbc-opengl"]
 	path = deps/bindbc-opengl
 	url = https://github.com/BindBC/bindbc-opengl
+[submodule "deps/intel-intrinsics"]
+	path = deps/intel-intrinsics
+	url = https://github.com/AuburnSounds/intel-intrinsics
