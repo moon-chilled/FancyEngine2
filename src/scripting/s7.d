@@ -9,6 +9,8 @@ import scripting.s7_lib_interface;
 import graphics.fancy_model;
 import graphics.shading;
 
+import windowing.key;
+
 
 private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 	if (s7_is_null(s7, ptr) || s7_is_unspecified(s7, ptr)) {
@@ -40,7 +42,7 @@ private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 		//!WARNING!XXX
 		// this is actually a little bit dangerous
 		// because anything could be in a c pointer
-		// we provide the following assurance
+		// we provide the following assurance:
 
 		// Please do not construct c-pointers in s7 unless you are making them from ScriptVars.  Thank you!
 		return *cast(ScriptVar*)s7_c_pointer(ptr);
@@ -55,7 +57,7 @@ private void copy_to_s7_vec(float *dest, float[] src) {
 		dest[i] = src[i];
 	}
 }
-private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var) {
+private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var, s7_pointer[Key] key_to_symtab = null) {
 	import std.variant: visit;
 	return var.visit!(
 			(long l) => s7_make_integer(s7, l),
@@ -66,6 +68,7 @@ private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var) {
 			(mat4f m) { s7_pointer ret = s7_make_float_vector(s7, 16, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), m.v); return ret; },
 			(FancyModel f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
 			(Shader s) => s7_make_c_pointer(s7, New!ScriptVar(s)),
+			(Key k) => key_to_symtab ? key_to_symtab[k] : s7_make_symbol(s7, k.key_to_str.cstr),
 			(None) => s7_nil(s7))();
 }
 
@@ -79,6 +82,7 @@ private __gshared Object s7funslock = new Object;
 
 class S7Script: ScriptlangImpl {
 	s7_scheme *s7;
+	private s7_pointer[Key] key_to_symtab;
 
 	this() {
 		s7 = s7_init();
@@ -127,6 +131,10 @@ class S7Script: ScriptlangImpl {
 		// s7, name, function, required args, optional args, rest (variadic?) args, docstring
 
 		super();
+
+		static foreach (keysym; __traits(allMembers, Key)) {
+			key_to_symtab[mixin("Key." ~ keysym)] = s7_make_symbol(s7, (keysym == "key_delete" ? "delete" : keysym).cstr);
+		}
 	}
 
 	void close() {
@@ -143,7 +151,7 @@ class S7Script: ScriptlangImpl {
 		s7_pointer funcptr = s7_name_to_value(s7, name.cstr); // lisp-1 ftw!
 		s7_pointer argsptr = s7_nil(s7);
 		foreach_reverse(arg; args) {
-			argsptr = s7_cons(s7, script_to_s7(s7, arg), argsptr);
+			argsptr = s7_cons(s7, script_to_s7(s7, arg, key_to_symtab), argsptr);
 		}
 
 		return s7_to_script(s7, s7_call(s7, funcptr, argsptr));

@@ -27,10 +27,10 @@ void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
 	foreach (ev; evs) {
 		final switch (ev.type) {
 			case Evtype.Keydown:
-				script.call("keyhandler", [ScriptVar(ev.key.key_to_str), ScriptVar(true)]);
+				script.call("keyhandler", [ScriptVar(ev.key), ScriptVar(true)]);
 				break;
 			case Evtype.Keyup:
-				script.call("keyhandler", [ScriptVar(ev.key.key_to_str), ScriptVar(false)]);
+				script.call("keyhandler", [ScriptVar(ev.key), ScriptVar(false)]);
 				break;
 			case Evtype.Mousemove:
 				//TODO: remove need for casts

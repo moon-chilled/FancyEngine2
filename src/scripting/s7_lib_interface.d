@@ -61,6 +61,7 @@ const(char) *s7_string(s7_pointer p);
 
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);
 s7_pointer s7_name_to_value(s7_scheme *sc, in char *name);
+s7_pointer s7_make_symbol(s7_scheme *sc, in char *name);
 
 s7_int s7_vector_length(s7_pointer vec);
 s7_double *s7_float_vector_elements(s7_pointer vec);
