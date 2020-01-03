@@ -49,9 +49,9 @@ int real_main(string[] args) {
 	scope (exit) faux.close();
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
-		string title = "FE2—OpenGL";
+		string title = "FE2 - OpenGL";
 	} else static if (gfx_backend == GfxBackend.Vulkan) {
-		string title = "FE2—Vulkan";
+		string title = "FE2 - Vulkan";
 	}
 	WindowSpec ws;
 	string fs, vs;
@@ -101,6 +101,7 @@ int real_main(string[] args) {
 
 	scope GraphicsState gfx = new GraphicsState(ws);
 	scope GorillaAudio audio = new GorillaAudio();
+	//scope (exit) { destroy(gfx); destroy(audio); }
 	auto sound = audio.load_cache_sound("out.ogg");
 	audio.set_volume(sound, master_vol * music_vol);
 	audio.play(sound);
@@ -119,6 +120,7 @@ int real_main(string[] args) {
 	faux.expose_fun("shader_set_mat4f", (Shader s, string name, mat4f mat) => s.set_mat4(name, mat));
 	faux.expose_fun("grab_mouse", &gfx.grab_mouse);
 	faux.expose_fun("ungrab_mouse", &gfx.ungrab_mouse);
+	faux.expose_fun("clear", (float r, float g, float b) => clear(gfx, r, g, b));
 
 	{
 		auto ww = ScriptVar(cast(long)ws.win_width);
@@ -155,8 +157,9 @@ mainloop:
 		if (time_so_far >= physics_frame) {
 			time_so_far -= physics_frame;
 			something_worth_framing = true;
+			frames++;
 		}
-		if (something_worth_framing) gfx.set_title(strfmt("%s %.f FPS", title, 1/avg_frame_time));
+		if (something_worth_framing && !(frames % 5)) gfx.set_title(strfmt("%s %.f FPS (%.2fms)", title, 1/avg_frame_time, avg_frame_time * 1000));
 
 		///////////////////////////////////
 		////EVENT HANDLING ////////////////
@@ -180,8 +183,6 @@ mainloop:
 		////  RENDERING    ////////////////
 		///               /////////////////
 		//               /
-		clear(gfx, 0, 0, 0);
-
 		faux.call("graphics-update");
 		gfx.blit();
 

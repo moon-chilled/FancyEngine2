@@ -19,7 +19,7 @@ class GraphicsState {
 	WindowSpec window_spec;
 
 	this(WindowSpec window) {
-		with (window) info("Opening %s window titled '%s' (%sx%s, render resolution %sx%s), in %s mode, with%s vsync", borders ? "bordered" : "borderless", title, win_width, win_height, render_width, render_height, [Fullscreenstate.None: "windowed", Fullscreenstate.Desktop: "borderless fullscreen", Fullscreenstate.Fullscreen: "true fullscreen"][window.fullscreen], vsync ? "" : "out");
+		with (window) info("Opening %s window titled '%s' (%sx%s, render resolution %sx%s), in %s mode, with%s vsync", borders ? "bordered" : "borderless", title, win_width, win_height, render_width, render_height, [Fullscreenstate.None: "windowed", Fullscreenstate.Desktop: "borderless fullscreen", Fullscreenstate.Fullscreen: "true fullscreen"][window.fullscreen], [Vsyncstate.Off: "out", Vsyncstate.On: "", Vsyncstate.Undefined: " undefined"][vsync]);
 
 		this.window_spec = window;
 

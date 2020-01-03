@@ -33,7 +33,7 @@ elif get_option('graphics_backend') == 'vulkan'
   fancy_source += vk_source
 endif
 
-if get_option('buildtype') == 'debugoptimized'
+if get_option('buildtype') == 'debugoptimized' or get_option('buildtype') == 'debug'
   d_versions += '_Build_type_is_dev'
 elif get_option('buildtype') == 'release'
   d_versions += '_Build_type_is_release'
