@@ -25,3 +25,6 @@
 [submodule "deps/intel-intrinsics"]
 	path = deps/intel-intrinsics
 	url = https://github.com/AuburnSounds/intel-intrinsics
+[submodule "deps/bindbc-lua"]
+	path = deps/bindbc-lua
+	url = https://github.com/BindBC/bindbc-lua

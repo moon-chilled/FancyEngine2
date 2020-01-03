@@ -44,6 +44,18 @@ void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
 }
 
 int real_main(string[] args) {
+	{
+		import bindbc.lua;
+		/+
+		lua_State *l = luaL_newstate();
+		luaL_openlibs(l);
+
+		luaL_loadfile(l, "test.lua");
+		lua_pcall(l, 0, LUA_MULTRET, 0);
+
+		lua_close(l);
+		+/
+	}
 	load_all_libraries();
 	Scriptlang faux = new S7Script();
 	scope (exit) faux.close();

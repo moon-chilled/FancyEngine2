@@ -14,6 +14,9 @@ d_versions = []
 fancy_source = []
 dependencies = []
 
+d_versions += 'LUA_51'
+d_versions += 'BindLua_Static'
+
 subdir('deps')
 
 if get_option('graphics_backend') == 'opengl'
@@ -41,8 +44,8 @@ endif
 
 
 fancy_source += ['src/app.d', 'src/asset.d', 'src/config.d', 'src/cstdlib.d', 'src/logging.d', 'src/stdlib.d', 'src/stdmem.d', 'src/stdmath.d', 'src/sound/gorilla.d', 'src/graphics/fancy_model.d', 'src/graphics/model.d', 'src/graphics/shading.d', 'src/graphics/tex.d', 'src/scripting/package.d', 'src/scripting/s7.d', 'src/scripting/s7_lib_interface.d', 'src/windowing/key.d', 'src/windowing/windows.d']
-include_dirs = include_directories('src', 'deps/bindbc-opengl/source', 'deps/bindbc-sdl/source', 'deps/erupted/source', 'deps/gfm/math', 'deps/bindbc-assimp/source', 'deps/bindbc-loader/source', 'deps/toml/src', 'deps/intel-intrinsics/source')
-link_args = ['../lib/' + sys + '/gorilla.lib']
+include_dirs = include_directories('src', 'deps/bindbc-opengl/source', 'deps/bindbc-sdl/source', 'deps/erupted/source', 'deps/gfm/math', 'deps/bindbc-assimp/source', 'deps/bindbc-loader/source', 'deps/toml/src', 'deps/intel-intrinsics/source', 'deps/bindbc-lua/source/')
+link_args = ['../lib/' + sys + '/gorilla.lib', '../lib/' + sys + '/libluajit-5.1.a']
 
 
 #run_command('git.exe rev-parse --short HEAD > src/.commit.txt')
