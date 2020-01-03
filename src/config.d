@@ -11,14 +11,15 @@ void Configure(S...)(string fname, S confs) {
 	import std.file: read;
 
 	if (!fname.fexists)
-		fatal("File '%s' does not exist", fname);
+		error("Configuration file '%s' does not exist", fname);
 
 	TOMLDocument toml;
 
 	try {
 		toml = parseTOML(cast(string)read(fname));
 	} catch (TOMLParserException e) {
-		fatal("Failed to parse toml file '%s'; '%s'", fname, e.msg);
+		error("Failed to parse toml file '%s'; '%s'", fname, e.msg);
+		return;
 	}
 
 	string table, index;
@@ -27,12 +28,14 @@ void Configure(S...)(string fname, S confs) {
 		static if (is(typeof(conf) == Table)) {
 			table = conf.table_name;
 			if (!(table in toml)) {
-				fatal("Table '%s' not in file %s", table, fname);
+				error("Table '%s' not in file %s", table, fname);
+				throw new Exception("");
 			}
 		} else static if (is(typeof(conf) == string)) {
 			index = conf;
 			if (!(index in toml[table])) {
-				fatal("Index '%s' not in table '%s'", index, table);
+				error("Index '%s' not in table '%s'", index, table);
+				throw new Exception("");
 			}
 		} else {
 			_Configure!(typeof(*conf))(toml, table, index, conf);
@@ -48,7 +51,13 @@ void Configure(S...)(string fname, S confs) {
 		}
 	}
 
-	mmap!proxyfunc(confs);
+	try {
+		mmap!proxyfunc(confs);
+	} catch (Throwable t) {
+		goto earlyreturn;
+	}
+
+earlyreturn:
 }
 
 private void _Configure(S)(TOMLDocument toml, string table, string index, S *conf) {
@@ -61,23 +70,23 @@ private void _Configure(S)(TOMLDocument toml, string table, string index, S *con
 		else if (toml[table][index].type == TOML_TYPE.FALSE)
 			*conf = false;
 		else
-			fatal("%s.%s was expected to be of boolean type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
+			error("%s.%s was expected to be of boolean type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
 	} else static if (is(T == string)) {
 		if (toml[table][index].type == TOML_TYPE.STRING)
 			*conf = toml[table][index].str;
 		else
-			fatal("%s.%s was expected to be of string type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
+			error("%s.%s was expected to be of string type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
 	} else static if (isNumeric!T) {
 		if (toml[table][index].type == TOML_TYPE.INTEGER)
 			// cast is because what if you pass in an int but .integer is a long
 			*conf = cast(T)toml[table][index].integer;
 		else
-			fatal("%s.%s was expected to be of integer type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
+			error("%s.%s was expected to be of integer type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
 	} else static if(isFloatingPoint!T) {
 		if ((toml[table][index].type == TOML_TYPE.FLOAT) || (toml[table][index].type == TOML_TYPE.INTEGER))
 			// ditto— float and double
 			*conf = cast(T)toml[table][index].floating;
 		else
-			fatal("%s.%s was expected to be of numeric type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
+			error("%s.%s was expected to be of numeric type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
 	}
 }

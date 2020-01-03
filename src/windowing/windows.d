@@ -62,7 +62,8 @@ class GraphicsState {
 
 		post_window_setup(this.window);
 
-		set_vsync(window.vsync);
+		if (window.vsync == Vsyncstate.On) set_vsync(true);
+		else if (window.vsync == Vsyncstate.Off) set_vsync(false);
 
 		set_wireframe(window.wireframe);
 	}
@@ -89,13 +90,20 @@ enum Fullscreenstate {
 	Desktop,
 	Fullscreen
 }
+enum Vsyncstate {
+	On,
+	Off,
+	Undefined, // let the driver do whatever it wants
+}
+
 struct WindowSpec {
 	string title;
 	uint win_width, win_height;
 	uint render_width, render_height;
 	Fullscreenstate fullscreen;
-	bool borders, vsync;
+	bool borders;
 	bool wireframe;
+	Vsyncstate vsync;
 	int aa_samples;
 	uint monitor_index;
 }

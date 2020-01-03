@@ -22,3 +22,5 @@
 * Add an asset *system*
   * Add user-defined assets?  (Engine manages *lifetime*/*cache* around file system or memory objects)
 * More sophisticated audio (3d/etc.)
+
+* Multiple error boxes at once cause a crash.  (SDL bug?  Investigate.)

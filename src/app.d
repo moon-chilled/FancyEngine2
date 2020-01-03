@@ -54,7 +54,7 @@ int real_main(string[] args) {
 		string title = "FE2—Vulkan";
 	}
 	WindowSpec ws;
-	string fs;
+	string fs, vs;
 	float physics_fps;
 	float master_vol, music_vol, effect_vol;
 
@@ -64,7 +64,7 @@ int real_main(string[] args) {
 			"height", &win_height,
 			"fullscreen", &fs,
 			"borders", &borders,
-			"vsync", &vsync,
+			"vsync", &vs,
 			"wireframe", &wireframe,
 			"msaa", &aa_samples,
 			"physics_fps", &physics_fps,
@@ -87,6 +87,13 @@ int real_main(string[] args) {
 		case "none": ws.fullscreen = Fullscreenstate.None; break;
 		default: error("config error: unable to load option 'fullscreen': invalid value '%s'.  Defaulting to windowed mode.", fs); ws.fullscreen = Fullscreenstate.None; break;
 	}
+	switch (vs) {
+		case "on": ws.vsync = Vsyncstate.On; break;
+		case "off": ws.vsync = Vsyncstate.Off; break;
+		case "undefined": ws.vsync = Vsyncstate.Undefined; break;
+		default: error("config error: unable to load option 'fullscreen': invalid value '%s'.  Defaulting to let the driver do whatever it wants.", vs); ws.vsync = Vsyncstate.Undefined;
+	}
+
 	ws.render_width = ws.win_width;
 	ws.render_height = ws.win_height;
 	ws.title = title;
