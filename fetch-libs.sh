@@ -5,6 +5,8 @@ SDL2_URL_BASE="https://www.libsdl.org/release/"
 GORILLA_WIN_URL="https://github.com/Elronnd/gorilla-audio/releases/download/v0.3.3/gorilla.lib"
 GORILLA_LIN_URL="https://github.com/Elronnd/gorilla-audio/releases/download/v0.3.3/libgorilla.a"
 ASSIMP_WIN_URL="https://github.com/assimp/assimp/releases/download/v4.1.0/assimp-sdk-4.1.0-setup.exe"
+MOONJIT_LIN_URL="https://em.slashem.me/~elronnd/libluajit-5.1.a"
+MOONJIT_WIN_URL="https://em.slashem.me/~elronnd/libluajit-5.1.dll.a"
 
 S7_FNAME="s7.tar.gz"
 S7_URL="ftp://ccrma-ftp.stanford.edu/pub/Lisp/$S7_FNAME"
@@ -25,6 +27,7 @@ fetch-win() {
 	rm -rf assimp-sdk-4.1.0-setup.exe app
 
 	wget $GORILLA_WIN_URL
+	wget $MOONJIT_WIN_URL -O libluajit-5.1.a
 
 	popd
 }
@@ -33,6 +36,7 @@ fetch-linux() {
 	pushd lib/linux
 
 	wget $GORILLA_LIN_URL -O gorilla.lib
+	wget $MOONJIT_LIN_URL
 
 	popd
 }
@@ -53,6 +57,8 @@ fetch-src() {
 
 rm -rf lib
 mkdir lib
-fetch-win
-fetch-linux
-fetch-src
+fetch-win&
+fetch-linux&
+fetch-src&
+
+wait
