@@ -351,7 +351,6 @@ extern (Windows) int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR
 
 		Runtime.terminate();
 	} catch (Throwable e) {
-		// ditto with (down there) (TODO)
 		fatal(e.msg);
 		ret = 1;
 	}
@@ -368,7 +367,8 @@ int main(string[] args) {
 		ret = real_main(args);
 	// Don't fatal() on assertion errors; fatal has already been
 	// called, we don't want a duplicate error message window
-	} catch (FatalAssertionError) {
+	} catch (Throwable t) {
+		fatal(t.msg);
 		ret = 1;
 	}
 

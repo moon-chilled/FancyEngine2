@@ -35,11 +35,6 @@ void set_msg_log_level(LogLevel ll) {
 	synchronized msg_log_level = ll;
 }
 
-import std.exception: basicExceptionCtors;
-class FatalAssertionError: Exception {
-	mixin basicExceptionCtors;
-}
-
 void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 	if (ll >= min_log_level) {
 		foreach (target; log_targets) {
@@ -78,7 +73,15 @@ void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 	}
 
 	if (ll == LogLevel.fatal) {
-		throw new FatalAssertionError("Fatal message logged: " ~ str);
+		import core.runtime: Runtime;
+		import core.memory: GC;
+		import core.stdc.stdlib: abort; // does this work on windows?
+		GC.collect();
+		GC.collect();
+
+		Runtime.terminate();
+
+		abort();
 	}
 }
 
