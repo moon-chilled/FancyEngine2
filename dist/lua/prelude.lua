@@ -1,3 +1,7 @@
+--package.path = "dist/lua/?.lua"
+
+--math = require "math"
+
 function log(fmt, ...)
 	msg = string.format(fmt, ...)
 	formatted = "<lua>" .. msg .. "\n"

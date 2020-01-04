@@ -45,16 +45,9 @@ void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
 }
 
 int real_main(string[] args) {
-	{
-		Scriptlang fu = new MoonJitScript();
-		fu.load("test.lua");
-		fu.expose_fun("hiii", (long a, long b) { log("Called with %s and %s", a, b); return 7L; });
-
-		log("Have %s", fu.call("addering", [ScriptVar(1L), ScriptVar(8L)]));
-		fu.close();
-	}
 	load_all_libraries();
-	Scriptlang faux = new S7Script();
+	//Scriptlang faux = new S7Script();
+	Scriptlang faux = new MoonJitScript();
 	scope (exit) faux.close();
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
@@ -138,12 +131,12 @@ int real_main(string[] args) {
 		faux.expose_var("window-height", wh);
 	}
 
-	faux.load("stdlib.scm");
+	//faux.load("stdlib.scm");
 
 
 	ulong frames;
 
-	faux.load("game.scm");
+	faux.load("test.lua");
 	faux.call("init");
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
@@ -152,6 +145,8 @@ int real_main(string[] args) {
 	auto sw = StopWatch(AutoStart.yes);
 	float time_so_far = 0;
 	float avg_frame_time = physics_frame;
+	import core.memory: GC;
+	GC.disable;
 mainloop:
 	while (!done) {
 		global_pause_mutex.lock();
@@ -192,7 +187,7 @@ mainloop:
 		////  RENDERING    ////////////////
 		///               /////////////////
 		//               /
-		faux.call("graphics-update");
+		faux.call("graphics_update");
 		gfx.blit();
 
 

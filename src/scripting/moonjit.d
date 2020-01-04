@@ -41,18 +41,38 @@ private ScriptVar lua_popvar(lua_State *l) {
 						// isn't guaranteed to last.
 			ret = ScriptVar(cast(string)str);
 			break;
-		// TODO: vectors/lists
+
+		// cdata
+		// TODO: work for non-mat4f cdata
+		case 10:
+			const(void) *addr = lua_topointer(l, -1);
+			float[] f = new float[16];
+			f[] = (cast(const(float)*)addr)[0 .. 16];
+			ret = mat4f(f);
+			break;
+
+		case LUA_TUSERDATA:
+			void *addr = lua_touserdata(l, -1);
+			size_t len = lua_objlen(l, -1);
+			size_t flen = len/float.sizeof;
+			float[] f = new float[flen];
+			f[] = (cast(float*)addr)[0 .. len/float.sizeof];
+			if (f.length == 3) ret = vec3f(f);
+			else if (f.length == 16) ret = mat4f(f);
+			else fatal("Got unknown userdata with length %s", len);
+			break;
+
 		case LUA_TLIGHTUSERDATA:
 			//!WARNING!XXX
 			// this is actually a little bit dangerous
 			// because anything could be in a c pointer
 			// we provide the following assurance:
 
-			// Please do not construct c-pointers in lua unless you are making them from ScriptVars.  Thank you!
+			// Please do not construct light-user-data in lua unless you are making them from ScriptVars.  Thank you!
 			ret = *cast(ScriptVar*)lua_touserdata(l, -1);
 			break;
 		default:
-			fatal("Got unknown lua value of type %s", lua_typename(l, -1).dstr);
+			fatal("Got unknown lua value of type %s (%s)", lua_typename(l, -1).dstr, lua_type(l, -1));
 			assert(0);
 	}
 	lua_pop(l, 1);
@@ -66,10 +86,10 @@ private void lua_push_var(lua_State *l, ScriptVar var) {
 		(float d) => lua_pushnumber(l, d),
 		(string s) => lua_pushlstring(l, s.ptr, s.length),
 		(bool b) => lua_pushboolean(l, b),
-		(vec3f v) { /*s7_pointer ret = s7_make_float_vector(s7, 3, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v);*/ },
-		(mat4f m) { /*s7_pointer ret = s7_make_float_vector(s7, 16, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), m.v);*/ },
-		(FancyModel f) { /* s7_make_c_pointer(s7, New!ScriptVar(f))*/ },
-		(Shader s) { /*s7_make_c_pointer(s7, New!ScriptVar(s))*/ },
+		(vec3f v) => memcpy(lua_newuserdata(l, float.sizeof * v.v.length), v.v.ptr, float.sizeof * v.v.length),
+		(mat4f m) => memcpy(lua_newuserdata(l, float.sizeof * m.v.length), m.v.ptr, float.sizeof * m.v.length),
+		(FancyModel f) => lua_pushlightuserdata(l, New!ScriptVar(f)),
+		(Shader s) => lua_pushlightuserdata(l, New!ScriptVar(s)),
 		(Key k) => lua_pushlstring(l, k.key_to_str.ptr, k.key_to_str.length),
 		(None) => lua_pushnil(l))();
 }
@@ -86,6 +106,7 @@ class MoonJitScript: ScriptlangImpl {
 		super.expose_fun("_real_push_log_msg", &real_push_log_msg);
 
 		load("dist/lua/prelude.lua");
+		load("dist/lua/math.lua");
 
 		super();
 	}
@@ -95,11 +116,10 @@ class MoonJitScript: ScriptlangImpl {
 	}
 
 	ScriptVar eval(string text) {
-		//return s7_to_script(s7, s7_eval_c_string(s7, text.cstr));
-		return ScriptVar(0L);
+		assert(0);
 	}
 	void exec(string text) {
-		//s7_eval_c_string(s7, text.cstr);
+		assert(0);
 	}
 	ScriptVar call(string name, ScriptVar[] args = []) {
 		lua_getfield(l, LUA_GLOBALSINDEX, name.cstr);
@@ -108,9 +128,6 @@ class MoonJitScript: ScriptlangImpl {
 		}
 		foreach (a; args) { lua_push_var(l, a); }
 		checkerror(lua_pcall(l, cast(int)args.length, 1, 0));
-		//lua_pushinteger(l, 1);
-		//lua_pushinteger(l, 7);
-		//lua_call(l, 2, 1);
 
 		return lua_popvar(l);
 	}
@@ -127,6 +144,11 @@ class MoonJitScript: ScriptlangImpl {
 			ScriptVar[] args;
 			foreach_reverse (t; argtypes) {
 				ScriptVar x = lua_popvar(l);
+				// allow automatic casting of ints to floats, since lua has no ints
+				if ((script_typeof(x) == ScriptVarType.Int) && (t == ScriptVarType.Real)) {
+					x = ScriptVar(cast(float)*x.peek!long);
+				}
+
 				if ((script_typeof(x) != t) && (t != ScriptVarType.Any)) {
 					error("D function was passed arguments '%s' of type %s, but needed type %s", x, script_typeof(x), t);
 					return 0;
@@ -149,20 +171,12 @@ class MoonJitScript: ScriptlangImpl {
 
 		lua_pushcclosure(l, closure_caller, 4);
 		lua_setfield(l, LUA_GLOBALSINDEX, name.cstr);
-		/+
-		+/
 	}
 
 	bool can_load(string path) {
-		/+
-		auto s7_obj = s7_eval_c_string_with_environment(s7, (`
-(catch 'read-error
- (lambda () (load "` ~ path ~ `") #t)
- (lambda args
-  #f))`).cstr, s7_inlet(s7, s7_nil(s7)));
-		return *s7_to_script(s7, s7_obj).peek!bool;
-		+/
-		return false;
+		bool ret = luaL_loadfile(l, path.cstr) == 0;
+		lua_pop(l, 1);
+		return ret;
 	}
 	void load(string path) {
 		checkerror(luaL_loadfile(l, path.cstr));
@@ -170,8 +184,10 @@ class MoonJitScript: ScriptlangImpl {
 	}
 
 	bool has_symbol(string name) {
-		//return s7_symbol_table_find_name(s7, name.cstr) ? true : false;
-		return false;
+		lua_getfield(l, LUA_GLOBALSINDEX, name.cstr);
+		bool ret = !lua_isnoneornil(l, -1);
+		lua_pop(l, 1);
+		return ret;
 	}
 
 	private void checkerror(int res) {
