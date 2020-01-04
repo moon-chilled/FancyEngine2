@@ -19,7 +19,7 @@ import std.functional: toDelegate;
 import std.math: abs, trunc;
 import std.string: strfmt = format;
 import std.traits: isFloatingPoint, isIntegral, isNumeric, isSomeString;
-import std.variant: Sum = Algebraic;
+import std.variant: Sum = Algebraic, This;
 
 // Boring stuff: version flags are passed in as simple booleans, but we really
 // need them to be enums, so they're 1) always defined and 2) always have a

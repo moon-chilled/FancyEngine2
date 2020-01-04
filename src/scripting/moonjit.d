@@ -21,7 +21,7 @@ private ScriptVar lua_popvar(lua_State *l) {
 	} else if (lua_isstring(l, -1)) {
 		size_t len;
 		const(char) *pstr = lua_tolstring(l, -1, &len);
-		char[] str;
+		char[] str = new char[len];
 		str[] = pstr[0 .. len];	// copy because the memory we get from lua
 					// isn't guaranteed to last.
 		ret = ScriptVar(cast(string)str);
@@ -65,21 +65,13 @@ private void lua_push_var(lua_State *l, ScriptVar var) {
 		(None) => lua_pushnil(l))();
 }
 
-struct S7Fun {
-	string name;
-	ScriptFun fun;
-	ScriptVarType[] argtypes;
-}
-__gshared S7Fun[] s7funs;
-private __gshared Object s7funslock = new Object;
-
 class MoonJitScript: ScriptlangImpl {
 	lua_State *l;
 
 	this() {
 		l = luaL_newstate();
 		luaL_openlibs(l);
-		log("Successfully booted %s", eval("(s7-version)"));
+		log("Booted LuaJIT");
 
 		/+
 		void real_push_log_msg(long ll, string str, string basic_str) { _real_push_log_msg(cast(LogLevel)ll, str, basic_str); }
@@ -106,16 +98,17 @@ class MoonJitScript: ScriptlangImpl {
 		//s7_eval_c_string(s7, text.cstr);
 	}
 	ScriptVar call(string name, ScriptVar[] args = []) {
-		/+
-		s7_pointer funcptr = s7_name_to_value(s7, name.cstr); // lisp-1 ftw!
-		s7_pointer argsptr = s7_nil(s7);
-		foreach_reverse(arg; args) {
-			argsptr = s7_cons(s7, script_to_s7(s7, arg, key_to_symtab), argsptr);
+		lua_getglobal(l, name.cstr);
+		if (lua_isnoneornil(l, -1)) {
+			fatal("cant get function \"%s\"", name);
 		}
+		foreach (a; args) { lua_push_var(l, a); }
+		lua_call(l, cast(int)args.length, 1);
+		//lua_pushinteger(l, 1);
+		//lua_pushinteger(l, 7);
+		//lua_call(l, 2, 1);
 
-		return s7_to_script(s7, s7_call(s7, funcptr, argsptr));
-		+/
-		return ScriptVar(0L);
+		return lua_popvar(l);
 	}
 
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes) {
@@ -138,14 +131,8 @@ class MoonJitScript: ScriptlangImpl {
 		lua_pushlightuserdata(l, fun.ptr);
 
 		lua_pushcclosure(l, closure_caller, 4);
+		lua_setfield(l, LUA_GLOBALSINDEX, name.cstr);
 		/+
-		long new_index;
-		synchronized (s7funslock) {
-			new_index = s7funs.length++;
-		}
-		s7funs[new_index] = S7Fun(name, fun, argtypes);
-
-		exec(strfmt("(define (%s . args) (apply __s7_funcwrapper (cons %s args)))", name, new_index));
 		+/
 	}
 
@@ -161,9 +148,19 @@ class MoonJitScript: ScriptlangImpl {
 		return false;
 	}
 	void load(string path) {
-		/+
-		s7_load(s7, path.cstr);
-		+/
+		luaL_loadfile(l, path.cstr);
+		int res = lua_pcall(l, 0, 0, 0);
+		if (res == 0) return; // cool
+
+		string err_cat = [LUA_ERRRUN: "runtime error",
+		       		  LUA_ERRMEM: "memory allocation error"].get(res, "unknown error");
+
+		string err_msg;
+
+		if (lua_isstring(l, -1)) err_msg = *lua_popvar(l).peek!string;
+		else err_msg = "unkown error";
+
+		fatal("Lua: %s: %s", err_cat, err_msg);
 	}
 
 	bool has_symbol(string name) {
