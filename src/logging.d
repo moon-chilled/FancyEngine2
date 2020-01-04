@@ -76,8 +76,8 @@ void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 		import core.runtime: Runtime;
 		import core.memory: GC;
 		import core.stdc.stdlib: abort; // does this work on windows?
-		GC.collect();
-		GC.collect();
+		//GC.collect();
+		//GC.collect();
 
 		Runtime.terminate();
 

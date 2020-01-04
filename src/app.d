@@ -48,6 +48,8 @@ int real_main(string[] args) {
 	{
 		Scriptlang fu = new MoonJitScript();
 		fu.load("test.lua");
+		fu.expose_fun("hiii", (long a, long b) { log("Called with %s and %s", a, b); return 7L; });
+
 		log("Have %s", fu.call("addering", [ScriptVar(1L), ScriptVar(8L)]));
 		fu.close();
 	}

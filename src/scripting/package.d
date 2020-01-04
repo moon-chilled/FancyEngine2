@@ -30,7 +30,7 @@ enum ScriptVarType {
 	Any,
 	None,
 }
-alias ScriptVar = Sum!(long, float, string, bool, vec3f, mat4f, FancyModel, Shader, Key, void*, This*, NoneType);
+alias ScriptVar = Sum!(long, float, string, bool, vec3f, mat4f, FancyModel, Shader, Key, void*, NoneType);
 alias ScriptFun = ScriptVar delegate(ScriptVar[] args);
 ScriptVar None;
 shared static this() {
