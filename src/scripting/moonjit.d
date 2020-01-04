@@ -94,6 +94,8 @@ private void lua_push_var(lua_State *l, ScriptVar var) {
 		(None) => lua_pushnil(l))();
 }
 
+private void*[] _dont_gc_delegates;
+
 class MoonJitScript: ScriptlangImpl {
 	lua_State *l;
 
@@ -164,13 +166,18 @@ class MoonJitScript: ScriptlangImpl {
 				return 1;
 			}
 		};
+		ScriptVarType *msig = Alloc!ScriptVarType(argtypes.length);
+		memcpy(msig, argtypes.ptr, argtypes.length * ScriptVarType.sizeof);
+
 		lua_pushinteger(l, argtypes.length);
-		lua_pushlightuserdata(l, argtypes.ptr);
+		lua_pushlightuserdata(l, msig);
 		lua_pushlightuserdata(l, fun.ptr);
 		lua_pushlightuserdata(l, fun.funcptr);
 
 		lua_pushcclosure(l, closure_caller, 4);
 		lua_setfield(l, LUA_GLOBALSINDEX, name.cstr);
+
+		_dont_gc_delegates ~= fun.ptr;
 	}
 
 	bool can_load(string path) {

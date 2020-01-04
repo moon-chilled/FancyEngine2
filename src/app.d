@@ -145,8 +145,6 @@ int real_main(string[] args) {
 	auto sw = StopWatch(AutoStart.yes);
 	float time_so_far = 0;
 	float avg_frame_time = physics_frame;
-	import core.memory: GC;
-	GC.disable;
 mainloop:
 	while (!done) {
 		global_pause_mutex.lock();
