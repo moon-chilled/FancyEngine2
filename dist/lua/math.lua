@@ -49,9 +49,12 @@ vec3f = ffi.metatype("struct vec3", {
 
 		cross = function(s, o)
 			ret = ffi.new("struct vec3")
+
 			ret.v[0] = s.v[1]*o.v[2] - s.v[2]*o.v[1]
+
 			ret.v[1] = s.v[2]*o.v[0] - s.v[0]*o.v[2]
-			ret.v[2] = s.v[0]*r.v[1] - s.v[1]*o.v[0]
+
+			ret.v[2] = s.v[0]*o.v[1] - s.v[1]*o.v[0]
 
 			return ret
 		end,
