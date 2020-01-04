@@ -65,7 +65,7 @@ void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 				writeln("TODO: print a message on macos");
 			} else {
 				import core.stdc.stdlib;
-				system(cstr("xmessage '" ~ basic_str ~ "'"));
+				system(cstr(`xmessage "` ~ basic_str.replace(`\`, `\\`).replace(`"`, `\"`) ~ `"`));
 			}
 		}
 		global_pause_mutex.unlock();

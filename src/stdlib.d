@@ -11,7 +11,7 @@ import core.sync.mutex: Mutex;
 import std.algorithm: contains = canFind;
 import std.algorithm.comparison: min, max, clamp;
 import std.algorithm.iteration: reduce = fold, sum;
-import std.array: split, join;
+import std.array: split, join, replace;
 import std.container.array: ManArray = Array;
 import std.conv: to, tostr = text, towstr = wtext, todstr = dtext;
 import std.file: fexists = exists;
