@@ -10,8 +10,8 @@ enum LogLevel: long {
 	trace, info, log, warning, error, critical, fatal
 }
 
-shared static this() {
-	static if (build_type == BuildType.Release) {
+static this() {
+	if (build_type == BuildType.Release) {
 		import std.datetime.systime: Clock;
 		set_logger_targets([File("fancy_log_" ~ Clock.currTime.toISOString ~ ".txt", "w")]);
 	} else {
@@ -50,7 +50,6 @@ void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 
 		new Thread({
 		global_pause_mutex.lock();
-		import windowing.windows;
 
 		if (is_sdl_loaded) {
 			import bindbc.sdl;

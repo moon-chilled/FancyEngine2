@@ -14,7 +14,7 @@ struct FancyModel {
 	// Imagine this is:
 	/*
 	 * struct FancyMesh {
-	 * 	Mesh retarted_mesh;
+	 * 	Mesh stupid_mesh;
 	 * 	Texture[] textures;
 	 *	uint[] indices;
 	 * }
@@ -24,7 +24,7 @@ struct FancyModel {
 	 *  //||\
 	 * ///||\\
 	 *///alas\\
-	Mesh[] retarted_meshes;
+	Mesh[] stupid_meshes;
 	Texture[][] meta_diffuse_textures;
 	Texture[][] meta_specular_textures;
 	uint[][] meta_indices;
@@ -45,9 +45,9 @@ struct FancyModel {
 		load_meshes(scene.mRootNode, scene);
 		chdir(cwd);
 
-		assert (retarted_meshes.length == meta_diffuse_textures.length && meta_diffuse_textures.length == meta_specular_textures.length && meta_specular_textures.length == meta_indices.length);
+		assert (stupid_meshes.length == meta_diffuse_textures.length && meta_diffuse_textures.length == meta_specular_textures.length && meta_specular_textures.length == meta_indices.length);
 
-		trace("Loaded model %s with %s meshes", fpath, retarted_meshes.length);
+		trace("Loaded model %s with %s meshes", fpath, stupid_meshes.length);
 	}
 
 	void load_meshes(const aiNode *node, const aiScene *scene) {
@@ -104,7 +104,7 @@ struct FancyModel {
 			specular_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.SPECULAR);
 
 
-			retarted_meshes ~= Mesh(vertices, [3, 3, 2, 3, 3]);
+			stupid_meshes ~= Mesh(vertices, [3, 3, 2, 3, 3]);
 
 			GLuint EBO;
 			glGenBuffers(1, &EBO);

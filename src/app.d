@@ -64,6 +64,8 @@ int real_main(string[] args) {
 		Table("Graphics"),
 			"width", &win_width,
 			"height", &win_height,
+			"render_width", &render_width,
+			"render_height", &render_height,
 			"fullscreen", &fs,
 			"borders", &borders,
 			"vsync", &vs,
@@ -96,8 +98,6 @@ int real_main(string[] args) {
 		default: error("config error: unable to load option 'fullscreen': invalid value '%s'.  Defaulting to let the driver do whatever it wants.", vs); ws.vsync = Vsyncstate.Undefined;
 	}
 
-	ws.render_width = ws.win_width;
-	ws.render_height = ws.win_height;
 	ws.title = title;
 
 

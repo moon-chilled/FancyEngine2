@@ -2,6 +2,8 @@ module windowing.windows;
 import stdlib;
 import cstdlib;
 
+import graphics.framebuffer;
+
 import windowing.key;
 static if (gfx_backend == GfxBackend.Vulkan) {
 	import windowing.windows_vk;
@@ -13,9 +15,8 @@ import bindbc.sdl;
 
 class GraphicsState {
 	GfxContext gfx_context;
-
+	GfxExtra gfx_extra;
 	SDL_Window *window; // maybe I should allow for multiple windows.  But meh
-
 	WindowSpec window_spec;
 
 	this(WindowSpec window) {
@@ -66,6 +67,8 @@ class GraphicsState {
 		else if (window.vsync == Vsyncstate.Off) set_vsync(false);
 
 		set_wireframe(window.wireframe);
+
+		gfx_extra = setup_extra(gfx_context, window);
 	}
 
 	void grab_mouse() {
@@ -112,7 +115,7 @@ private void sdlerror() {
 }
 
 pragma(inline, true) void blit(GraphicsState gs) {
-	gfx_blit(gs.gfx_context, gs.window);
+	gfx_blit(gs.gfx_context, gs.gfx_extra, gs.window);
 }
 pragma(inline, true) void clear(GraphicsState gs, float r, float g, float b) {
 	gfx_clear(gs.gfx_context, r, g, b);

@@ -111,7 +111,7 @@ string fslurp(string fname) {
 __gshared bool is_sdl_loaded;
 __gshared Mutex global_pause_mutex;
 
-__gshared static this() {
+shared static this() {
 	global_pause_mutex = new Mutex;
 }
 

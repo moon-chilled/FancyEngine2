@@ -5,9 +5,21 @@ import cstdlib;
 import bindbc.sdl;
 import bindbc.opengl;
 
+import graphics.framebuffer_gl;
+import graphics.shading_gl;
+import graphics.model_gl;
+import windowing.windows;
+
 struct GfxContext {
 	SDL_GLContext gl_context;
 }
+
+struct GfxExtra {
+	Framebuffer framebuffer;
+	Shader tex_copy;
+	Mesh mesh;
+}
+
 
 
 // in order to do aa properly, we need to make sure we don't ask for more
@@ -56,8 +68,42 @@ GfxContext setup_context(SDL_Window *window) {
 	if (ret.gl_context is null) {
 		fatal("Error creating OpenGL context.  SDL says '%s'", SDL_GetError().dstr);
 	}
+
 	return ret;
 }
+
+GfxExtra setup_extra(GfxContext ctx, WindowSpec ws) {
+	GfxExtra ret = GfxExtra(
+			Framebuffer(ws.render_width, ws.render_height, ctx),
+			Shader(q{#version 330 core
+				layout (location = 0) in vec2 in_pos;
+				layout (location = 1) in vec2 in_tex_coord;
+				out vec2 tex_coord;
+				void main() {
+					gl_Position = vec4(in_pos.x, in_pos.y, 0, 1);
+					tex_coord = in_tex_coord;
+				}
+			 },q{	#version 330 core
+				out vec4 frag_color;
+				in vec2 tex_coord;
+				uniform sampler2D screen_tex;
+				void main() {
+					frag_color = texture(screen_tex, tex_coord);
+				}}, ctx),
+			Mesh([-1,+1, 0,1,
+			      +1,-1, 1,0,
+			      -1,-1, 0,0,
+
+			      +1,-1, 1,0,
+			      -1,+1, 0,1,
+			      +1,+1, 1,1], [2, 2]));
+
+	ret.tex_copy.set_int("screen_tex", GL_TEXTURE0);
+
+	return ret;
+}
+
+
 
 void post_window_setup(SDL_Window *window) {
 	GLSupport status = loadOpenGL();
@@ -75,11 +121,6 @@ void post_window_setup(SDL_Window *window) {
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
-
-	int w, h;
-	SDL_GL_GetDrawableSize(window, &w, &h);
-	glViewport(0, 0, w, h);
-	//TODO: handle render width/height
 
 	info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
 }
@@ -104,8 +145,25 @@ void set_wireframe(bool enabled) {
 	}
 }
 
-pragma(inline, true) void gfx_blit(GfxContext ctx, SDL_Window *win) {
-	SDL_GL_SwapWindow(win);
+pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Window *win) {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDisable(GL_DEPTH_TEST);
+	glClearColor(1, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	int w, h;
+	SDL_GL_GetDrawableSize(win, &w, &h);
+	glViewport(0, 0, w, h);
+
+	glBindTexture(GL_TEXTURE_2D, extra.framebuffer.tex);
+	extra.tex_copy.blit(extra.mesh);
+
+	SDL_GL_SwapWindow(win);	
+
+	glBindFramebuffer(GL_FRAMEBUFFER, extra.framebuffer.fbo);
+	glViewport(0, 0, extra.framebuffer.w, extra.framebuffer.h);
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.1, 0.1, 0.1, 1);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {

@@ -4,9 +4,9 @@ import stdmath;
 import cstdlib;
 
 import windowing.windows_gl;
-import graphics.tex;
-import graphics.model;
-import graphics.fancy_model;
+import graphics.tex_gl;
+import graphics.model_gl;
+import graphics.fancy_model_gl;
 
 import bindbc.opengl;
 
@@ -39,19 +39,25 @@ struct Shader {
 
 		GLint success = GL_TRUE;
 		glGetProgramiv(program, GL_COMPILE_STATUS, &success);
-		if (!success) {
+		{
 			GLint error_len;
 			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &error_len);
-			scope char[] error = new char[error_len];
+			scope char[] error = new char[error_len + 1];
 			glGetProgramInfoLog(program, error_len, null, error.ptr);
-			fatal("error linking program!  OpenGL says '%s'", error);
+			if (!success) {
+				fatal("error linking program!  OpenGL says '%s'", error);
+			} else {
+				if (error_len) info("Program runlog: %s", error);
+			}
 		}
 	}
 
 	void set_int(string id, GLint value) {
+		glUseProgram(program);
 		glUniform1i(glGetUniformLocation(program, id.cstr), value);
 	}
 	void set_mat4(string id, mat4f value) {
+		glUseProgram(program);
 		glUniformMatrix4fv(glGetUniformLocation(program, id.cstr), 1, GL_TRUE, value.v.ptr);
 	}
 
@@ -61,14 +67,16 @@ struct Shader {
 		glBindVertexArray(model.VAO);
 		glDrawArrays(GL_TRIANGLES, 0, model.num_verts);
 		glBindVertexArray(0);
+
+		glUseProgram(0);
 	}
 
 	// yes, I did.  What are you gonna do about it?
-	void blit(const ref FancyModel modél) {
-		foreach (i; 0 .. modél.retarted_meshes.length) {
-			const Mesh mesh = modél.retarted_meshes[i];
-			const Texture[] diffuse_textures = modél.meta_diffuse_textures[i];
-			uint num_indices = cast(uint)modél.meta_indices[i].length;
+	void blit(const ref FancyModel model) {
+		foreach (i; 0 .. model.stupid_meshes.length) {
+			const Mesh mesh = model.stupid_meshes[i];
+			const Texture[] diffuse_textures = model.meta_diffuse_textures[i];
+			uint num_indices = cast(uint)model.meta_indices[i].length;
 
 			foreach (int j; 0 .. cast(int)diffuse_textures.length) {
 				glActiveTexture(GL_TEXTURE0 + j);
@@ -76,8 +84,6 @@ struct Shader {
 				set_int("diffuse" ~ j.tostr, j);
 			}
 
-
-			// TODO: textures
 			glUseProgram(program);
 			glBindVertexArray(mesh.VAO);
 			glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, null);
