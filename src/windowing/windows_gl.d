@@ -150,8 +150,6 @@ void set_wireframe(bool enabled) {
 pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Window *win) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDisable(GL_DEPTH_TEST);
-	glClearColor(1, 0, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	int w, h;
 	SDL_GL_GetDrawableSize(win, &w, &h);
 	glViewport(0, 0, w, h);
@@ -164,8 +162,6 @@ pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Windo
 	glBindFramebuffer(GL_FRAMEBUFFER, extra.framebuffer.fbo);
 	glViewport(0, 0, extra.framebuffer.w, extra.framebuffer.h);
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.1, 0.1, 0.1, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {
