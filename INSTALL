@@ -5,6 +5,11 @@ Need:
 - meson, ninja
 - innoextract, 7-zip, wget (for dependencies)
 - On unix: assimp, SDL, and OpenAL need to be in the system
+- Note: if you build pathfinder from source, make sure to change the following definitions in c/src/lib.rs:
+PF_GL_VERSION_GL3 = 1,
+PF_GL_VERSION_GLES3 = 0,
+PF_ARC_DIRECTION_CW = 1,
+PF_ARC_DIRECTION_CCW = 0
 
 
 Copy/symlink the 'dist' folder into any game.

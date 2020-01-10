@@ -73,10 +73,14 @@ struct Shader {
 
 	// yes, I did.  What are you gonna do about it?
 	void blit(const ref FancyModel model) {
+		glUseProgram(program);
+
 		foreach (i; 0 .. model.stupid_meshes.length) {
 			const Mesh mesh = model.stupid_meshes[i];
 			const Texture[] diffuse_textures = model.meta_diffuse_textures[i];
 			uint num_indices = cast(uint)model.meta_indices[i].length;
+
+			glBindVertexArray(mesh.VAO);
 
 			foreach (int j; 0 .. cast(int)diffuse_textures.length) {
 				glActiveTexture(GL_TEXTURE0 + j);
@@ -84,11 +88,10 @@ struct Shader {
 				set_int("diffuse" ~ j.tostr, j);
 			}
 
-			glUseProgram(program);
-			glBindVertexArray(mesh.VAO);
 			glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, null);
-			glBindVertexArray(0);
 		}
+
+		glBindVertexArray(0);
 	}
 
 	void destruct() {

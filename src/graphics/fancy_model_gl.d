@@ -101,6 +101,7 @@ struct FancyModel {
 			}
 
 			diffuse_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.DIFFUSE);
+			log("Loaded %s diffuse textures", diffuse_textures.length);
 			specular_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.SPECULAR);
 
 
