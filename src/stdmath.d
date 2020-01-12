@@ -1,5 +1,5 @@
 public:
-import gfm.math.vector: vec2f, vec3f, vec4f, dot, cross, reflect, angle_between = angleBetween;
+import gfm.math.vector: vec3f;
 import gfm.math.matrix: mat4f, Matrix;
 import std.math: sin, cos, tan, PI, sqrt;
 
