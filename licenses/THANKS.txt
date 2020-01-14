@@ -7,6 +7,10 @@ This program may contain the following external libraries:
 * Gorilla audio, licensed under the MIT license, originally maintained by Final Form games.  Original source available at https://code.google.com/archive/p/gorilla-audio/, code for this versiona available at https://github.com/Elronnd/gorilla-audio.
 * assimp, licensed under the 3-clause BSD license.  Source code available at https://github.com/assimp/assimp.
 * toml for D, licensed under the MIT license.  Source code available at https://github.com/Kripth/toml.
-* intel-intrinsics, from Auburn sounds, licensed under the Boost license.  Source code available at https://github.com/AuburnSounds/intel-intrinsics.
+* intel-intrinsics, licensed under the Boost license.  Source code available at https://github.com/AuburnSounds/intel-intrinsics.
+* Pathfinder, licensed under the MIT license.  Source code available at https://github.com/servo/pathfinder.
+* HarfBuzz, licensed under the MIT license.  Source code available at https://github.com/harfbuzz/harfbuzz.
+* FreeType, licensed under the FreeType license.  Source code available at http://git.savannah.gnu.org/cgit/freetype/freetype2.git/.
+* Fontconfig, licensed under the MIT license.  Source code available at https://gitlab.freedesktop.org/fontconfig/fontconfig.
 
 Text for the above-mentioned licenses are available in the 'licensing' directory.

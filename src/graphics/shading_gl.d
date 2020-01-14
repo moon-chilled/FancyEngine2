@@ -38,7 +38,7 @@ struct Shader {
 		glDeleteShader(fragment_shader);
 
 		GLint success = GL_TRUE;
-		glGetProgramiv(program, GL_COMPILE_STATUS, &success);
+		glGetProgramiv(program, GL_LINK_STATUS, &success);
 		{
 			GLint error_len;
 			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &error_len);
@@ -71,7 +71,6 @@ struct Shader {
 		glUseProgram(0);
 	}
 
-	// yes, I did.  What are you gonna do about it?
 	void blit(const ref FancyModel model) {
 		glUseProgram(program);
 
@@ -106,14 +105,17 @@ private GLuint compile_shader(ShaderType type, string src) {
 	glShaderSource(ret, 1, [src.cstr].ptr, [cast(int)src.length].ptr);
 	glCompileShader(ret);
 
+	GLint error_len;
+	glGetShaderiv(ret, GL_INFO_LOG_LENGTH, &error_len);
+	scope char[] error = new char[error_len];
+	glGetShaderInfoLog(ret, error_len, null, error.ptr);
+
 	GLint success = GL_FALSE;
 	glGetShaderiv(ret, GL_COMPILE_STATUS, &success);
 	if (!success) {
-		GLint error_len;
-		glGetShaderiv(ret, GL_INFO_LOG_LENGTH, &error_len);
-		scope char[] error = new char[error_len];
-		glGetShaderInfoLog(ret, error_len, null, error.ptr);
 		fatal("error compiling %s shader!  OpenGL says '%s'", type, error);
+	} else if (error_len) {
+		info("OpenGL log while compiling shader: %s", src, error);
 	}
 
 	return ret;

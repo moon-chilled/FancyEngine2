@@ -6,6 +6,7 @@ import windowing.windows;
 import windowing.key;
 
 import graphics.fancy_model;
+import graphics.font;
 import graphics.model;
 import graphics.shading;
 import graphics.tex;
@@ -133,6 +134,7 @@ int real_main(string[] args) {
 
 	//faux.load("stdlib.scm");
 
+	auto fnt = new Font("assets/fonts/dvsm.ttf", 120, gfx.gfx_context);
 
 	ulong frames;
 
@@ -186,6 +188,8 @@ mainloop:
 		///               /////////////////
 		//               /
 		faux.call("graphics_update");
+		fnt.draw_char('b');
+		//fnt.draw_char('V');
 		gfx.blit();
 
 

@@ -98,7 +98,7 @@ GfxExtra setup_extra(GfxContext ctx, WindowSpec ws) {
 			      -1,+1, 0,1,
 			      +1,+1, 1,1], [2, 2]));
 
-	ret.tex_copy.set_int("screen_tex", GL_TEXTURE0);
+	ret.tex_copy.set_int("screen_tex", 0);
 
 	return ret;
 }
@@ -119,10 +119,19 @@ void post_window_setup(SDL_Window *window) {
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
+
+	static if (build_type == BuildType.Dev) {
+		glEnable(GL_DEBUG_OUTPUT);
+		extern (C) void gl_debugmsg(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) nothrow {
+			try { log("OpenGL: '%s'", message.dstr); } catch (Throwable) {}
+		}
+
+		glDebugMessageCallback(&gl_debugmsg, null);
+	}
 
 	info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
 }
@@ -161,7 +170,7 @@ pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Windo
 
 	glBindFramebuffer(GL_FRAMEBUFFER, extra.framebuffer.fbo);
 	glViewport(0, 0, extra.framebuffer.w, extra.framebuffer.h);
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 }
 
 pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {

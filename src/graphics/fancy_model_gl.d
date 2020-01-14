@@ -73,6 +73,7 @@ struct FancyModel {
 				if (mesh.mTextureCoords[0]) {
 					vertices ~= mesh.mTextureCoords[0][i].x;
 					vertices ~= mesh.mTextureCoords[0][i].y;
+					//log("Tex coords (%s, %s)", mesh.mTextureCoords[0][i].x, mesh.mTextureCoords[0][i].y);
 				} else {
 					// for alignment:
 					vertices ~= 0;
@@ -106,6 +107,8 @@ struct FancyModel {
 
 
 			stupid_meshes ~= Mesh(vertices, [3, 3, 2, 3, 3]);
+
+			glBindVertexArray(stupid_meshes[$-1].VAO);
 
 			GLuint EBO;
 			glGenBuffers(1, &EBO);

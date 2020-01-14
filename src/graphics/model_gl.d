@@ -22,11 +22,6 @@ struct Mesh {
 		one_vertex_size = sizes.reduce!((a, b) => a + b);
 		assert(vertices.length % one_vertex_size == 0);
 
-		load_verts(vertices);
-	}
-
-	// TODO: don't hardcode for floats (GL_FLOAT, float.sizeof, etc.)
-	void load_verts(float[] vertices) {
 		uint offset;
 		glBufferData(GL_ARRAY_BUFFER, float.sizeof * vertices.length, vertices.ptr, GL_DYNAMIC_DRAW);
 		// GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW
@@ -38,5 +33,21 @@ struct Mesh {
 		}
 
 		num_verts = cast(uint)vertices.length / one_vertex_size;
+
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+
+	// TODO: don't hardcode for floats (GL_FLOAT, float.sizeof, etc.)
+	void load_verts(float[] vertices) {
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+		glBufferData(GL_ARRAY_BUFFER, float.sizeof * vertices.length, vertices.ptr, GL_DYNAMIC_DRAW);
+
+		num_verts = cast(uint)vertices.length / one_vertex_size;
+
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 }
