@@ -134,7 +134,7 @@ int real_main(string[] args) {
 
 	//faux.load("stdlib.scm");
 
-	auto fnt = new Font("assets/fonts/roboto.ttf", 24, ws.render_width, ws.render_height, gfx.gfx_context);
+	auto fnt = new Font("assets/fonts/dvs.ttf", 24, ws.render_width, ws.render_height, gfx.gfx_context);
 
 	ulong frames;
 
@@ -188,7 +188,7 @@ mainloop:
 		///               /////////////////
 		//               /
 		faux.call("graphics_update");
-		fnt.draw(-.8, .2, "The quick brown fox jumps over the lazy dog.");
+		fnt.draw(-.8, .2, "Hiii");
 		gfx.blit();
 
 

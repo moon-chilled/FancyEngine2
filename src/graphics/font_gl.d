@@ -33,6 +33,10 @@ struct Font {
 
 	GLuint tex_id;
 
+	FT_Library f;
+	FT_Face face;
+	bool have_kerning;
+
 	this(string fpath, uint height, uint scr_w, uint scr_h, GfxContext ctx) {
 		this.height = height;
 		this.screen_width = scr_w;
@@ -40,10 +44,8 @@ struct Font {
 
 		if (!fpath.fexists) fatal("tried to read nonexistent texture '%s'", fpath);
 
-		FT_Library f;
 		if (FT_Init_FreeType(&f)) fatal("Could not initialize FreeType");
 
-		FT_Face face;
 		if (FT_New_Face(f, fpath.cstr, 0, &face)) fatal("FreeType: could not open face from file '%s", fpath);
 
 		// Note: per https://www.freetype.org/freetype2/docs/reference/ft2-base_interface.html#ft_set_pixel_sizes,
@@ -61,9 +63,6 @@ struct Font {
 			atlas_map[c] = char_spec(atlas_width, face.glyph.bitmap.width, face.glyph.bitmap.rows, face.glyph.bitmap_left, face.glyph.bitmap_top, cast(int)face.glyph.advance.x);
 			atlas_width += face.glyph.bitmap.width;
 		}
-
-		FT_Done_Face(face);
-		FT_Done_FreeType(f);
 
 		ubyte *font_bitmap = Alloc!ubyte(atlas_width * height);
 
@@ -97,11 +96,13 @@ struct Font {
 		// dummy value for vertices because it'll be reset each time
 		// two vec2s: position and texture coordinates
 		character_model = Mesh([], [2, 2]);
+		have_kerning = FT_HAS_KERNING(face);
 	}
 
 	void draw(float x, float y, string s) {
 		float[] verts;
 
+		char prev_char = 0;
 		foreach (c; s) {
 			float
 				tex_x0 = (cast(float)atlas_map[c].atlas_offset)/atlas_width,
@@ -119,6 +120,17 @@ struct Font {
 				x1 = x0 + cast(float)atlas_map[c].width / (.5*screen_width),
 				y0 = y - (cast(float)atlas_map[c].height - atlas_map[c].beary) / (.5*screen_height),
 				y1 = y0 + cast(float)atlas_map[c].height / (.5*screen_height);
+
+			if (have_kerning) {
+				FT_Vector kern;
+				FT_Get_Kerning(face, FT_Get_Char_Index(face, prev_char), FT_Get_Char_Index(face, c), 0, &kern);
+				x += kern.x / (64.*.5*screen_width);
+				x0 += kern.x / (64.*.5*screen_width);
+				x1 += kern.x / (64.*.5*screen_width);
+				prev_char = c;
+				//log("Delta %s", kern.x / (64.*.5*screen_width));
+				//log("Delta %s", kern.x);
+			}
 
 			verts ~= [
 					x0,y0, tex_x0,tex_y0,
@@ -141,5 +153,8 @@ struct Font {
 	}
 
 	~this() {
+		FT_Done_Face(face);
+		FT_Done_FreeType(f);
+		glDeleteTextures(1, &tex_id);
 	}
 }
