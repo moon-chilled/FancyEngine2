@@ -1,7 +1,8 @@
 TO DO:::
 - Font rendering
+ - Support kerning everywhere with harfbuzz and https://github.com/DlangGraphicsWG/bindbc-harfbuzz
+- Framebuffer stack
 - Raygui
-- Robustify framebuffer interface based on above
 - C dlls
  - D dlls?
 - Store data in engine, record changes to data, to allow for inversion etc.
@@ -32,3 +33,7 @@ TO DO:::
 * More sophisticated audio (3d/etc.)
 
 * Multiple error boxes at once cause a crash.  (SDL bug?  Investigate.)
+
+- Compile everything statically
+
+- Fix license files
