@@ -4,10 +4,12 @@ import cstdlib;
 
 import std.stdio: File, stderr;
 
+nothrow:
 
 enum LogLevel: long {
 	all, // pseudo-loglevel, just so you can set set_min_log_level(LogLevel.all)
-	trace, info, log, warning, error, critical, fatal
+	trace, info, log, warning, error, critical, fatal,
+	none // also a pseudo loglevel
 }
 
 static this() {
@@ -36,10 +38,16 @@ void set_msg_log_level(LogLevel ll) {
 }
 
 void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
-	if (ll >= min_log_level) {
-		foreach (target; log_targets) {
-			target.write(str);
-			target.flush();
+	if (ll >= min_log_level || min_log_level == LogLevel.all) {
+		foreach (ref target; log_targets) {
+			import std.stdio: StdioException;
+			try {
+				target.write(str);
+				target.flush();
+			} catch (StdioException s) {
+				set_min_log_level(LogLevel.none);
+				fatal("Got stdio exception %s", s.errno);
+			} catch (Throwable) {} // shut up dmd
 		}
 	}
 
@@ -72,13 +80,16 @@ void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 	}
 
 	if (ll == LogLevel.fatal) {
-		import core.runtime: Runtime;
+		import core.runtime;//: Runtime;
 		import core.memory: GC;
 		import core.stdc.stdlib: abort; // does this work on windows?
 		//GC.collect();
 		//GC.collect();
 
-		Runtime.terminate();
+		try {
+			rt_term();
+		} catch (Throwable) {}
+		//Runtime.terminate();
 
 		abort();
 	}

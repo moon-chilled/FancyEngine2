@@ -4,6 +4,8 @@ import cstdlib;
 import stdmath;
 import asset;
 
+nothrow:
+
 version (Windows) {
 	// gorilla wants ldexp, but microsoft doesn't provide it
 	extern(C) double scalbn(double x, int exp);

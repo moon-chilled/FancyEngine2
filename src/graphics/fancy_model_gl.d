@@ -7,6 +7,8 @@ import bindbc.assimp;
 import graphics.model;
 import graphics.tex;
 
+nothrow:
+
 struct FancyModel {
 	@disable this();
 

@@ -3,7 +3,10 @@ import stdlib;
 import cstdlib;
 import bindbc.opengl;
 
+nothrow:
+
 struct Mesh {
+nothrow:
 	GLuint VAO, VBO;
 	uint num_verts;
 
@@ -19,7 +22,7 @@ struct Mesh {
 
 		this.sizes = sizes;
 
-		one_vertex_size = sizes.reduce!((a, b) => a + b);
+		one_vertex_size = sizes.sum;//reduce!((a, b) => a + b);
 		assert(vertices.length % one_vertex_size == 0);
 
 		uint offset;

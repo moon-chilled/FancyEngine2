@@ -1,5 +1,7 @@
 module windowing.key;
 
+nothrow:
+
 struct Event {
 	Evtype type;
 	union {

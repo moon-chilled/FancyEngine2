@@ -10,6 +10,7 @@ import graphics.fancy_model_gl;
 
 import bindbc.opengl;
 
+nothrow:
 
 enum ShaderType: GLuint {
 	Vertex = GL_VERTEX_SHADER,
@@ -22,6 +23,7 @@ void upload_texture(uint pos, Texture tex) {
 } //TODO: move this to another file
 
 struct Shader {
+nothrow:
 	@disable this();
 
 	private GLuint program;

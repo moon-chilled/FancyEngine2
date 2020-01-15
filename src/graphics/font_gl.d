@@ -11,6 +11,8 @@ import graphics.shading_gl;
 
 import bindbc.opengl;
 
+nothrow:
+
 private extern (C) {
 	struct stbtt__buf {
 		ubyte *data;

@@ -17,7 +17,6 @@ import std.conv: to, tostr = text, towstr = wtext, todstr = dtext;
 import std.file: fexists = exists;
 import std.functional: toDelegate;
 import std.math: abs, trunc;
-import std.string: strfmt = format;
 import std.traits: isFloatingPoint, isIntegral, isNumeric, isSomeString;
 import std.variant: Sum = Algebraic, This;
 
@@ -125,6 +124,16 @@ void segfault() {
 	}
 
 	inner();
+}
+
+string strfmt(T...)(T args) nothrow {
+	try {
+		import std.string: format;
+		return format(args);
+	} catch (Throwable t) {
+		errors("BUG!  Unable to properly stringformat for some reason.  ", t.msg);
+		return "<DUMMY" ~ t.msg ~ ">";
+	}
 }
 
 

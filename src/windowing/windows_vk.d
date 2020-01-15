@@ -5,6 +5,8 @@ import cstdlib;
 import bindbc.sdl;
 import erupted;
 
+nothrow:
+
 struct GfxContext {
 	VkInstance instance;
 	VkPhysicalDevice phys_device;
