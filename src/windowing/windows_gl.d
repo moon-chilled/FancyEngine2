@@ -10,8 +10,6 @@ import graphics.shading_gl;
 import graphics.model_gl;
 import windowing.windows;
 
-nothrow:
-
 struct GfxContext {
 	SDL_GLContext gl_context;
 }

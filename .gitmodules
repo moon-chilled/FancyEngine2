@@ -28,3 +28,6 @@
 [submodule "deps/bindbc-lua"]
 	path = deps/bindbc-lua
 	url = https://github.com/BindBC/bindbc-lua
+[submodule "deps/bindbc-freetype"]
+	path = deps/bindbc-freetype
+	url = https://github.com/BindBC/bindbc-freetype

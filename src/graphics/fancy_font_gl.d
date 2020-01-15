@@ -7,7 +7,7 @@ import windowing.windows_gl;
 
 import bindbc.opengl;
 
-nothrow:
+
 
 // pathfinder bindings
 private extern (C) {

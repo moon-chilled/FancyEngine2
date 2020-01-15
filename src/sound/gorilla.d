@@ -4,7 +4,7 @@ import cstdlib;
 import stdmath;
 import asset;
 
-nothrow:
+
 
 version (Windows) {
 	// gorilla wants ldexp, but microsoft doesn't provide it

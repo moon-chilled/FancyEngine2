@@ -134,7 +134,7 @@ int real_main(string[] args) {
 
 	//faux.load("stdlib.scm");
 
-	auto fnt = new Font("assets/fonts/dvsm.ttf", 120, ws.render_width, ws.render_height, gfx.gfx_context);
+	auto fnt = new Font("assets/fonts/roboto.ttf", 24, ws.render_width, ws.render_height, gfx.gfx_context);
 
 	ulong frames;
 
@@ -188,7 +188,7 @@ mainloop:
 		///               /////////////////
 		//               /
 		faux.call("graphics_update");
-		fnt.draw(-.8, .2, "!$%&'()1AJKLOQRUYZ^ahquxz{|}f");
+		fnt.draw(-.8, .2, "The quick brown fox jumps over the lazy dog.");
 		gfx.blit();
 
 
@@ -281,10 +281,28 @@ void load_all_libraries() {
 				break;
 		}
 	}
+
+	{
+		import bindbc.freetype: FTSupport, loadFreeType;
+		FTSupport status = loadFreeType;
+		final switch (status) {
+			case FTSupport.noLibrary:
+				fatal("The FreeType library file could not be found.  Have you moved (or removed) the DLL?");
+				assert(0);
+			case FTSupport.badLibrary:
+				fatal("The FreeType library file appears to be corrupt");
+				assert(0);
+			case FTSupport.ft26: case FTSupport.ft27: case FTSupport.ft28: case FTSupport.ft29: case FTSupport.ft210:
+				// cool
+				break;
+		}
+
+	}
 }
 
 // really, it returns errno_t, but that's the same as int
 version (Windows) private extern (C) int _putenv_s(const char*, const char*);
+
 // setup LD_LIBRARY_PATH (or equivalent) so bindbc (or something else) can find libraries
 void set_lib_path() {
 	version (Windows) {

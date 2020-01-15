@@ -3,10 +3,10 @@ import stdlib;
 import cstdlib;
 import bindbc.opengl;
 
-nothrow:
+
 
 struct Mesh {
-nothrow:
+
 	GLuint VAO, VBO;
 	uint num_verts;
 

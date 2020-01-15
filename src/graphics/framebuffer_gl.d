@@ -7,10 +7,10 @@ import windowing.windows_gl;
 
 import bindbc.opengl;
 
-nothrow:
+
 
 struct Framebuffer {
-nothrow:
+
 	GLuint fbo, rbo, tex;
 	uint w, h;
 

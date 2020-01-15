@@ -126,7 +126,7 @@ void segfault() {
 	inner();
 }
 
-string strfmt(T...)(T args) nothrow {
+string strfmt(T...)(T args) {
 	try {
 		import std.string: format;
 		return format(args);

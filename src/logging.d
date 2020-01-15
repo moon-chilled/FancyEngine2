@@ -4,8 +4,6 @@ import cstdlib;
 
 import std.stdio: File, stderr;
 
-nothrow:
-
 enum LogLevel: long {
 	all, // pseudo-loglevel, just so you can set set_min_log_level(LogLevel.all)
 	trace, info, log, warning, error, critical, fatal,

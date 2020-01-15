@@ -7,7 +7,7 @@ import windowing.windows_gl;
 
 import bindbc.opengl;
 
-nothrow:
+
 
 private extern (C) ubyte *stbi_load(const(char) *filename, int *x, int *y, int *channels, int desired_channels);
 private extern (C) void stbi_image_free(void *retval_from_stbi_load);
@@ -19,7 +19,7 @@ class Texture: Asset {
 	uint w, h;
 	GLuint tex_id;
 
-	this(string fpath) nothrow {
+	this(string fpath) {
 		if (fpath in texture_cache) {
 			w = texture_cache[fpath].w;
 			h = texture_cache[fpath].h;
