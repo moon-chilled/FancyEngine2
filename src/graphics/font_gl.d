@@ -49,6 +49,8 @@ struct Font {
 	@disable this();
 	@disable this(this);
 
+	uint screen_width, screen_height; // when drawing to screen, need to normalize properly w.r.t to font height
+
 	uint height;
 	uint atlas_width;
 	Shader draw_shader;
@@ -56,15 +58,17 @@ struct Font {
 
 	private struct char_spec {
 		uint atlas_offset; // memory offset (only in x direction)
-		ubyte width;
-		ubyte xoffset, yoffset; // display offset
+		int width, height;
+		int xoffset, yoffset; // display offset
 	}
 	char_spec[128] atlas_map;
 
 	GLuint tex_id;
 
-	this(string fpath, uint height, GfxContext ctx) {
+	this(string fpath, uint height, uint scr_w, uint scr_h, GfxContext ctx) {
 		this.height = height;
+		this.screen_width = scr_w;
+		this.screen_height = scr_h;
 
 		if (!fpath.fexists) fatal("tried to read nonexistent texture '%s'", fpath);
 		string data = fslurp(fpath);
@@ -73,53 +77,34 @@ struct Font {
 		stbtt_InitFont(&f, cast(const ubyte*)data.ptr, stbtt_GetFontOffsetForIndex(cast(const ubyte*)data.ptr, 0));
 
 		ubyte*[128] font_bitmaps;
-		ubyte[128] bitmap_heights;
 
-		foreach (c; 33 .. 127) {
+		foreach (c; 32 .. 127) {
 			int w, h, xo, yo;
 			font_bitmaps[c] = stbtt_GetCodepointBitmap(&f, 0, stbtt_ScaleForPixelHeight(&f, height), c, &w, &h, &xo, &yo);
-			atlas_map[c] = char_spec(atlas_width, cast(ubyte)w, cast(ubyte)xo, cast(ubyte)yo);
-			bitmap_heights[c] = cast(ubyte)h;
+			atlas_map[c] = char_spec(atlas_width, w, h, xo, yo);
 			atlas_width += w;
-			atlas_width++; // one pixel of separation between characters
-			//atlas_width += height/2;
+			atlas_width++;
 		}
 
 		ubyte *font_bitmap = Alloc!ubyte(atlas_width * height);
 
-		/+
-		foreach (i; 0 .. atlas_width * height) {
-			import std.random: uniform;
-			font_bitmap[i] = uniform(0, 2) ? 0 : 255;
-		}
-		+/
-
-		/+
-		foreach (i; 33 .. 127) {
-			foreach (j; 0 .. bitmap_heights[i]) {
-				memcpy(font_bitmap + j*atlas_width + atlas_map[i].atlas_offset, font_bitmaps[i] + j * atlas_map[i].width, atlas_map[i].width);
-			}
-		}
-		+/
-		//log("Having %s (%sx%s)", font_bitmap[0 .. atlas_width * height], atlas_width, height);
-
-
 		glGenTextures(1, &tex_id);
 		glBindTexture(GL_TEXTURE_2D, tex_id);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, [1f, 0, 0, 1].ptr);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, atlas_width, height, 0, GL_RED, GL_UNSIGNED_BYTE, null/*font_bitmap*/);
 
-		foreach (i; 33 .. 127) {
-			//log("doing %s", font_bitmaps[i][0 .. atlas_map[i].width * bitmap_heights[i]]);
-			glTexSubImage2D(GL_TEXTURE_2D, 0, atlas_map[i].atlas_offset, 0, atlas_map[i].width, bitmap_heights[i], GL_RED, GL_UNSIGNED_BYTE, font_bitmaps[i]);
+		foreach (i; 32 .. 127) {
+			glTexSubImage2D(GL_TEXTURE_2D, 0, atlas_map[i].atlas_offset, 0, atlas_map[i].width, atlas_map[i].height, GL_RED, GL_UNSIGNED_BYTE, font_bitmaps[i]);
 			stbtt_FreeBitmap(font_bitmaps[i], null);
 		}
 
@@ -129,56 +114,43 @@ struct Font {
 		glBindTexture(GL_TEXTURE_2D, tex_id);
 		glActiveTexture(GL_TEXTURE0);
 		draw_shader.set_int("font_atlas", 0);
-		draw_shader.set_mat4("projection", mat4f.orthographic(1280, 0, 720, 0, 0.1, 100));
-
-		auto t = mat4f.orthographic(1280, 0, 720, 0, 0.1, 100);
 
 		// dummy value for vertices because it'll be reset each time
 		// two vec2s: position and texture coordinates
 		character_model = Mesh([], [2, 2]);
-
 	}
 
-	void draw_char(char c) {
-		character_model.load_verts([
-				0,0,   (cast(float)atlas_map[c].atlas_offset)/atlas_width,0,
-				.2,1, (cast(float)atlas_map[c].atlas_offset+atlas_map[c].width)/atlas_width,1,
-				.2,0,  (cast(float)atlas_map[c].atlas_offset+atlas_map[c].width)/atlas_width,0,
+	void draw(float x, float y, string s) {
+		float[] verts;
 
-				0,0,   (cast(float)atlas_map[c].atlas_offset)/atlas_width,0,
-				0,1,  (cast(float)atlas_map[c].atlas_offset)/atlas_width,1,
-				.2,1, (cast(float)atlas_map[c].atlas_offset+atlas_map[c].width)/atlas_width,1]);
+		foreach (c; s) {
+			float
+				tex_x = (cast(float)atlas_map[c].atlas_offset)/atlas_width,
+				tex_w = (cast(float)atlas_map[c].width)/atlas_width;
 
-//		log("%s, %s, %s, %s", (cast(float)atlas_map[c].atlas_offset)/atlas_width, (cast(float)atlas_map[c].atlas_offset+atlas_map[c].width)/atlas_width, (cast(float)atlas_map[c].atlas_offset)/atlas_width, (cast(float)atlas_map[c].atlas_offset+atlas_map[c].width)/atlas_width);
-//		log("(%s/%s)", atlas_map[c].width, atlas_width);
+			float
+				x1 = x + cast(float)atlas_map[c].width / screen_width,
+				y1 = y + cast(float)height / screen_height;
+				//y1 = y + cast(float)atlas_map[c].height / screen_height;
 
-		/+
-		character_model.load_verts([
-				-.9,-.9,   0,0,
-				.3,-.7, 1,1,
-				.3,-.9,  1,0,
+			verts ~= [
+					x,y,   tex_x,0,
+					x1,y1, tex_x+tex_w,1,
+					x1,y,  tex_x+tex_w,0,
 
-				-.9,-.9,   0,0,
-				-.9,-.7,  0,1,
-				.3,-.7, 1,1]);
-		+/
+					x,y,   tex_x,0,
+					x,y1,  tex_x,1,
+					x1,y1, tex_x+tex_w,1];
 
-			/+
-		character_model.load_verts([
-				0,0,   cast(float)atlas_map[c].atlas_offset,0,
-				400,400, cast(float)atlas_map[c].atlas_offset+atlas_map[c].width,height,
-				400,0,  cast(float)atlas_map[c].atlas_offset+atlas_map[c].width,0,
+			x = x1;
+		}
 
-				0,0,   cast(float)atlas_map[c].atlas_offset,0,
-				0,400,  cast(float)atlas_map[c].atlas_offset,height,
-				400,400, cast(float)atlas_map[c].atlas_offset+atlas_map[c].width,height]);
-		+/
+		character_model.load_verts(verts);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tex_id);
 		glActiveTexture(GL_TEXTURE0);
 		draw_shader.set_int("font_atlas", 0);
-		draw_shader.set_mat4("projection", mat4f.orthographic(1280, 0, 720, 0, 0.1, 100));
 		draw_shader.blit(character_model);
 	}
 

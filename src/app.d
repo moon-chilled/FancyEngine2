@@ -134,7 +134,7 @@ int real_main(string[] args) {
 
 	//faux.load("stdlib.scm");
 
-	auto fnt = new Font("assets/fonts/dvsm.ttf", 120, gfx.gfx_context);
+	auto fnt = new Font("assets/fonts/dvsm.ttf", 120, ws.render_width, ws.render_height, gfx.gfx_context);
 
 	ulong frames;
 
@@ -188,8 +188,7 @@ mainloop:
 		///               /////////////////
 		//               /
 		faux.call("graphics_update");
-		fnt.draw_char('b');
-		//fnt.draw_char('V');
+		fnt.draw(-.8, .2, "!$%&'()1AJKLOQRUYZ^ahquxz{|}f");
 		gfx.blit();
 
 
