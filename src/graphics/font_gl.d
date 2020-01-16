@@ -128,8 +128,6 @@ struct Font {
 				x0 += kern.x / (64.*.5*screen_width);
 				x1 += kern.x / (64.*.5*screen_width);
 				prev_char = c;
-				//log("Delta %s", kern.x / (64.*.5*screen_width));
-				//log("Delta %s", kern.x);
 			}
 
 			verts ~= [

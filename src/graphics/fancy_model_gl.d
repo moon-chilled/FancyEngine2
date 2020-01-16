@@ -75,7 +75,6 @@ struct FancyModel {
 				if (mesh.mTextureCoords[0]) {
 					vertices ~= mesh.mTextureCoords[0][i].x;
 					vertices ~= mesh.mTextureCoords[0][i].y;
-					//log("Tex coords (%s, %s)", mesh.mTextureCoords[0][i].x, mesh.mTextureCoords[0][i].y);
 				} else {
 					// for alignment:
 					vertices ~= 0;
@@ -104,7 +103,6 @@ struct FancyModel {
 			}
 
 			diffuse_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.DIFFUSE);
-			log("Loaded %s diffuse textures", diffuse_textures.length);
 			specular_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.SPECULAR);
 
 
