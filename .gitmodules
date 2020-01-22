@@ -31,3 +31,6 @@
 [submodule "deps/bindbc-freetype"]
 	path = deps/bindbc-freetype
 	url = https://github.com/BindBC/bindbc-freetype
+[submodule "deps/raygui"]
+	path = deps/raygui
+	url = https://github.com/raysan5/raygui
