@@ -5,6 +5,7 @@ import cstdlib;
 import bindbc.sdl;
 import erupted;
 
+import windowing.windows;
 
 
 struct GfxContext {
@@ -14,6 +15,14 @@ struct GfxContext {
 	VkSurfaceKHR win_surface;
 	VkQueue gfx_queue;
 }
+struct GfxExtra {
+	/+
+	Framebuffer framebuffer;
+	Shader tex_copy;
+	Mesh mesh;
+	+/
+}
+
 
 void setup_aa(uint samples) {
 }
@@ -35,9 +44,13 @@ GfxContext setup_context(SDL_Window *window) {
 	select_physical_device(ret);
 	select_logical_device(ret);
 
-	log("Successfully booted vulkan");
+	log("Successfully booted vulkan (mark II)");
 
 	return ret;
+}
+
+GfxExtra setup_extra(GfxContext ctx, WindowSpec ws) {
+	return GfxExtra();
 }
 
 void setup_instance(ref GfxContext ctx) {
@@ -91,6 +104,10 @@ void setup_instance(ref GfxContext ctx) {
 	if (res != VK_SUCCESS) {
 		fatal("Vulkan: error creating instance!  '%s'", res);
 	}
+
+	import erupted.functions: loadInstanceLevelFunctions, loadDeviceLevelFunctions;
+	loadInstanceLevelFunctions(ctx.instance);
+	loadDeviceLevelFunctions(ctx.instance);
 }
 
 private void select_physical_device(ref GfxContext ctx) {
@@ -155,7 +172,7 @@ void set_fullscreen(bool) {
 void set_wireframe(bool) {
 }
 
-pragma(inline, true) void gfx_blit(GfxContext ctx, SDL_Window *win) {
+pragma(inline, true) void gfx_blit(GfxContext ctx, GfxExtra extra, SDL_Window *win) {
 }
 
 pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {

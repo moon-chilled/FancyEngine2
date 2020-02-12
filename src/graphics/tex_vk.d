@@ -1,4 +1,4 @@
-module graphics.tex_gl;
+module graphics.tex_vk;
 import stdlib;
 import cstdlib;
 

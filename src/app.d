@@ -244,6 +244,8 @@ void load_all_libraries() {
 		if (!loadGlobalLevelFunctions()) {
 			fatal("Unknown error loading Vulkan (do you have it installed?)");
 		}
+
+		info("Successfully booted Vulkan (mark I)");
 		//TODO: figure out a place to do this
 		//freeVulkanLib();
 	}} else static if (gfx_backend == GfxBackend.OpenGL) {{
