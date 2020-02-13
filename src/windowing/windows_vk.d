@@ -37,12 +37,12 @@ GfxContext setup_context(SDL_Window *window) {
 
 	setup_instance(ret);
 
+	select_physical_device(ret);
+	select_logical_device(ret);
+
 	if (!SDL_Vulkan_CreateSurface(window, ret.instance, &ret.win_surface)) {
 		fatal("Vulkan: failed to create surface for window");
 	}
-
-	select_physical_device(ret);
-	select_logical_device(ret);
 
 	log("Successfully booted vulkan (mark II)");
 
@@ -146,11 +146,15 @@ void select_logical_device(ref GfxContext ctx) {
 
 	VkPhysicalDeviceFeatures device_features;
 
+	const(char)*[] device_extensions = ["VK_KHR_swapchain"];
+
 	VkDeviceCreateInfo device_info;
 	device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	device_info.pQueueCreateInfos = &queue_info;
 	device_info.queueCreateInfoCount = 1;
 	device_info.pEnabledFeatures = &device_features;
+	device_info.enabledExtensionCount = cast(uint)device_extensions.length;
+	device_info.ppEnabledExtensionNames = device_extensions.ptr;
 
 	VkResult res = vkCreateDevice(ctx.phys_device, &device_info, null, &ctx.device);
 	if (res != VK_SUCCESS) {
@@ -179,7 +183,7 @@ pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {
 }
 
 void gfx_end(GfxContext ctx) {
-	//TODO: this segfaults
+	vkDestroySurfaceKHR(ctx.instance, ctx.win_surface, null);
 	vkDestroyDevice(ctx.device, null);
-	//vkDestroyInstance(ctx.instance, null);
+	vkDestroyInstance(ctx.instance, null);
 }
