@@ -23,6 +23,13 @@ struct GfxExtra {
 	+/
 }
 
+// TODO: make it a no-op in release builds?
+void vkcheck(int line = __LINE__, string file = __FILE__, string func_name = __FUNCTION__, string pretty_func_name = __PRETTY_FUNCTION__, string module_name = __MODULE__, T...)(VkResult res, T args) {
+	if (res != VK_SUCCESS) {
+		_real_log(LogLevel.fatal, line, file, func_name, pretty_func_name, module_name, strfmt("Vulkan: %s (%s)", args.length ? strfmt(args) : "error", res));
+	}
+}
+
 
 void setup_aa(uint samples) {
 }
@@ -37,12 +44,13 @@ GfxContext setup_context(SDL_Window *window) {
 
 	setup_instance(ret);
 
-	select_physical_device(ret);
-	select_logical_device(ret);
-
 	if (!SDL_Vulkan_CreateSurface(window, ret.instance, &ret.win_surface)) {
 		fatal("Vulkan: failed to create surface for window");
 	}
+
+	select_physical_device(ret);
+	select_logical_device(ret);
+	create_swapchain(window, ret);
 
 	log("Successfully booted vulkan (mark II)");
 
@@ -100,10 +108,7 @@ void setup_instance(ref GfxContext ctx) {
 	info.enabledLayerCount = cast(uint)received_layers.length; // I promise never to enable more than (2^32)-1 validation layers
 	info.ppEnabledLayerNames = received_layers.map!cstr.ptr;
 
-	VkResult res = vkCreateInstance(&info, null, &ctx.instance);
-	if (res != VK_SUCCESS) {
-		fatal("Vulkan: error creating instance!  '%s'", res);
-	}
+	vkcheck(vkCreateInstance(&info, null, &ctx.instance), "error creating instance");
 
 	import erupted.functions: loadInstanceLevelFunctions, loadDeviceLevelFunctions;
 	loadInstanceLevelFunctions(ctx.instance);
@@ -119,10 +124,11 @@ private void select_physical_device(ref GfxContext ctx) {
 	vkEnumeratePhysicalDevices(ctx.instance, &num_devices, devices.ptr);
 
 	// just pick the first one for now
+	// TODO: make this user-configurable, and add a smart way to detect what's probably the best one
 	ctx.phys_device = devices[0];
 }
 
-void select_logical_device(ref GfxContext ctx) {
+private void select_logical_device(ref GfxContext ctx) {
 	long graphics_family_index = -1;
 
 	uint num_queue_families;
@@ -156,13 +162,66 @@ void select_logical_device(ref GfxContext ctx) {
 	device_info.enabledExtensionCount = cast(uint)device_extensions.length;
 	device_info.ppEnabledExtensionNames = device_extensions.ptr;
 
-	VkResult res = vkCreateDevice(ctx.phys_device, &device_info, null, &ctx.device);
-	if (res != VK_SUCCESS) {
-		fatal("Vulkan: failed to create logical devices.  '%s'", res);
-	}
+	vkcheck(vkCreateDevice(ctx.phys_device, &device_info, null, &ctx.device), "failed to create logical device");
 
 	vkGetDeviceQueue(ctx.device, cast(uint)graphics_family_index, 0, &ctx.gfx_queue);
 }
+
+private void create_swapchain(SDL_Window *win, ref GfxContext ctx) {
+	VkSurfaceCapabilitiesKHR surface_cap;
+	vkcheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ctx.phys_device, ctx.win_surface, &surface_cap), "error getting device surface capabilities");
+	VkExtent2D extent;
+	if (surface_cap.currentExtent.width == uint.max) {
+		int w, h;
+		SDL_GetWindowSize(win, &w, &h);
+		extent.width = clamp(w, surface_cap.minImageExtent.width, surface_cap.maxImageExtent.width);
+		extent.height = clamp(h, surface_cap.minImageExtent.height, surface_cap.maxImageExtent.height);
+	} else {
+		extent = surface_cap.currentExtent;
+	}
+
+	uint img_count = surface_cap.minImageCount + 1;
+	if (surface_cap.maxImageCount != 0) img_count = min(img_count, surface_cap.maxImageCount);
+
+	uint num_clr_formats;
+	vkcheck(vkGetPhysicalDeviceSurfaceFormatsKHR(ctx.phys_device, ctx.win_surface, &num_clr_formats, null), "error getting device surface colour formats");
+	if (!num_clr_formats) fatal("no device surface colour formats");
+	auto surface_clr_formats = new VkSurfaceFormatKHR[num_clr_formats];
+	vkcheck(vkGetPhysicalDeviceSurfaceFormatsKHR(ctx.phys_device, ctx.win_surface, &num_clr_formats, surface_clr_formats.ptr), "error getting device surface colour formats");
+
+	VkSurfaceFormatKHR surface_fmt;
+	bool got_format = false;
+	foreach (f; surface_clr_formats) {
+		if (f.format == VK_FORMAT_B8G8R8A8_SRGB && f.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+			surface_fmt = f;
+			got_format = true;
+			break;
+		}
+	}
+	if (!got_format) surface_fmt = surface_clr_formats[0];
+
+
+	/+
+	uint num_present_modes;
+	vkcheck(vkGetPhysicalDeviceSurfacePresentModesKHR(ctx.phys_device, ctx.win_surface, &num_present_modes, null), "error device surface presentation modes");
+	if (!num_present_modes) fatal("no device surface presentation modes");
+	auto surface_present_modes = new VkPresentModeKHR[num_present_modes];
+	vkcheck(vkGetPhysicalDeviceSurfacePresentModesKHR(ctx.phys_device, ctx.win_surface, &num_present_modes, surface_present_modes.ptr), "error getting device surface presentation modes");
+	+/
+	// TODO: fancier present modes w/ above
+	VkPresentModeKHR present_mode = VK_PRESENT_MODE_FIFO_KHR;
+
+	VkSwapchainCreateInfoKHR swapchain_info;
+	swapchain_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	swapchain_info.surface = ctx.win_surface;
+	swapchain_info.minImageCount = img_count;
+	swapchain_info.imageFormat = surface_fmt.format;
+	swapchain_info.imageColorSpace = surface_fmt.colorSpace;
+	swapchain_info.imageExtent = extent;
+	swapchain_info.imageArrayLayers = 1; //TODO: vr?
+	swapchain_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // TODO: framebuffers
+}
+
 
 void post_window_setup(SDL_Window *window) {
 }
