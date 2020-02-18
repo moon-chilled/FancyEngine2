@@ -14,6 +14,7 @@ struct GfxContext {
 	VkDevice device;
 	VkSurfaceKHR win_surface;
 	VkQueue gfx_queue;
+	VkSwapchainKHR swapchain;
 }
 struct GfxExtra {
 	/+
@@ -220,6 +221,51 @@ private void create_swapchain(SDL_Window *win, ref GfxContext ctx) {
 	swapchain_info.imageExtent = extent;
 	swapchain_info.imageArrayLayers = 1; //TODO: vr?
 	swapchain_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // TODO: framebuffers
+
+	uint num_queue_families;
+	vkGetPhysicalDeviceQueueFamilyProperties(ctx.phys_device, &num_queue_families, null);
+	VkQueueFamilyProperties[] queue_families = new VkQueueFamilyProperties[num_queue_families];
+	vkGetPhysicalDeviceQueueFamilyProperties(ctx.phys_device, &num_queue_families, queue_families.ptr);
+
+	uint gfx_family_i, present_family_i;
+	bool got_gfx, got_present;
+	foreach (i; 0 .. num_queue_families) {
+		if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+			gfx_family_i = i;
+			got_gfx = true;
+		}
+
+		VkBool32 support_present;
+		vkcheck(vkGetPhysicalDeviceSurfaceSupportKHR(ctx.phys_device, i, ctx.win_surface, &support_present), "couldn't find whether phys device supports presentation to surface");
+
+		if (support_present) {
+			got_present = true;
+			present_family_i = i;
+		}
+	}
+
+	if (!got_gfx) fatal("Vulkan: couldn't find graphics queue family with support for graphics");
+	if (!got_present) fatal("Vulkan: couldn't find graphics queue family with support for surface presentation");
+
+	uint[2] gfx_families = [gfx_family_i, present_family_i];
+
+	if (gfx_family_i == present_family_i) {
+		swapchain_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	} else {
+		swapchain_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		swapchain_info.queueFamilyIndexCount = 2;
+		swapchain_info.pQueueFamilyIndices = gfx_families.ptr;
+	}
+
+	swapchain_info.preTransform = surface_cap.currentTransform;
+	swapchain_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+
+	swapchain_info.presentMode = present_mode;
+	swapchain_info.clipped = true;
+
+	swapchain_info.oldSwapchain = VK_NULL_HANDLE;
+
+	vkcheck(vkCreateSwapchainKHR(ctx.device, &swapchain_info, null, &ctx.swapchain), "could not create swapchain");
 }
 
 
@@ -242,7 +288,9 @@ pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {
 }
 
 void gfx_end(GfxContext ctx) {
+	vkDestroySwapchainKHR(ctx.device, ctx.swapchain, null);
 	vkDestroySurfaceKHR(ctx.instance, ctx.win_surface, null);
 	vkDestroyDevice(ctx.device, null);
 	vkDestroyInstance(ctx.instance, null);
+	log("Died vulkan");
 }
