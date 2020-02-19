@@ -92,7 +92,7 @@ interface ScriptlangImpl {
 	ScriptVar call(string name, ScriptVar[] args = []);
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes, bool variadic = false);
 
-	final void expose_fun(R, A...)(string name, R function(A...) fun) {
+	final void expose_fun(R, A...)(string name, R function(A) fun) {
 		expose_fun(name, toDelegate(fun));
 	}
 	final void expose_fun(R, A...)(string name, R delegate(A) fun) {

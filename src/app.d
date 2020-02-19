@@ -23,11 +23,11 @@ import config;
 
 import queue;
 
+import scriptable;
+
 bool done;
 
-void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
-	bool have_keyhandler = script.has_symbol("keyhandler");
-
+void dispatch(Event[] evs, GraphicsState gfx, ScriptManager script) {
 	foreach (ev; evs) {
 		final switch (ev.type) {
 			case Evtype.Keydown:
@@ -49,9 +49,9 @@ void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
 
 int real_main(string[] args) {
 	load_all_libraries();
-	//Scriptlang faux = new S7Script();
-	Scriptlang faux = new MoonJitScript();
-	scope (exit) faux.close();
+	scope ScriptManager faux = new ScriptManager([
+			"scm": new S7Script(),
+			"lua": new MoonJitScript()]);
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2 - OpenGL";
@@ -115,6 +115,7 @@ int real_main(string[] args) {
 
 
 	QueueManager queues = new QueueManager(5);
+
 	faux.expose_fun("shader_set_and_blit", (ScriptVar[] vars) {
 		if (vars.length < 2 || vars.length % 2 != 0) error("Asked to draw shader with bad params (%s)", vars);
 		if (script_typeof(vars[0]) != ScriptVarType.Shader) {
@@ -148,7 +149,7 @@ int real_main(string[] args) {
 		queues.enqueue(new ShaderSetMatricesAndDraw(s, pairs, model));
 
 		return ScriptVar(true);
-	}, [], true);
+	}, cast(ScriptVarType[])[], true);
 
 	Dispatchable mouse_grabber = new GfxGrabMouse(gfx), mouse_ungrabber = new GfxUngrabMouse(gfx);
 	faux.expose_fun("grab_mouse", () => queues.enqueue(mouse_grabber));
@@ -173,8 +174,7 @@ int real_main(string[] args) {
 
 	ulong frames;
 
-	faux.load("test.lua");
-	//faux.load("game.scm");
+	faux.load_script("game.toml");
 	faux.call("init");
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
@@ -215,7 +215,7 @@ mainloop:
 		///               /////////////////
 		//               /
 		if (something_worth_framing) {
-			faux.call("update");
+			faux.update();
 		}
 
 
@@ -223,7 +223,7 @@ mainloop:
 		////  RENDERING    ////////////////
 		///               /////////////////
 		//               /
-		faux.call("graphics_update");
+		faux.graphics_update();
 		fnt.draw(-.8, .2, "Hiii");
 		queues.flush_current_frame();
 		gfx.blit();
