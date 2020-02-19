@@ -44,6 +44,7 @@ private ScriptVar lua_popvar(lua_State *l) {
 
 		// cdata
 		// TODO: work for non-mat4f cdata
+		// also, this is awful undocumented black magic.  Is there a better way?
 		case 10:
 			const(void) *addr = lua_topointer(l, -1);
 			float[] f = new float[16];
@@ -96,7 +97,7 @@ private void lua_push_var(lua_State *l, ScriptVar var) {
 
 private void*[] _dont_gc_delegates;
 
-class MoonJitScript: ScriptlangImpl {
+class MoonJitScript: Scriptlang {
 	lua_State *l;
 
 	this() {
@@ -134,28 +135,48 @@ class MoonJitScript: ScriptlangImpl {
 		return lua_popvar(l);
 	}
 
-	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes) {
+	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes, bool variadic = false) {
 		lua_CFunction closure_caller =
 		cast(lua_CFunction)(lua_State *l) {
-			size_t arity = lua_tointeger(l, lua_upvalueindex(1));
-			ScriptVarType[] argtypes = (cast(ScriptVarType*)lua_touserdata(l, lua_upvalueindex(2)))[0 .. arity];
+			bool variadic = false;
+			size_t arity;
+			lua_Integer fArity = lua_tointeger(l, lua_upvalueindex(1));
+			ScriptVarType[] argtypes;
+
+			if (fArity == -1) variadic = true;
+			else {
+				arity = fArity;
+				argtypes = (cast(ScriptVarType*)lua_touserdata(l, lua_upvalueindex(2)))[0 .. arity];
+			}
+
 			ScriptFun fun;
 			fun.ptr = lua_touserdata(l, lua_upvalueindex(3));
 			fun.funcptr = cast(ScriptVar function(ScriptVar[]))lua_touserdata(l, lua_upvalueindex(4));
 
 			ScriptVar[] args;
-			foreach_reverse (t; argtypes) {
-				ScriptVar x = lua_popvar(l);
-				// allow automatic casting of ints to floats, since lua has no ints
-				if ((script_typeof(x) == ScriptVarType.Int) && (t == ScriptVarType.Real)) {
-					x = ScriptVar(cast(float)*x.peek!long);
-				}
 
-				if ((script_typeof(x) != t) && (t != ScriptVarType.Any)) {
-					error("D function was passed arguments '%s' of type %s, but needed type %s", x, script_typeof(x), t);
+			if (variadic) {
+				foreach (_; 0 .. lua_gettop(l)) {
+					args = [lua_popvar(l)] ~ args;
+				}
+			} else {
+				if (lua_gettop(l) != arity) {
+					error("D function was passed %s arguments, wanted %s", lua_gettop(l), arity);
 					return 0;
 				}
-				args = [x] ~ args;
+				foreach_reverse (t; argtypes) {
+					ScriptVar x = lua_popvar(l);
+					// allow automatic casting of ints to floats, since lua has no ints
+					if ((script_typeof(x) == ScriptVarType.Int) && (t == ScriptVarType.Real)) {
+						x = ScriptVar(cast(float)*x.peek!long);
+					}
+
+					if ((script_typeof(x) != t) && (t != ScriptVarType.Any)) {
+						error("D function was passed arguments '%s' of type %s, but needed type %s", x, script_typeof(x), t);
+						return 0;
+					}
+					args = [x] ~ args;
+				}
 			}
 
 			ScriptVar ret = fun(args);
@@ -166,10 +187,10 @@ class MoonJitScript: ScriptlangImpl {
 				return 1;
 			}
 		};
-		ScriptVarType *msig = Alloc!ScriptVarType(argtypes.length);
+		ScriptVarType *msig = SysAllocator.allocate!ScriptVarType(argtypes.length);
 		memcpy(msig, argtypes.ptr, argtypes.length * ScriptVarType.sizeof);
 
-		lua_pushinteger(l, argtypes.length);
+		lua_pushinteger(l, variadic ? lua_Integer(-1) : argtypes.length);
 		lua_pushlightuserdata(l, msig);
 		lua_pushlightuserdata(l, fun.ptr);
 		lua_pushlightuserdata(l, fun.funcptr);

@@ -57,14 +57,14 @@ struct Font {
 
 		foreach (c; 32 .. 128) {
 			FT_Load_Char(face, c, FT_LOAD_RENDER);
-			font_bitmaps[c] = Alloc!ubyte(face.glyph.bitmap.rows * face.glyph.bitmap.width);
+			font_bitmaps[c] = SysAllocator.allocate!ubyte(face.glyph.bitmap.rows * face.glyph.bitmap.width);
 			memcpy(font_bitmaps[c], face.glyph.bitmap.buffer, face.glyph.bitmap.rows * face.glyph.bitmap.width);
 
 			atlas_map[c] = char_spec(atlas_width, face.glyph.bitmap.width, face.glyph.bitmap.rows, face.glyph.bitmap_left, face.glyph.bitmap_top, cast(int)face.glyph.advance.x);
 			atlas_width += face.glyph.bitmap.width;
 		}
 
-		ubyte *font_bitmap = Alloc!ubyte(atlas_width * height);
+		ubyte *font_bitmap = SysAllocator.allocate!ubyte(atlas_width * height);
 
 		glGenTextures(1, &tex_id);
 		glBindTexture(GL_TEXTURE_2D, tex_id);
@@ -83,7 +83,7 @@ struct Font {
 
 		foreach (i; 32 .. 128) {
 			glTexSubImage2D(GL_TEXTURE_2D, 0, atlas_map[i].atlas_offset, 0, atlas_map[i].width, atlas_map[i].height, GL_RED, GL_UNSIGNED_BYTE, font_bitmaps[i]);
-			Free(font_bitmaps[i]);
+			SysAllocator.free(font_bitmaps[i]);
 		}
 
 
@@ -91,7 +91,9 @@ struct Font {
 
 		glBindTexture(GL_TEXTURE_2D, tex_id);
 		glActiveTexture(GL_TEXTURE0);
+		draw_shader.enter();
 		draw_shader.set_int("font_atlas", 0);
+		draw_shader.exit();
 
 		// dummy value for vertices because it'll be reset each time
 		// two vec2s: position and texture coordinates

@@ -21,6 +21,8 @@ import sound.gorilla;
 
 import config;
 
+import queue;
+
 bool done;
 
 void dispatch(Event[] evs, GraphicsState gfx, Scriptlang script) {
@@ -112,33 +114,67 @@ int real_main(string[] args) {
 	gfx.grab_mouse();
 
 
-	// TODO: move these somewhere better.
-	/* TODO: perl6 and lisp use kebab-case, but most others use snek_case.
-	 *       Make a system where some symbol (maybe '$') is replaced by a separator
-	 *       (or should I not do that, make snek definitions here, and have each language's stdlib redefine the names?
-	 */
-	faux.expose_fun("blit", (Shader s, FancyModel m) => s.blit(m));
+	QueueManager queues = new QueueManager(5);
+	faux.expose_fun("shader_set_and_blit", (ScriptVar[] vars) {
+		if (vars.length < 2 || vars.length % 2 != 0) error("Asked to draw shader with bad params (%s)", vars);
+		if (script_typeof(vars[0]) != ScriptVarType.Shader) {
+			error("Asked to draw with shader, but passed %s object of type %s instead", vars[0], vars[0].script_typeof);
+			return ScriptVar(false);
+		}
+
+		Shader s = *vars[0].peek!Shader;
+
+		if (script_typeof(vars[1]) != ScriptVarType.FancyModel) {
+			error("Asked to draw model, but passed %s object of type %s instead", vars[1], vars[1].script_typeof);
+			return ScriptVar(false);
+		}
+
+		FancyModel model = *vars[1].peek!FancyModel;
+
+		vars = vars[2 .. $];
+		Mat4fNamePair[] pairs;
+		foreach (i; 0 .. vars.length/2) {
+			if (script_typeof(vars[2*i]) != ScriptVarType.Str) { error("asked to set uniform on shader, but name was %s, not string", vars[2*i]); return ScriptVar(false); }
+			if (script_typeof(vars[2*i+1]) != ScriptVarType.Matx4) { error("asked to set uniform matrix on shader, but given %s, not matrix", vars[2*i+1]); return ScriptVar(false); }
+			Mat4fNamePair m;
+			m.name = *vars[2*i].peek!string;
+			m.to = *vars[2*i+1].peek!mat4f;
+
+			pairs ~= m;
+			//TODO: m.from
+		}
+
+		//TODO: bump allocator
+		queues.enqueue(new ShaderSetMatricesAndDraw(s, pairs, model));
+
+		return ScriptVar(true);
+	}, [], true);
+
+	Dispatchable mouse_grabber = new GfxGrabMouse(gfx), mouse_ungrabber = new GfxUngrabMouse(gfx);
+	faux.expose_fun("grab_mouse", () => queues.enqueue(mouse_grabber));
+	faux.expose_fun("ungrab_mouse", () => queues.enqueue(mouse_ungrabber));
+
+	//TODO: old, new
+	faux.expose_fun("clear", (float r, float g, float b) => queues.enqueue(new GfxClear(gfx, vec3f(r, g, b), vec3f(1, 0, 0))));
+
 	faux.expose_fun("make_fancy_model", (string s) => FancyModel(s));
 	faux.expose_fun("make_shader", (string path) => Shader(fslurp(path ~ ".vert"), fslurp(path ~ ".frag"), gfx.gfx_context));
-	faux.expose_fun("shader_set_mat4f", (Shader s, string name, mat4f mat) => s.set_mat4(name, mat));
-	faux.expose_fun("grab_mouse", &gfx.grab_mouse);
-	faux.expose_fun("ungrab_mouse", &gfx.ungrab_mouse);
-	faux.expose_fun("clear", (float r, float g, float b) => clear(gfx, r, g, b));
 
+	/+
 	{
 		auto ww = ScriptVar(cast(long)ws.win_width);
 		auto wh = ScriptVar(cast(long)ws.win_height);
 		faux.expose_var("window-width", ww);
 		faux.expose_var("window-height", wh);
 	}
-
-	//faux.load("stdlib.scm");
+	+/
 
 	auto fnt = new Font("assets/fonts/dvs.ttf", 24, ws.render_width, ws.render_height, gfx.gfx_context);
 
 	ulong frames;
 
 	faux.load("test.lua");
+	//faux.load("game.scm");
 	faux.call("init");
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
@@ -189,6 +225,7 @@ mainloop:
 		//               /
 		faux.call("graphics_update");
 		fnt.draw(-.8, .2, "Hiii");
+		queues.flush_current_frame();
 		gfx.blit();
 
 
@@ -381,6 +418,7 @@ extern (Windows) int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR
 } else {
 int main(string[] args) {
 	int ret;
+	static if (build_type == BuildType.Release) {
 	try {
 		ret = real_main(args);
 	// Don't fatal() on assertion errors; fatal has already been
@@ -388,6 +426,9 @@ int main(string[] args) {
 	} catch (Throwable t) {
 		fatal(t.msg);
 		ret = 1;
+	}
+	} else {
+		ret = real_main(args);
 	}
 
 	// ensure no other threads are still running

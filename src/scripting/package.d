@@ -85,12 +85,12 @@ ScriptVarType script_typeof(T)() {
 	}
 }
 
-interface Scriptlang {
+interface ScriptlangImpl {
 	void close();
 	ScriptVar eval(string text);
 	void exec(string text); //TODO: remove this.  It's a temporary kludge; even eval shouldn't really be allowed
 	ScriptVar call(string name, ScriptVar[] args = []);
-	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes);
+	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes, bool variadic = false);
 
 	final void expose_fun(R, A...)(string name, R function(A...) fun) {
 		expose_fun(name, toDelegate(fun));
@@ -135,19 +135,6 @@ interface Scriptlang {
 	bool can_load(string path);
 	void load(string path);
 	bool has_symbol(string name);
-
-	void expose_var(string name, ref ScriptVar var);
 }
 
-abstract class ScriptlangImpl: Scriptlang {
-	private ScriptVar*[string] var_tab;
-
-	void expose_var(string name, ref ScriptVar var) {
-		var_tab[name] = &var;
-	}
-
-	this() {
-		expose_fun("sset", (string name, ScriptVar var) { *var_tab[name] = var; });
-		expose_fun("sget", (string name) => *var_tab.get(name, &None));
-	}
-}
+abstract class Scriptlang: ScriptlangImpl { this() {} }

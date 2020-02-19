@@ -98,7 +98,9 @@ GfxExtra setup_extra(GfxContext ctx, WindowSpec ws) {
 			      -1,+1, 0,1,
 			      +1,+1, 1,1], [2, 2]));
 
+	ret.tex_copy.enter();
 	ret.tex_copy.set_int("screen_tex", 0);
+	ret.tex_copy.exit();
 
 	return ret;
 }

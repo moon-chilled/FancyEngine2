@@ -23,7 +23,6 @@ void upload_texture(uint pos, Texture tex) {
 } //TODO: move this to another file
 
 struct Shader {
-
 	@disable this();
 
 	private GLuint program;
@@ -54,27 +53,28 @@ struct Shader {
 		}
 	}
 
+	void enter() { glUseProgram(program); }
+	void exit() { glUseProgram(0); }
+
 	void set_int(string id, GLint value) {
-		glUseProgram(program);
 		glUniform1i(glGetUniformLocation(program, id.cstr), value);
 	}
 	void set_mat4(string id, mat4f value) {
-		glUseProgram(program);
 		glUniformMatrix4fv(glGetUniformLocation(program, id.cstr), 1, GL_TRUE, value.v.ptr);
 	}
 
 	void blit(const ref Mesh model) {
-		glUseProgram(program);
+		enter();
 
 		glBindVertexArray(model.VAO);
 		glDrawArrays(GL_TRIANGLES, 0, model.num_verts);
 		glBindVertexArray(0);
 
-		glUseProgram(0);
+		exit();
 	}
 
 	void blit(const ref FancyModel model) {
-		glUseProgram(program);
+		enter();
 
 		foreach (i; 0 .. model.stupid_meshes.length) {
 			const Mesh mesh = model.stupid_meshes[i];
@@ -92,7 +92,7 @@ struct Shader {
 			glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, null);
 		}
 
-		glBindVertexArray(0);
+		exit();
 	}
 
 	void destruct() {

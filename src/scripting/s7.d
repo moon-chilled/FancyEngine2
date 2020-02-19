@@ -35,7 +35,7 @@ private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 			ret.v = s7_float_vector_elements(ptr)[0 .. 16];
 			return ScriptVar(ret);
 		} else {
-			fatal("Got scheme float vector %s; not of length 3 or 16, so not a vec3 or matrix", s7_float_vector_elements(ptr)[0 .. s7_vector_length(ptr)]);
+			fatal("Got scheme float vector %s; not of length 3 or 16, so not a vec3 or mat4", s7_float_vector_elements(ptr)[0 .. s7_vector_length(ptr)]);
 			assert(0);
 		}
 	} else if (s7_is_c_pointer(ptr)) {
@@ -76,11 +76,12 @@ struct S7Fun {
 	string name;
 	ScriptFun fun;
 	ScriptVarType[] argtypes;
+	bool variadic;
 }
 __gshared S7Fun[] s7funs;
 private __gshared Object s7funslock = new Object;
 
-class S7Script: ScriptlangImpl {
+class S7Script: Scriptlang {
 	s7_scheme *s7;
 	private s7_pointer[Key] key_to_symtab;
 
@@ -93,6 +94,7 @@ class S7Script: ScriptlangImpl {
 		super.expose_fun("_real_push_log_msg", &real_push_log_msg);
 		s7_add_to_load_path(s7, "dist/scheme".cstr);
 		load("prelude.scm");
+		load("stdlib.scm");
 
 		extern (C) s7_pointer s7_funcwrapper(s7_scheme *sc, s7_pointer args) {
 			S7Fun fun = s7funs[s7_integer(s7_car(args))];
@@ -107,14 +109,14 @@ class S7Script: ScriptlangImpl {
 
 			bool bad_call;
 
-			if (fargs.length != fun.argtypes.length) {
-				bad_call = true;
-			}
-
-			foreach (i; 0 .. fargs.length) {
-				if ((script_typeof(fargs[i]) != fun.argtypes[i]) && (fun.argtypes[i] != ScriptVarType.Any)) {
+			if (!fun.variadic) {
+				if (fargs.length != fun.argtypes.length) {
 					bad_call = true;
-					break;
+				} else foreach (i; 0 .. fargs.length) {
+					if ((script_typeof(fargs[i]) != fun.argtypes[i]) && (fun.argtypes[i] != ScriptVarType.Any)) {
+						bad_call = true;
+						break;
+					}
 				}
 			}
 
@@ -157,12 +159,12 @@ class S7Script: ScriptlangImpl {
 		return s7_to_script(s7, s7_call(s7, funcptr, argsptr));
 	}
 
-	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes) {
+	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes, bool variadic = false) {
 		long new_index;
 		synchronized (s7funslock) {
 			new_index = s7funs.length++;
 		}
-		s7funs[new_index] = S7Fun(name, fun, argtypes);
+		s7funs[new_index] = S7Fun(name, fun, argtypes, variadic);
 
 		exec(strfmt("(define (%s . args) (apply __s7_funcwrapper (cons %s args)))", name, new_index));
 	}
