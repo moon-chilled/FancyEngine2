@@ -146,6 +146,9 @@ class S7Script: Scriptlang {
 	ScriptVar eval(string text) {
 		return s7_to_script(s7, s7_eval_c_string(s7, text.cstr));
 	}
+	string eval_to_str(string text) {
+		return s7_object_to_c_string(s7, s7_eval_c_string(s7, text.cstr)).dstr;
+	}
 	void exec(string text) {
 		s7_eval_c_string(s7, text.cstr);
 	}

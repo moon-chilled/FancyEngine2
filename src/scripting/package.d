@@ -87,6 +87,7 @@ ScriptVarType script_typeof(T)() {
 
 interface ScriptlangImpl {
 	void close();
+	string eval_to_str(string text);
 	ScriptVar eval(string text);
 	void exec(string text); //TODO: remove this.  It's a temporary kludge; even eval shouldn't really be allowed
 	ScriptVar call(string name, ScriptVar[] args = []);

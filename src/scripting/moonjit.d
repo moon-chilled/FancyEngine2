@@ -121,6 +121,9 @@ class MoonJitScript: Scriptlang {
 	ScriptVar eval(string text) {
 		assert(0);
 	}
+	string eval_to_str(string text) {
+		assert(0);
+	}
 	void exec(string text) {
 		assert(0);
 	}

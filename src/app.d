@@ -25,6 +25,8 @@ import queue;
 
 import scriptable;
 
+import repl;
+
 bool done;
 
 void dispatch(Event[] evs, GraphicsState gfx, ScriptManager script) {
@@ -52,6 +54,9 @@ int real_main(string[] args) {
 	scope ScriptManager faux = new ScriptManager([
 			"scm": new S7Script(),
 			"lua": new MoonJitScript()]);
+
+	scope Repl repl = new Repl(faux, "scm", &done);
+	repl.start();
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2 - OpenGL";
@@ -238,6 +243,9 @@ mainloop:
 
 		global_pause_mutex.unlock();
 	}
+
+	repl.join();
+	destroy(repl);
 
 	return 0;
 }
