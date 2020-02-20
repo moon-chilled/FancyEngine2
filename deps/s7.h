@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "8.12"
-#define S7_DATE "2020-1-3"
+#define S7_VERSION "8.16"
+#define S7_DATE "2020-2-20"
 
 #include <stdint.h>           /* for int64_t */
 
@@ -126,7 +126,6 @@ bool s7_history_enabled(s7_scheme *sc);
 bool s7_set_history_enabled(s7_scheme *sc, bool enabled);
 
 s7_pointer s7_gc_on(s7_scheme *sc, bool on);                         /* (gc on) */
-void s7_set_gc_stats(s7_scheme *sc, bool on);                        /* (set! (*s7* 'gc-stats) on) */
 
 s7_int s7_gc_protect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect_at(s7_scheme *sc, s7_int loc);
@@ -385,6 +384,10 @@ s7_pointer s7_openlet(s7_scheme *sc, s7_pointer e);                         /* (
 bool s7_is_openlet(s7_pointer e);                                           /* (openlet? e) */
 s7_pointer s7_method(s7_scheme *sc, s7_pointer obj, s7_pointer method);
 
+/* *s7* */
+s7_pointer s7_let_field_ref(s7_scheme *sc, s7_pointer sym);                 /* (*s7* sym) */
+s7_pointer s7_let_field_set(s7_scheme *sc, s7_pointer sym, s7_pointer new_value); /* (set! (*s7* sym) new_value) */
+
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);               /* name's value in the current environment (after turning name into a symbol) */
 s7_pointer s7_symbol_table_find_name(s7_scheme *sc, const char *name);
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
@@ -577,12 +580,6 @@ s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);            /* (fill! ...) */
 s7_pointer s7_type_of(s7_scheme *sc, s7_pointer arg);          /* (type-of arg) */
 
 
-s7_int s7_print_length(s7_scheme *sc);                                                /* value of (*s7* 'print-length) */
-s7_int s7_set_print_length(s7_scheme *sc, s7_int new_len);                            /* sets (*s7* 'print-length), returns old value */
-s7_int s7_float_format_precision(s7_scheme *sc);                                      /* value of (*s7* 'float-format-precision) */
-s7_int s7_set_float_format_precision(s7_scheme *sc, s7_int new_len);                  /* sets (*s7* 'float-format-precision), returns old value */
-
-
 
 /* -------------------------------------------------------------------------------- */
 /* c types/objects */
@@ -597,50 +594,59 @@ s7_pointer s7_make_c_object(s7_scheme *sc, s7_int type, void *value);
 s7_pointer s7_make_c_object_with_let(s7_scheme *sc, s7_int type, void *value, s7_pointer let);
 s7_pointer s7_c_object_let(s7_pointer obj);
 s7_pointer s7_c_object_set_let(s7_scheme *sc, s7_pointer obj, s7_pointer e);
+/* the "let" in s7_make_c_object_with_let and s7_c_object_set_let needs to be GC protected by marking it in the c_object's mark function */
 
-s7_int s7_make_c_type(s7_scheme *sc, const char *name);
-void s7_c_type_set_free      (s7_scheme *sc, s7_int tag, void (*gc_free)(void *value));
-void s7_c_type_set_equal     (s7_scheme *sc, s7_int tag, bool (*equal)(void *value1, void *value2)); /* old style */
-void s7_c_type_set_mark      (s7_scheme *sc, s7_int tag, void (*mark)(void *value));
-void s7_c_type_set_equality  (s7_scheme *sc, s7_int tag, s7_pointer (*equality)  (s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_equivalent(s7_scheme *sc, s7_int tag, s7_pointer (*equivalent)(s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_ref       (s7_scheme *sc, s7_int tag, s7_pointer (*ref)       (s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_set       (s7_scheme *sc, s7_int tag, s7_pointer (*set)       (s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_length    (s7_scheme *sc, s7_int tag, s7_pointer (*length)    (s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_copy      (s7_scheme *sc, s7_int tag, s7_pointer (*copy)      (s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_fill      (s7_scheme *sc, s7_int tag, s7_pointer (*fill)      (s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_reverse   (s7_scheme *sc, s7_int tag, s7_pointer (*reverse)   (s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_to_list   (s7_scheme *sc, s7_int tag, s7_pointer (*to_list)   (s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_to_string (s7_scheme *sc, s7_int tag, s7_pointer (*to_string) (s7_scheme *sc, s7_pointer args));
-void s7_c_type_set_getter    (s7_scheme *sc, s7_int tag, s7_pointer getter);
-void s7_c_type_set_setter    (s7_scheme *sc, s7_int tag, s7_pointer setter);
-/* if a c-object might participate in a cyclic structure, and you want to check its equality to another such object
- *   or get a readable string representing that object, you need to implement the "to_list" and "set" cases above,
- *   and make the type name a function that can recreate the object.  See the <cycle> object in s7test.scm.
- *   For the copy function, either the first or second argument can be a c-object of the given type.
- */
+s7_int s7_make_c_type(s7_scheme *sc, const char *name);     /* create a new c_object type */
+
+/* old style free/mark/equal */
+void s7_c_type_set_free         (s7_scheme *sc, s7_int tag, void (*gc_free)(void *value));
+void s7_c_type_set_mark         (s7_scheme *sc, s7_int tag, void (*mark)(void *value));
+void s7_c_type_set_equal        (s7_scheme *sc, s7_int tag, bool (*equal)(void *value1, void *value2));
+
+/* new style free/mark/equal and equivalent */
+void s7_c_type_set_gc_free      (s7_scheme *sc, s7_int tag, s7_pointer (*gc_free)   (s7_scheme *sc, s7_pointer obj)); /* free c_object function, new style*/
+void s7_c_type_set_gc_mark      (s7_scheme *sc, s7_int tag, s7_pointer (*mark)      (s7_scheme *sc, s7_pointer obj)); /* mark function, new style */
+void s7_c_type_set_is_equal     (s7_scheme *sc, s7_int tag, s7_pointer (*is_equal)  (s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_is_equivalent(s7_scheme *sc, s7_int tag, s7_pointer (*is_equivalent)(s7_scheme *sc, s7_pointer args));
+
+void s7_c_type_set_ref          (s7_scheme *sc, s7_int tag, s7_pointer (*ref)       (s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_set          (s7_scheme *sc, s7_int tag, s7_pointer (*set)       (s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_length       (s7_scheme *sc, s7_int tag, s7_pointer (*length)    (s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_copy         (s7_scheme *sc, s7_int tag, s7_pointer (*copy)      (s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_fill         (s7_scheme *sc, s7_int tag, s7_pointer (*fill)      (s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_reverse      (s7_scheme *sc, s7_int tag, s7_pointer (*reverse)   (s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_to_list      (s7_scheme *sc, s7_int tag, s7_pointer (*to_list)   (s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_to_string    (s7_scheme *sc, s7_int tag, s7_pointer (*to_string) (s7_scheme *sc, s7_pointer args));
+void s7_c_type_set_getter       (s7_scheme *sc, s7_int tag, s7_pointer getter);
+void s7_c_type_set_setter       (s7_scheme *sc, s7_int tag, s7_pointer setter);
+/* For the copy function, either the first or second argument can be a c-object of the given type. */
 
   /* These functions create a new Scheme object type.  There is a simple example in s7.html.
    *
-   * s7_make_c_type creates a new C-based type for Scheme:
-   *   free:    the function called when an object of this type is about to be garbage collected
-   *   mark:    called during the GC mark pass -- you should call s7_mark
-   *            on any embedded s7_pointer associated with the object to protect if from the GC.
-   *   equal:   compare two objects of this type; (equal? obj1 obj2)
-   *   ref:     a function that is called whenever an object of this type
-   *            occurs in the function position (at the car of a list; the rest of the list
-   *            is passed to the ref function as the arguments: (obj ...))
-   *   set:     a function that is called whenever an object of this type occurs as
-   *            the target of a generalized set! (set! (obj ...) val)
-   *   length:  the function called when the object is asked what its length is.
-   *   copy:    the function called when a copy of the object is needed.
-   *   fill:    the function called to fill the object with some value.
-   *   reverse: similarly...
-   *   to_string: object->string for an object of this type
+   * s7_make_c_type creates a new C-based type for Scheme.  It returns an s7_int "tag" used to indentify this type elsewhere.
+   *   The functions associated with this type are set via s7_c_type_set*:
+   *
+   *   free:          the function called when an object of this type is about to be garbage collected
+   *   mark:          called during the GC mark pass -- you should call s7_mark
+   *                  on any embedded s7_pointer associated with the object (including its "let") to protect if from the GC.
+   *   gc_mark and gc_free are new forms of mark and free, taking the c_object s7_pointer rather than its void* value
+   *   equal:         compare two objects of this type; (equal? obj1 obj2) -- this is the old form
+   *   is_equal:      compare objects as in equal? -- this is the new form of equal?
+   *   is_equivalent: compare objects as in equivalent?
+   *   ref:           a function that is called whenever an object of this type
+   *                  occurs in the function position (at the car of a list; the rest of the list
+   *                  is passed to the ref function as the arguments: (obj ...))
+   *   set:           a function that is called whenever an object of this type occurs as
+   *                  the target of a generalized set! (set! (obj ...) val)
+   *   length:        the function called when the object is asked what its length is.
+   *   copy:          the function called when a copy of the object is needed.
+   *   fill:          the function called to fill the object with some value.
+   *   reverse:       similarly...
+   *   to_string:     object->string for an object of this type
    *   getter/setter: these help the optimizer handle applicable c-objects (see s7test.scm for an example)
    *
    * s7_is_c_object returns true if 'p' is a c_object
-   * s7_c_object_type returns the c_object's type
+   * s7_c_object_type returns the c_object's type (the s7_int passed to s7_make_c_object)
    * s7_c_object_value returns the value bound to that c_object (the void *value of s7_make_c_object)
    * s7_make_c_object creates a new Scheme entity of the given type with the given (uninterpreted) value
    * s7_mark marks any Scheme c_object as in-use (use this in the mark function to mark
@@ -853,7 +859,30 @@ typedef s7_double s7_Double;
 #define s7_mark_object        s7_mark
 #define s7_UNSPECIFIED(Sc)    s7_unspecified(Sc)
 #define s7_NIL(Sc)            s7_nil(Sc)
+s7_int s7_new_type_1(s7_scheme *sc,
+		     const char *name,
+		     char *(*print)(s7_scheme *sc, void *value),
+		     void (*gc_free)(void *value),
+		     bool (*equal)(void *val1, void *val2),
+		     void (*mark)(void *val),
+		     s7_pointer (*ref)(s7_scheme *sc, s7_pointer obj, s7_pointer args), 
+		     s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
 #define s7_new_type(Name, Print, GC_Free, Equal, Mark, Ref, Set) s7_new_type_1(s7, Name, Print, GC_Free, Equal, Mark, Ref, Set)
+
+s7_int s7_print_length(s7_scheme *sc);                               /* (*s7* 'print-length) */
+s7_int s7_set_print_length(s7_scheme *sc, s7_int new_len);           /* (set! (*s7* 'print-length) new_len), but returns old value */
+s7_int s7_float_format_precision(s7_scheme *sc);                     /* (*s7* 'float-format-precision) */
+s7_int s7_set_float_format_precision(s7_scheme *sc, s7_int new_len); /* (set! (*s7* 'float-format-precision) new_len), but returns old value */
+void s7_set_gc_stats(s7_scheme *sc, bool on);                        /* (set! (*s7* 'gc-stats) on) */
+
+#else
+
+#define s7_set_gc_stats(Sc, On)                  s7_let_field_set(Sc, s7_make_symbol(Sc, "gc-stats"), On)
+#define s7_print_length(Sc)           s7_integer(s7_let_field_ref(Sc, s7_make_symbol(Sc, "print-length")))
+#define s7_float_format_precision(Sc) s7_integer(s7_let_field_ref(Sc, s7_make_symbol(Sc, "float-format-precision")))
+#define s7_set_print_length(Sc, Val)             s7_let_field_set(Sc, s7_make_symbol(Sc, "print-length"), s7_make_integer(Sc, Val))
+#define s7_set_float_format_precision(Sc, Val)   s7_let_field_set(Sc, s7_make_symbol(Sc, "float-format-precision"), s7_make_integer(Sc, Val))
+/* but the last two used to return the old value -- these return the new value */
 #endif
 
 
@@ -861,7 +890,13 @@ typedef s7_double s7_Double;
  * 
  *        s7 changes
  *
- * 2-Jan:     s7_c_type_set_equality and s7_c_type_set_equivalent.
+ * 17-Feb:    s7_let_field_ref|set for *s7* access. *current-function* to replace __func__.
+ *            deprecate __func__, s7_print_length, s7_float_format_precision, s7_set_gc_stats.
+ * 31-Jan:    macro(*) and bacro(*) -- unnamed macros analogous to lambda(*).
+ * 20-Jan:    debug.scm and (*s7* 'debug), trace-in, dynamic-unwind.
+ *            remove coverlets (openlets is now a dilambda).
+ * 10-Jan:    s7_c_type_set_gc_free and s7_c_type_set_gc_mark.
+ * 2-Jan-20:  s7_c_type_set_is_equal and s7_c_type_set_is_equivalent.
  * --------
  * 2-Nov:     s7_repl.
  * 30-Oct:    change S7_DATE format, and start updating it to reflect s7.c.
@@ -956,7 +991,7 @@ typedef s7_double s7_Double;
  * 16-June:   remove unoptimize and s7_unoptimize.
  * 14-May:    s7_define_safe_function_star.  Removed s7_catch_all.
  * 22-Apr:    remove s7_apply_n_10, s7_is_valid_pointer, s7_keyword_eq_p.
- * 5-Mar-14:  s7_heap_size, s7_gc_freed.
+ * 5-Mar-14:  s7_heap_size, s7_gc_freed (subsequently removed).
  * --------
  * 8-Nov:     s7_symbol_documentation, s7_define_constant_with_documentation.
  * 17-Oct:    bignum-precision (procedure-with-setter) is now an integer variable named *bignum-precision*.
