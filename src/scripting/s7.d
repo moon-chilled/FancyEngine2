@@ -152,6 +152,37 @@ class S7Script: Scriptlang {
 	void exec(string text) {
 		s7_eval_c_string(s7, text.cstr);
 	}
+	ScriptedFunction[] load_getsyms(string path, string[] wanted_syms) {
+		s7_pointer env;
+		env = s7_inlet(s7, s7_nil(s7));
+
+		if (!s7_load_with_environment(s7, path.cstr, env)) {
+			error("Failed to load %s", path);
+			return [];
+		}
+
+		ScriptedFunction[] ret;
+
+		foreach (sym; wanted_syms) {
+			s7_pointer p = s7_let_ref(s7, env, s7_make_symbol(s7, sym.cstr));
+			if (!p) { error("Failed to load symbol '%s' from '%s'", sym, path); }
+
+			//TODO: lifetime issue: currently, this closes around 's7'
+			//but could outlive 'this', which destroys the 's7' ctx.
+			//or is that not an issue since both live basically for the lifetime of the program?
+
+			ret ~= ((p) => () => s7_to_script(s7, s7_call(s7, p, s7_nil(s7))))(p);
+			// ^^ need that indirection to properly close over p
+			// because otherwise it's closed over by reference
+			// meaning that all returned function pointers close over the last p we create (and that will be overwritten on future invocations)
+			// this way, it first has to be copied into a newly created environment
+			// so it's a copy, which persists
+		}
+
+		return ret;
+	}
+
+
 	ScriptVar call(string name, ScriptVar[] args = []) {
 		s7_pointer funcptr = s7_name_to_value(s7, name.cstr); // lisp-1 ftw!
 		s7_pointer argsptr = s7_nil(s7);

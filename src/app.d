@@ -30,17 +30,18 @@ import repl;
 bool done;
 
 void dispatch(Event[] evs, GraphicsState gfx, ScriptManager script) {
+	//TODO: don't hardcode scm
 	foreach (ev; evs) {
 		final switch (ev.type) {
 			case Evtype.Keydown:
-				script.call("keyhandler", [ScriptVar(ev.key), ScriptVar(true)]);
+				script.call("scm", "keyhandler", [ScriptVar(ev.key), ScriptVar(true)]);
 				break;
 			case Evtype.Keyup:
-				script.call("keyhandler", [ScriptVar(ev.key), ScriptVar(false)]);
+				script.call("scm", "keyhandler", [ScriptVar(ev.key), ScriptVar(false)]);
 				break;
 			case Evtype.Mousemove:
 				//TODO: remove need for casts
-				script.call("mousehandler", [ScriptVar(cast(long)ev.mouse.deltay), ScriptVar(cast(long)ev.mouse.deltax), ScriptVar(cast(long)ev.mouse.ypos), ScriptVar(cast(long)ev.mouse.xpos)]);
+				script.call("scm", "mousehandler", [ScriptVar(cast(long)ev.mouse.deltay), ScriptVar(cast(long)ev.mouse.deltax), ScriptVar(cast(long)ev.mouse.ypos), ScriptVar(cast(long)ev.mouse.xpos)]);
 				break;
 			case Evtype.Keypress: break;
 			case Evtype.Quit:
@@ -131,7 +132,7 @@ int real_main(string[] args) {
 		Shader s = *vars[0].peek!Shader;
 
 		if (script_typeof(vars[1]) != ScriptVarType.FancyModel) {
-			error("Asked to draw model, but passed %s object of type %s instead", vars[1], vars[1].script_typeof);
+			error("Asked to draw model, but passed '%s' of type %s instead", vars[1], vars[1].script_typeof);
 			return ScriptVar(false);
 		}
 
@@ -180,7 +181,7 @@ int real_main(string[] args) {
 	ulong frames;
 
 	faux.load_script("game.toml");
-	faux.call("init");
+	faux.call("scm", "init");
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
 
@@ -192,7 +193,7 @@ mainloop:
 	while (!done) {
 		global_pause_mutex.lock();
 
-		bool something_worth_framing;
+		bool something_worth_framing = false;
 
 		float frame_time = sw.peek.total!"nsecs" / 1_000_000_000.0;
 		sw.reset;
@@ -204,7 +205,7 @@ mainloop:
 			something_worth_framing = true;
 			frames++;
 		}
-		if (something_worth_framing && !(frames % 5)) gfx.set_title(strfmt("%s %.f FPS (%.2fms)", title, 1/avg_frame_time, avg_frame_time * 1000));
+		if (something_worth_framing && !(frames % 5)) gfx.set_title(strfmt("%s %.2fms (%.f FPS)", title, avg_frame_time * 1000, 1/avg_frame_time));
 
 		///////////////////////////////////
 		////EVENT HANDLING ////////////////

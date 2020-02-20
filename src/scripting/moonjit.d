@@ -130,7 +130,7 @@ class MoonJitScript: Scriptlang {
 	ScriptVar call(string name, ScriptVar[] args = []) {
 		lua_getfield(l, LUA_GLOBALSINDEX, name.cstr);
 		if (lua_isnoneornil(l, -1)) {
-			fatal("cant get function \"%s\"", name);
+			fatal("can't get function \"%s\"", name);
 		}
 		foreach (a; args) { lua_push_var(l, a); }
 		checkerror(lua_pcall(l, cast(int)args.length, 1, 0));
@@ -212,6 +212,10 @@ class MoonJitScript: Scriptlang {
 	void load(string path) {
 		checkerror(luaL_loadfile(l, path.cstr));
 		checkerror(lua_pcall(l, 0, 0, 0));
+	}
+	ScriptedFunction[] load_getsyms(string path, string[] wanted_syms) {
+		fatal("luajit not yet supported loading symbols");
+		assert(0);
 	}
 
 	bool has_symbol(string name) {

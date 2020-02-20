@@ -5,7 +5,8 @@ import scripting;
 
 class ScriptManager {
 	Scriptlang[string] languages;
-	string current_language; //TODO
+	ScriptedFunction[] updates;
+	ScriptedFunction[] gfx_updates;
 
 	this(Scriptlang[string] languages) {
 		this.languages = languages;
@@ -25,19 +26,24 @@ class ScriptManager {
 		string ext = fname.split('.')[$-1];
 		if (ext !in languages) { error("Bad script '%s'", fname); return; }
 
-		current_language = ext;
-		languages[ext].load(fname);
+		auto funs = languages[ext].load_getsyms(fname, ["update", "graphics_update"]);
+		if (funs.length == 2) {
+			updates ~= funs[0];
+			gfx_updates ~= funs[1];
+		} else {
+			error("Unable to load update functions from '%s'", fname);
+		}
 	}
 
 	void update() {
-		languages[current_language].call("update");
+		foreach (g; updates) g();
 	}
 
 	void graphics_update() {
-		languages[current_language].call("graphics_update");
+		foreach (g; gfx_updates) g();
 	}
 
-	void call(T...)(string s, T aux) {
-		languages[current_language].call(s, aux);
+	void call(T...)(string lang, string s, T aux) {
+		languages[lang].call(s, aux);
 	}
 }

@@ -49,7 +49,11 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_int num);
 s7_pointer s7_make_real(s7_scheme *sc, s7_double num);
 s7_pointer s7_make_string_with_length(s7_scheme *sc, in char *str, s7_int len);
 s7_pointer s7_define_function(s7_scheme *sc, in char *name, s7_pointer function(s7_scheme*, s7_pointer) fnc, s7_int required_args, s7_int optional_args, bool rest_arg, in char *doc);
+s7_pointer s7_rootlet(s7_scheme *sc);
+s7_pointer s7_curlet(s7_scheme *sc);
 s7_pointer s7_inlet(s7_scheme *sc, s7_pointer bindings);
+s7_pointer s7_outlet(s7_scheme *sc, s7_pointer e);
+s7_pointer s7_let_ref(s7_scheme *sc, s7_pointer env, s7_pointer sym);
 
 bool s7_boolean(s7_scheme *sc, s7_pointer x);
 s7_int s7_integer(s7_pointer p);
