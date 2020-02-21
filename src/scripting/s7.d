@@ -113,6 +113,11 @@ class S7Script: Scriptlang {
 				if (fargs.length != fun.argtypes.length) {
 					bad_call = true;
 				} else foreach (i; 0 .. fargs.length) {
+					// allow casting from int to real
+					if (script_typeof(fargs[i]) == ScriptVarType.Int && fun.argtypes[i] == ScriptVarType.Real) {
+						fargs[i] = ScriptVar(cast(float)*fargs[i].peek!long);
+					}
+
 					if ((script_typeof(fargs[i]) != fun.argtypes[i]) && (fun.argtypes[i] != ScriptVarType.Any)) {
 						bad_call = true;
 						break;
@@ -152,26 +157,24 @@ class S7Script: Scriptlang {
 	void exec(string text) {
 		s7_eval_c_string(s7, text.cstr);
 	}
-	ScriptedFunction[] load_getsyms(string path, string[] wanted_syms) {
+	ScriptedFunction[string] load_getsyms(string path, string[] wanted_syms) {
 		s7_pointer env;
 		env = s7_inlet(s7, s7_nil(s7));
 
+		ScriptedFunction[string] ret;
+
 		if (!s7_load_with_environment(s7, path.cstr, env)) {
 			error("Failed to load %s", path);
-			return [];
+			return ret;
 		}
-
-		ScriptedFunction[] ret;
 
 		foreach (sym; wanted_syms) {
 			s7_pointer p = s7_let_ref(s7, env, s7_make_symbol(s7, sym.cstr));
-			if (!p) { error("Failed to load symbol '%s' from '%s'", sym, path); }
-
 			//TODO: lifetime issue: currently, this closes around 's7'
 			//but could outlive 'this', which destroys the 's7' ctx.
 			//or is that not an issue since both live basically for the lifetime of the program?
 
-			ret ~= ((p) => () => s7_to_script(s7, s7_call(s7, p, s7_nil(s7))))(p);
+			if (p) ret[sym] = ((p) => (ScriptVar[] args) => s7_to_script(s7, s7_call(s7, p, make_arglist(args))))(p);
 			// ^^ need that indirection to properly close over p
 			// because otherwise it's closed over by reference
 			// meaning that all returned function pointers close over the last p we create (and that will be overwritten on future invocations)
@@ -182,15 +185,20 @@ class S7Script: Scriptlang {
 		return ret;
 	}
 
+	private s7_pointer make_arglist(ScriptVar[] args) {
+		s7_pointer ret = s7_nil(s7);
+		foreach_reverse(a; args) {
+			ret = s7_cons(s7, script_to_s7(s7, a, key_to_symtab), ret);
+		}
+
+		return ret;
+	}
+
 
 	ScriptVar call(string name, ScriptVar[] args = []) {
 		s7_pointer funcptr = s7_name_to_value(s7, name.cstr); // lisp-1 ftw!
-		s7_pointer argsptr = s7_nil(s7);
-		foreach_reverse(arg; args) {
-			argsptr = s7_cons(s7, script_to_s7(s7, arg, key_to_symtab), argsptr);
-		}
 
-		return s7_to_script(s7, s7_call(s7, funcptr, argsptr));
+		return s7_to_script(s7, s7_call(s7, funcptr, make_arglist(args)));
 	}
 
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes, bool variadic = false) {

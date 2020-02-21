@@ -30,18 +30,17 @@ import repl;
 bool done;
 
 void dispatch(Event[] evs, GraphicsState gfx, ScriptManager script) {
-	//TODO: don't hardcode scm
 	foreach (ev; evs) {
 		final switch (ev.type) {
 			case Evtype.Keydown:
-				script.call("scm", "keyhandler", [ScriptVar(ev.key), ScriptVar(true)]);
+				script.keyhandler(ScriptVar(ev.key), ScriptVar(true));
 				break;
 			case Evtype.Keyup:
-				script.call("scm", "keyhandler", [ScriptVar(ev.key), ScriptVar(false)]);
+				script.keyhandler(ScriptVar(ev.key), ScriptVar(false));
 				break;
 			case Evtype.Mousemove:
 				//TODO: remove need for casts
-				script.call("scm", "mousehandler", [ScriptVar(cast(long)ev.mouse.deltay), ScriptVar(cast(long)ev.mouse.deltax), ScriptVar(cast(long)ev.mouse.ypos), ScriptVar(cast(long)ev.mouse.xpos)]);
+				script.mousehandler(ScriptVar(cast(long)ev.mouse.deltay), ScriptVar(cast(long)ev.mouse.deltax), ScriptVar(cast(long)ev.mouse.ypos), ScriptVar(cast(long)ev.mouse.xpos));
 				break;
 			case Evtype.Keypress: break;
 			case Evtype.Quit:
@@ -181,7 +180,7 @@ int real_main(string[] args) {
 	ulong frames;
 
 	faux.load_script("game.toml");
-	faux.call("scm", "init");
+	faux.init();
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
 

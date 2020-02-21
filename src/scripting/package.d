@@ -135,10 +135,10 @@ interface ScriptlangImpl {
 
 	bool can_load(string path);
 	void load(string path);
-	ScriptedFunction[] load_getsyms(string path, string[] wanted_syms);
+	ScriptedFunction[string] load_getsyms(string path, string[] wanted_syms);
 	bool has_symbol(string name);
 }
 
 abstract class Scriptlang: ScriptlangImpl { this() {} }
 
-alias ScriptedFunction = ScriptVar delegate();
+alias ScriptedFunction = ScriptVar delegate(ScriptVar[] args = []);

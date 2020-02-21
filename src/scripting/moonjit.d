@@ -60,7 +60,7 @@ private ScriptVar lua_popvar(lua_State *l) {
 			f[] = (cast(float*)addr)[0 .. len/float.sizeof];
 			if (f.length == 3) ret = vec3f(f);
 			else if (f.length == 16) ret = mat4f(f);
-			else fatal("Got unknown userdata with length %s", len);
+			else fatal("LuaJIT: got unknown userdata with length %s", len);
 			break;
 
 		case LUA_TLIGHTUSERDATA:
@@ -73,7 +73,7 @@ private ScriptVar lua_popvar(lua_State *l) {
 			ret = *cast(ScriptVar*)lua_touserdata(l, -1);
 			break;
 		default:
-			fatal("Got unknown lua value of type %s (%s)", lua_typename(l, -1).dstr, lua_type(l, -1));
+			fatal("LuaJIT: got unknown lua value of type %s (%s)", lua_typename(l, -1).dstr, lua_type(l, -1));
 			assert(0);
 	}
 	lua_pop(l, 1);
@@ -130,7 +130,7 @@ class MoonJitScript: Scriptlang {
 	ScriptVar call(string name, ScriptVar[] args = []) {
 		lua_getfield(l, LUA_GLOBALSINDEX, name.cstr);
 		if (lua_isnoneornil(l, -1)) {
-			fatal("can't get function \"%s\"", name);
+			fatal("LuaJIT: can't get function \"%s\"", name);
 		}
 		foreach (a; args) { lua_push_var(l, a); }
 		checkerror(lua_pcall(l, cast(int)args.length, 1, 0));
@@ -164,7 +164,7 @@ class MoonJitScript: Scriptlang {
 				}
 			} else {
 				if (lua_gettop(l) != arity) {
-					error("D function was passed %s arguments, wanted %s", lua_gettop(l), arity);
+					error("LuaJIT: D function was passed %s arguments, wanted %s", lua_gettop(l), arity);
 					return 0;
 				}
 				foreach_reverse (t; argtypes) {
@@ -175,7 +175,7 @@ class MoonJitScript: Scriptlang {
 					}
 
 					if ((script_typeof(x) != t) && (t != ScriptVarType.Any)) {
-						error("D function was passed arguments '%s' of type %s, but needed type %s", x, script_typeof(x), t);
+						error("LuaJIT: D function was passed arguments '%s' of type %s, but needed type %s", x, script_typeof(x), t);
 						return 0;
 					}
 					args = [x] ~ args;
@@ -213,9 +213,37 @@ class MoonJitScript: Scriptlang {
 		checkerror(luaL_loadfile(l, path.cstr));
 		checkerror(lua_pcall(l, 0, 0, 0));
 	}
-	ScriptedFunction[] load_getsyms(string path, string[] wanted_syms) {
-		fatal("luajit not yet supported loading symbols");
-		assert(0);
+	
+	ScriptedFunction[string] load_getsyms(string path, string[] wanted_syms) {
+		lua_getfield(l, LUA_GLOBALSINDEX, "fe2_new_env");
+		if (lua_isnoneornil(l, -1)) fatal("LuaJIT: can't get fe2_new_env");
+		checkerror(lua_pcall(l, 0, 1, 0));
+		if (lua_isnoneornil(l, -1)) fatal("LuaJIT: fe2 new env returned nil");
+		int idx = lua_gettop(l);
+
+		lua_getfield(l, LUA_GLOBALSINDEX, "loadfile");
+
+		lua_push_var(l, ScriptVar(path));
+		lua_push_var(l, ScriptVar("bt"));
+
+		lua_pushvalue(l, idx);
+
+		checkerror(lua_pcall(l, 3, 1, 0));
+		checkerror(lua_pcall(l, 0, 0, 0));
+
+		ScriptedFunction[string] ret;
+
+		foreach (sym; wanted_syms) {
+			lua_getfield(l, idx, sym.cstr);
+			if (lua_isnoneornil(l, -1)) {
+				continue;
+			}
+
+			int p = luaL_ref(l, LUA_REGISTRYINDEX);
+			ret[sym] = ((p) => (ScriptVar[] args) { lua_rawgeti(l, LUA_REGISTRYINDEX, p); foreach (a; args) lua_push_var(l, a); checkerror(lua_pcall(l, cast(int)args.length, 1, 0)); return lua_popvar(l);})(p);
+		}
+
+		return ret;
 	}
 
 	bool has_symbol(string name) {
@@ -236,6 +264,6 @@ class MoonJitScript: Scriptlang {
 		if (lua_isstring(l, -1)) err_msg = *lua_popvar(l).peek!string;
 		else err_msg = "unkown error";
 
-		fatal("Lua: %s: %s", err_cat, err_msg);
+		fatal("LuaJIT: %s: %s", err_cat, err_msg);
 	}
 }

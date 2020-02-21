@@ -5,8 +5,11 @@ import scripting;
 
 class ScriptManager {
 	Scriptlang[string] languages;
+	ScriptedFunction[] inits;
 	ScriptedFunction[] updates;
 	ScriptedFunction[] gfx_updates;
+	ScriptedFunction[] keyhandlers;
+	ScriptedFunction[] mousehandlers;
 
 	this(Scriptlang[string] languages) {
 		this.languages = languages;
@@ -26,24 +29,39 @@ class ScriptManager {
 		string ext = fname.split('.')[$-1];
 		if (ext !in languages) { error("Bad script '%s'", fname); return; }
 
-		auto funs = languages[ext].load_getsyms(fname, ["update", "graphics_update"]);
-		if (funs.length == 2) {
-			updates ~= funs[0];
-			gfx_updates ~= funs[1];
-		} else {
-			error("Unable to load update functions from '%s'", fname);
-		}
+		auto funs = languages[ext].load_getsyms(fname, ["update", "graphics_update", "init", "keyhandler", "mousehandler"]);
+
+		if (ScriptedFunction *fn = ("update" in funs)) updates ~= *fn;
+		if (ScriptedFunction *fn = ("graphics_update" in funs)) gfx_updates ~= *fn;
+		if (ScriptedFunction *fn = ("init" in funs)) inits ~= *fn;
+		if (ScriptedFunction *fn = ("keyhandler" in funs)) keyhandlers ~= *fn;
+		if (ScriptedFunction *fn = ("mousehandler" in funs)) mousehandlers ~= *fn;
+	}
+
+	//TODO: why do I need to pass [] to these functions?
+	void init() {
+		foreach (g; inits) g([]);
 	}
 
 	void update() {
-		foreach (g; updates) g();
+		foreach (g; updates) g([]);
 	}
 
 	void graphics_update() {
-		foreach (g; gfx_updates) g();
+		foreach (g; gfx_updates) g([]);
 	}
 
+	void keyhandler(ScriptVar[] args...) {
+		foreach (f; keyhandlers) f(args);
+	}
+
+	void mousehandler(ScriptVar[] args...) {
+		foreach (f; mousehandlers) f(args);
+	}
+
+	/+
 	void call(T...)(string lang, string s, T aux) {
 		languages[lang].call(s, aux);
 	}
+	+/
 }
