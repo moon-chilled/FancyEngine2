@@ -9,8 +9,8 @@ import cstdlib;
 private alias s7_int = long;
 private alias s7_double = float;
 
-// This is incomplete.  This is NOT A BUG.  Functions and data structures will
-// be added here _as needed_, and no more frequently
+// Intentionally incomplete
+// Functions and data structures will be added as needed, and no more frequently
 
 extern (C):
 
@@ -41,6 +41,8 @@ bool s7_is_ratio(s7_pointer arg);
 bool s7_is_real(s7_pointer p);
 bool s7_is_string(s7_pointer p);
 bool s7_is_unspecified(s7_scheme *sc, s7_pointer val);
+bool s7_is_function(s7_pointer p);
+bool s7_is_procedure(s7_pointer p);
 
 s7_pointer s7_make_boolean(s7_scheme *sc, bool x);
 s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);

@@ -24,18 +24,24 @@ class ScriptManager {
 	void load_script(string toml_fname) {
 		import config;
 
-		string fname;
-		Configure(toml_fname, Table("FancyEngine2"), "file", &fname);
-		string ext = fname.split('.')[$-1];
-		if (ext !in languages) { error("Bad script '%s'", fname); return; }
+		string[] fnames;
+		Configure(toml_fname, Table("FancyEngine2"), "files", &fnames);
 
-		auto funs = languages[ext].load_getsyms(fname, ["update", "graphics_update", "init", "keyhandler", "mousehandler"]);
+		foreach (fname; fnames) {
+			string ext = fname.split('.')[$-1];
+			if (ext !in languages) {
+				error("Bad script '%s'", fname);
+				continue;
+			}
 
-		if (ScriptedFunction *fn = ("update" in funs)) updates ~= *fn;
-		if (ScriptedFunction *fn = ("graphics_update" in funs)) gfx_updates ~= *fn;
-		if (ScriptedFunction *fn = ("init" in funs)) inits ~= *fn;
-		if (ScriptedFunction *fn = ("keyhandler" in funs)) keyhandlers ~= *fn;
-		if (ScriptedFunction *fn = ("mousehandler" in funs)) mousehandlers ~= *fn;
+			auto funs = languages[ext].load_getsyms(fname, ["update", "graphics_update", "init", "keyhandler", "mousehandler"]);
+
+			if (auto fn = ("update" in funs)) updates ~= *fn;
+			if (auto fn = ("graphics_update" in funs)) gfx_updates ~= *fn;
+			if (auto fn = ("init" in funs)) inits ~= *fn;
+			if (auto fn = ("keyhandler" in funs)) keyhandlers ~= *fn;
+			if (auto fn = ("mousehandler" in funs)) mousehandlers ~= *fn;
+		}
 	}
 
 	//TODO: why do I need to pass [] to these functions?

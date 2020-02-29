@@ -38,7 +38,7 @@ void Configure(S...)(string fname, S confs) {
 				throw new Exception("");
 			}
 		} else {
-			_Configure!(typeof(*conf))(toml, table, index, conf);
+			_Configure!(typeof(*conf))(toml[table][index], conf);
 			index = null;
 		}
 	}
@@ -60,33 +60,44 @@ void Configure(S...)(string fname, S confs) {
 earlyreturn:
 }
 
-private void _Configure(S)(TOMLDocument toml, string table, string index, S *conf) {
+private void _Configure(S)(TOMLValue toml, S *conf) {
+	import std.traits: isDynamicArray;
 	alias T = typeof(*conf);
 
 	static if (is(T == bool)) {
-		if (toml[table][index].type == TOML_TYPE.TRUE)
+		if (toml.type == TOML_TYPE.TRUE)
 			*conf = true;
 		// Pray the speculative execution bugs don't get me!
-		else if (toml[table][index].type == TOML_TYPE.FALSE)
+		else if (toml.type == TOML_TYPE.FALSE)
 			*conf = false;
 		else
-			error("%s.%s was expected to be of boolean type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
+			error("%s was expected to be of boolean type, but was actually %s", toml, toml.type);
 	} else static if (is(T == string)) {
-		if (toml[table][index].type == TOML_TYPE.STRING)
-			*conf = toml[table][index].str;
+		if (toml.type == TOML_TYPE.STRING)
+			*conf = toml.str;
 		else
-			error("%s.%s was expected to be of string type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
+			error("%s was expected to be of string type, but was actually %s", toml, toml.type);
 	} else static if (isNumeric!T) {
-		if (toml[table][index].type == TOML_TYPE.INTEGER)
+		if (toml.type == TOML_TYPE.INTEGER)
 			// cast is because what if you pass in an int but .integer is a long
-			*conf = cast(T)toml[table][index].integer;
+			*conf = cast(T)toml.integer;
 		else
-			error("%s.%s was expected to be of integer type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
+			error("%s was expected to be of integer type, but was actually %s", toml, toml.type);
 	} else static if(isFloatingPoint!T) {
-		if ((toml[table][index].type == TOML_TYPE.FLOAT) || (toml[table][index].type == TOML_TYPE.INTEGER))
+		if ((toml.type == TOML_TYPE.FLOAT) || (toml.type == TOML_TYPE.INTEGER))
 			// ditto— float and double
-			*conf = cast(T)toml[table][index].floating;
+			*conf = cast(T)toml.floating;
 		else
-			error("%s.%s was expected to be of numeric type, but was actually %s (%s)", table, index, toml[table][index].type, toml[table][index]);
+			error("%s was expected to be of numeric type, but was actually %s", toml, toml.type);
+	} else static if (isDynamicArray!T) {
+		if (toml.type == TOML_TYPE.ARRAY) {
+			TOMLValue[] v = toml.array;
+			(*conf).length = v.length;
+			foreach (i; 0 .. v.length) {
+				_Configure(v[i], (*conf).ptr + i);
+			}
+		} else {
+			error("%s was expected to be array type, but was actually %s", toml, toml.type);
+		}
 	}
 }
