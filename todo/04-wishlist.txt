@@ -1,0 +1,28 @@
+- Support kerning everywhere with harfbuzz and https://github.com/DlangGraphicsWG/bindbc-harfbuzz
+
+- Add support for scripting with c (figure out a way to make this static).
+  - I think the way this works is that a c 'script' actually has all -static- types and symbols.  Like this:
+    - When you say expose_fun(whatever) or expose_var(whatever), it spits that out into a header file
+    - When you say load("file.c") it compiles file.c, forcing it to include that header file, and turns it into a shared object
+    - And caches that shared object, hot-recompiling/etc., just like hot-reloading of an actual scripting language
+    - This is all for dev environment
+    - Prod environment is just: ship the cache with the game.  That's it.
+    - This should probably be automated in some way because goodness, but I think the automation just looks like:
+      - Iterate over the scene graph, and load every c file
+      - Tada!  Cache is built.
+
+  - Remove hotloading from prod version?  Or leave it in so people can mess with it?
+  - Add scripting in d with super fancy reflection?  Or scripting in d is just boring like c?
+  - Use binderoo?
+
+- Multithreading
+
+- Multiple error boxes at once cause a crash.  (SDL bug?  Investigate.)
+
+- Compile everything statically
+
+- Fix license files
+
+- Engine-managed lifetime/caching of assets, per tentative design doc.
+
+- 3d audio
