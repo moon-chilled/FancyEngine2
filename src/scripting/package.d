@@ -24,6 +24,7 @@ enum ScriptVarType {
 	FancyModel,
 	Shader,
 	Key,
+	Texture,
 
 	// special
 	OpaquePtr,

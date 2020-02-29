@@ -8,7 +8,6 @@ import windowing.windows_gl;
 import bindbc.opengl;
 
 
-
 private extern (C) ubyte *stbi_load(const(char) *filename, int *x, int *y, int *channels, int desired_channels);
 private extern (C) void stbi_image_free(void *retval_from_stbi_load);
 Texture[string] texture_cache;
@@ -49,7 +48,7 @@ class Texture: Asset {
 		glBindTexture(GL_TEXTURE_2D, tex_id);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //TODO: make this configurable
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		glTexImage2D(GL_TEXTURE_2D, 0, colour_fmt, w, h, 0, colour_fmt, GL_UNSIGNED_BYTE, tex_data);

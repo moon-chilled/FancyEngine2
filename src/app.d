@@ -49,14 +49,19 @@ void dispatch(Event[] evs, GraphicsState gfx, ScriptManager script) {
 	}
 }
 
+struct G {
+	vec3f clear_clr;
+	bool am_grabbed;
+}
+
 int real_main(string[] args) {
 	load_all_libraries();
 	scope ScriptManager faux = new ScriptManager([
 			"scm": new S7Script(),
 			"lua": new MoonJitScript()]);
 
-	scope Repl repl = new Repl(faux, "scm", &done);
-	repl.start();
+	//scope Repl repl = new Repl(faux, "scm", &done);
+	//repl.start();
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2 - OpenGL";
@@ -156,12 +161,12 @@ int real_main(string[] args) {
 		return ScriptVar(true);
 	}, cast(ScriptVarType[])[], true);
 
-	Dispatchable mouse_grabber = new GfxGrabMouse(gfx), mouse_ungrabber = new GfxUngrabMouse(gfx);
-	faux.expose_fun("grab_mouse", () => queues.enqueue(mouse_grabber));
-	faux.expose_fun("ungrab_mouse", () => queues.enqueue(mouse_ungrabber));
+	G g_nminusone, g_n;
 
-	//TODO: old, new
-	faux.expose_fun("clear", (float r, float g, float b) => queues.enqueue(new GfxClear(gfx, vec3f(r, g, b), vec3f(1, 0, 0))));
+	faux.expose_fun("grab_mouse", { g_n.am_grabbed = true; queues.enqueue(new GfxGrabMouse(gfx, g_nminusone.am_grabbed)); });
+	faux.expose_fun("ungrab_mouse", { g_n.am_grabbed = false; queues.enqueue(new GfxUngrabMouse(gfx, g_nminusone.am_grabbed)); });
+
+	faux.expose_fun("clear", (float r, float g, float b) { g_n.clear_clr = vec3f(r, g, b); queues.enqueue(new GfxClear(gfx, g_n.clear_clr, g_nminusone.clear_clr)); });
 
 	faux.expose_fun("make_fancy_model", (string s) => FancyModel(s));
 	faux.expose_fun("make_shader", (string path) => Shader(fslurp(path ~ ".vert"), fslurp(path ~ ".frag"), gfx.gfx_context));
@@ -234,6 +239,13 @@ mainloop:
 		gfx.blit();
 
 
+		///////////////////////////////////
+		////    DUMB       ////////////////
+		///     GLOBAL    /////////////////
+		//      STATE    /
+		g_nminusone = g_n;
+
+
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
 		// TODO: don't need to re-set volume every loop.  Put this into
 		// sound manager, make it set a flag so that next time it's
@@ -244,8 +256,8 @@ mainloop:
 		global_pause_mutex.unlock();
 	}
 
-	repl.join();
-	destroy(repl);
+	//repl.join();
+	//destroy(repl);
 
 	return 0;
 }

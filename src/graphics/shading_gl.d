@@ -11,7 +11,6 @@ import graphics.fancy_model_gl;
 import bindbc.opengl;
 
 
-
 enum ShaderType: GLuint {
 	Vertex = GL_VERTEX_SHADER,
 	Fragment = GL_FRAGMENT_SHADER,

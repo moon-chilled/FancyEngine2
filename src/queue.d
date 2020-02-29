@@ -20,20 +20,21 @@ class GfxClear: Dispatchable {
 	void undispatch() { clear(gs, old_colour.r, old_colour.g, old_colour.b); }
 }
 
-//TODO: these undispatches are wrong
 class GfxGrabMouse: Dispatchable {
 	import windowing.windows;
 	GraphicsState gs;
-	this(GraphicsState gs) { this.gs = gs; }
+	bool was_grabbed;
+	this(GraphicsState gs, bool was_grabbed) { this.gs = gs; this.was_grabbed = was_grabbed; }
 	void dispatch() { gs.grab_mouse(); }
-	void undispatch() { gs.ungrab_mouse(); }
+	void undispatch() { if (was_grabbed) gs.grab_mouse(); else gs.ungrab_mouse(); }
 }
 class GfxUngrabMouse: Dispatchable {
 	import windowing.windows;
 	GraphicsState gs;
-	this(GraphicsState gs) { this.gs = gs; }
+	bool was_grabbed;
+	this(GraphicsState gs, bool was_grabbed) { this.gs = gs; this.was_grabbed = was_grabbed; }
 	void dispatch() { gs.ungrab_mouse(); }
-	void undispatch() { gs.grab_mouse(); }
+	void undispatch() { if (was_grabbed) gs.grab_mouse(); else gs.ungrab_mouse(); }
 }
 
 class SetVar: Dispatchable {

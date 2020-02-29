@@ -75,21 +75,7 @@ GfxContext setup_context(SDL_Window *window) {
 GfxExtra setup_extra(GfxContext ctx, WindowSpec ws) {
 	GfxExtra ret = GfxExtra(
 			Framebuffer(ws.render_width, ws.render_height, ctx),
-			Shader(q{#version 330 core
-				layout (location = 0) in vec2 in_pos;
-				layout (location = 1) in vec2 in_tex_coord;
-				out vec2 tex_coord;
-				void main() {
-					gl_Position = vec4(in_pos.x, in_pos.y, 0, 1);
-					tex_coord = in_tex_coord;
-				}
-			 },q{	#version 330 core
-				out vec4 frag_color;
-				in vec2 tex_coord;
-				uniform sampler2D screen_tex;
-				void main() {
-					frag_color = texture(screen_tex, tex_coord);
-				}}, ctx),
+			Shader(fslurp("dist/shaders/tex_copy.vert"), fslurp("dist/shaders/tex_copy.frag"), ctx),
 			Mesh([-1,+1, 0,1,
 			      +1,-1, 1,0,
 			      -1,-1, 0,0,
