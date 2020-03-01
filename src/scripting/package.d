@@ -5,13 +5,14 @@ import stdmath;
 import graphics.fancy_model;
 import graphics.shading;
 import graphics.tex;
+import graphics.font;
 import windowing.key;
 
 struct NoneType{}
 
 enum ScriptVarType {
 	// normal objects
-	//integral types:
+	// integral types:
 	Int,
 	Real,
 	Str,
@@ -27,13 +28,14 @@ enum ScriptVarType {
 	Shader,
 	Key,
 	Texture,
+	Font,
 
-	// special
+	// special:
 	OpaquePtr,
 	Any,
 	None,
 }
-alias ScriptVar = Sum!(long, float, string, bool, vec2f, vec3f, mat4f, FancyModel, Shader, Key, Texture, void*, NoneType);
+alias ScriptVar = Sum!(long, float, string, bool, vec2f, vec3f, mat4f, FancyModel, Shader, Key, Texture, Font, void*, NoneType);
 alias ScriptFun = ScriptVar delegate(ScriptVar[] args);
 ScriptVar None = ScriptVar(NoneType());
 
@@ -50,6 +52,7 @@ ScriptVarType script_typeof(ScriptVar v) {
 			(FancyModel f) => ScriptVarType.FancyModel,
 			(Shader s) => ScriptVarType.Shader,
 			(Texture t) => ScriptVarType.Texture,
+			(Font f) => ScriptVarType.Font,
 
 			(void *v) => ScriptVarType.OpaquePtr,
 			//(ScriptVar s) => ScriptVarType.Any,
@@ -79,6 +82,8 @@ ScriptVarType script_typeof(T)() {
 		return ScriptVarType.Shader;
 	} else static if (is(T == Texture)) {
 		return ScriptVarType.Texture;
+	} else static if (is(T == Font)) {
+		return ScriptVarType.Font;
 	} else static if (is(T == void*)) {
 		return ScriptVarType.OpaquePtr;
 	} else static if (is(T == void)) {
@@ -129,6 +134,11 @@ interface ScriptlangImpl {
 					(ScriptVar[] args) {
 						mixin(mixin_str ~ ";");
 						return None;
+					}, signature);
+		} else static if (is(R == ScriptVar)) {
+			expose_fun(name,
+					(ScriptVar[] args) {
+						return mixin(mixin_str);
 					}, signature);
 		} else {
 			expose_fun(name,

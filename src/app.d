@@ -173,6 +173,15 @@ int real_main(string[] args) {
 
 	faux.expose_fun("make_tex", (string path) => new Texture(path));
 
+	Font[] fonts;
+	scope(exit) foreach (f; fonts) f.destroy();
+	faux.expose_fun("make_font", (string path) {
+			Font f = Font(path, 24, ws.render_width, ws.render_height, gfx.gfx_context);
+			fonts ~= f;
+			return f;
+	});
+
+
 	Mesh tex_copy_mesh = Mesh([-1,+1, 0,1,
 				   +1,-1, 1,0,
 				   -1,-1, 0,0,
@@ -181,12 +190,18 @@ int real_main(string[] args) {
 				   -1,+1, 0,1,
 				   +1,+1, 1,1], [2, 2]);
 
-	faux.expose_fun("draw_tex_ndc", (Texture t, vec2f loc) => queues.enqueue(new ShaderDraw2D(&gfx.gfx_extra.tex_copy, &tex_copy_mesh, [loc, vec2f(loc.x + cast(float)t.w / ws.render_width, loc.y + cast(float)t.h / ws.render_height)], t)));
+	faux.expose_fun("draw_tex_ndc", (Texture t, vec2f loc) {
+		vec2f loc2;
+		loc2.x = loc.x + cast(float)t.w/ws.render_width;
+		loc2.y = loc.y + cast(float)t.h/ws.render_height;
+		queues.enqueue(new ShaderDraw2D(&gfx.gfx_extra.tex_copy, &tex_copy_mesh, [loc, loc2], t));
+	});
+
+	faux.expose_fun("draw_text_ndc", (Font f, string text, vec2f loc) => queues.enqueue(new FontDraw(f, loc, text)));
+
 
 	faux.expose_fun("get_renderdims", () => vec2f(ws.render_width, ws.render_height));
 	faux.expose_fun("get_texdims", (Texture t) => vec2f(t.w, t.h));
-
-	auto fnt = new Font("assets/fonts/dvs.ttf", 24, ws.render_width, ws.render_height, gfx.gfx_context);
 
 	ulong frames;
 
@@ -240,7 +255,6 @@ mainloop:
 		///               /////////////////
 		//               /
 		faux.graphics_update();
-		fnt.draw(-.8, .2, "Hiii");
 		queues.flush_current_frame();
 		gfx.blit();
 

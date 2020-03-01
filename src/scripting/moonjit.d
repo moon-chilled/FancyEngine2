@@ -9,6 +9,7 @@ import bindbc.lua;
 import graphics.fancy_model;
 import graphics.shading;
 import graphics.tex;
+import graphics.font;
 
 import windowing.key;
 
@@ -94,6 +95,7 @@ private void lua_push_var(lua_State *l, ScriptVar var) {
 		(FancyModel f) => lua_pushlightuserdata(l, New!ScriptVar(f)),
 		(Shader s) => lua_pushlightuserdata(l, New!ScriptVar(s)),
 		(Texture t) => lua_pushlightuserdata(l, New!ScriptVar(t)),
+		(Font f) => lua_pushlightuserdata(l, New!ScriptVar(f)),
 		(void *v) => lua_pushnil(l),
 		(NoneType n) => lua_pushnil(l))();
 }

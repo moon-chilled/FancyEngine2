@@ -9,6 +9,7 @@ import scripting.s7_lib_interface;
 import graphics.fancy_model;
 import graphics.shading;
 import graphics.tex;
+import graphics.font;
 
 import windowing.key;
 
@@ -75,6 +76,7 @@ private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var, s7_pointer[Key] ke
 			(FancyModel f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
 			(Shader s) => s7_make_c_pointer(s7, New!ScriptVar(s)),
 			(Texture t) => s7_make_c_pointer(s7, New!ScriptVar(t)),
+			(Font f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
 			(void *v) => s7_nil(s7),
 			(NoneType n) => s7_nil(s7))();
 }

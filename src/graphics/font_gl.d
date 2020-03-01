@@ -13,9 +13,6 @@ import bindbc.opengl;
 import bindbc.freetype;
 
 struct Font {
-	@disable this();
-	@disable this(this);
-
 	uint screen_width, screen_height; // when drawing to screen, need to normalize properly w.r.t to font height
 
 	uint height;
@@ -109,8 +106,10 @@ struct Font {
 			float
 				tex_x0 = (cast(float)atlas_map[c].atlas_offset)/atlas_width,
 				tex_x1 = (cast(float)atlas_map[c].atlas_offset+atlas_map[c].width)/atlas_width,
-				tex_y0 = (cast(float)height - atlas_map[c].height) / height,
-				tex_y1 = 1;
+				tex_y1 = 1 - (cast(float)height - atlas_map[c].height) / height,
+				tex_y0 = 0;
+				//tex_y0 = (cast(float)height - atlas_map[c].height) / height,
+				//tex_y1 = 1;
 			// TODO: tex y0 and y1 should probably be reversed (and y0 should be 0, y1 should be 1 - (all that)),
 			// but doing that properly involves making freetype flip its glyphs so they're in the format opengl expects.
 			// (Currently, we flip the y coords in the shader, which is ~~ok
@@ -152,7 +151,7 @@ struct Font {
 		draw_shader.blit(character_model);
 	}
 
-	~this() {
+	void destroy() {
 		FT_Done_Face(face);
 		FT_Done_FreeType(f);
 		glDeleteTextures(1, &tex_id);

@@ -112,6 +112,20 @@ class ShaderDraw2D: Dispatchable {
 	void undispatch() { dispatch(); }
 }
 
+
+class FontDraw: Dispatchable {
+	import graphics.font;
+	import stdmath;
+	Font font;
+	vec2f loc;
+	string text;
+	this(Font font, vec2f loc, string text) { this.font = font; this.loc = loc; this.text = text; }
+	void dispatch() {
+		font.draw(loc.x, loc.y, text);
+	}
+	void undispatch() { dispatch(); }
+}
+
 private struct ActionQueue {
 	Dispatchable[] actions;
 	Key[] inputs;
