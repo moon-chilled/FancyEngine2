@@ -85,6 +85,33 @@ class ShaderSetMatricesAndDraw: Dispatchable {
 	}
 }
 
+class ShaderDraw2D: Dispatchable {
+	import graphics.model;
+	import graphics.shading;
+	import stdmath;
+	import graphics.tex;
+
+	Mesh *mesh;
+	Shader *shader;
+	vec2f[2] bounds;
+	Texture tex;
+
+	this(Shader *shader, Mesh *mesh, vec2f[2] bounds, Texture tex) { this.shader = shader; this.mesh = mesh; this.bounds = bounds; this.tex = tex; }
+	void dispatch() {
+		mesh.load_verts([bounds[0].x,bounds[1].y, 0,1,
+				 bounds[1].x,bounds[0].y, 1,0,
+				 bounds[0].x,bounds[0].y, 0,0,
+
+				 bounds[1].x,bounds[0].y, 1,0,
+				 bounds[0].x,bounds[1].y, 0,1,
+				 bounds[1].x,bounds[1].y, 1,1]);
+
+		upload_texture(0, tex);
+		shader.blit(*mesh);
+	}
+	void undispatch() { dispatch(); }
+}
+
 private struct ActionQueue {
 	Dispatchable[] actions;
 	Key[] inputs;

@@ -171,14 +171,20 @@ int real_main(string[] args) {
 	faux.expose_fun("make_fancy_model", (string s) => FancyModel(s));
 	faux.expose_fun("make_shader", (string path) => Shader(fslurp(path ~ ".vert"), fslurp(path ~ ".frag"), gfx.gfx_context));
 
-	/+
-	{
-		auto ww = ScriptVar(cast(long)ws.win_width);
-		auto wh = ScriptVar(cast(long)ws.win_height);
-		faux.expose_var("window-width", ww);
-		faux.expose_var("window-height", wh);
-	}
-	+/
+	faux.expose_fun("make_tex", (string path) => new Texture(path));
+
+	Mesh tex_copy_mesh = Mesh([-1,+1, 0,1,
+				   +1,-1, 1,0,
+				   -1,-1, 0,0,
+
+				   +1,-1, 1,0,
+				   -1,+1, 0,1,
+				   +1,+1, 1,1], [2, 2]);
+
+	faux.expose_fun("draw_tex_ndc", (Texture t, vec2f loc) => queues.enqueue(new ShaderDraw2D(&gfx.gfx_extra.tex_copy, &tex_copy_mesh, [loc, vec2f(loc.x + cast(float)t.w / ws.render_width, loc.y + cast(float)t.h / ws.render_height)], t)));
+
+	faux.expose_fun("get_renderdims", () => vec2f(ws.render_width, ws.render_height));
+	faux.expose_fun("get_texdims", (Texture t) => vec2f(t.w, t.h));
 
 	auto fnt = new Font("assets/fonts/dvs.ttf", 24, ws.render_width, ws.render_height, gfx.gfx_context);
 

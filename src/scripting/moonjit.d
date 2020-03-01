@@ -8,6 +8,7 @@ import bindbc.lua;
 
 import graphics.fancy_model;
 import graphics.shading;
+import graphics.tex;
 
 import windowing.key;
 
@@ -87,11 +88,14 @@ private void lua_push_var(lua_State *l, ScriptVar var) {
 		(long i) => lua_pushinteger(l, i),
 		(float d) => lua_pushnumber(l, d),
 		(string s) => lua_pushlstring(l, s.ptr, s.length),
+		(vec2f v) => memcpy(lua_newuserdata(l, float.sizeof * v.v.length), v.v.ptr, float.sizeof * v.v.length),
 		(vec3f v) => memcpy(lua_newuserdata(l, float.sizeof * v.v.length), v.v.ptr, float.sizeof * v.v.length),
 		(mat4f m) => memcpy(lua_newuserdata(l, float.sizeof * m.v.length), m.v.ptr, float.sizeof * m.v.length),
 		(FancyModel f) => lua_pushlightuserdata(l, New!ScriptVar(f)),
 		(Shader s) => lua_pushlightuserdata(l, New!ScriptVar(s)),
-		_ => lua_pushnil(l))();
+		(Texture t) => lua_pushlightuserdata(l, New!ScriptVar(t)),
+		(void *v) => lua_pushnil(l),
+		(NoneType n) => lua_pushnil(l))();
 }
 
 private void*[] _dont_gc_delegates;

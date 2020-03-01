@@ -8,6 +8,7 @@ import scripting.s7_lib_interface;
 
 import graphics.fancy_model;
 import graphics.shading;
+import graphics.tex;
 
 import windowing.key;
 
@@ -26,7 +27,11 @@ private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 	} else if (s7_is_real(ptr)) {
 		return ScriptVar(s7_real(ptr));
 	} else if (s7_is_float_vector(ptr)) {
-		if (s7_vector_length(ptr) == 3) {
+		if (s7_vector_length(ptr) == 2) {
+			vec2f ret;
+			ret.v[] = s7_float_vector_elements(ptr)[0 .. 2];
+			return ScriptVar(ret);
+		} else if (s7_vector_length(ptr) == 3) {
 			vec3f ret;
 			ret.v[] = s7_float_vector_elements(ptr)[0 .. 3];
 			return ScriptVar(ret);
@@ -47,8 +52,8 @@ private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 		// Please do not construct c-pointers in s7 unless you are making them from ScriptVars.  Thank you!
 		return *cast(ScriptVar*)s7_c_pointer(ptr);
 	} else {
-		fatal("Got unknown scheme value with value %s", s7_object_to_c_string(s7, ptr).dstr);
-		assert(0);
+		trace("Got unknown scheme value with value %s", s7_object_to_c_string(s7, ptr).dstr);
+		return None;
 	}
 }
 
@@ -64,11 +69,14 @@ private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var, s7_pointer[Key] ke
 			(long l) => s7_make_integer(s7, l),
 			(float d) => s7_make_real(s7, d),
 			(string s) => s7_make_string_with_length(s7, s.ptr, s.length),
+			(vec2f v) { s7_pointer ret = s7_make_float_vector(s7, 2, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v); return ret; },
 			(vec3f v) { s7_pointer ret = s7_make_float_vector(s7, 3, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v); return ret; },
 			(mat4f m) { s7_pointer ret = s7_make_float_vector(s7, 16, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), m.v); return ret; },
 			(FancyModel f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
 			(Shader s) => s7_make_c_pointer(s7, New!ScriptVar(s)),
-			_ => s7_nil(s7))();
+			(Texture t) => s7_make_c_pointer(s7, New!ScriptVar(t)),
+			(void *v) => s7_nil(s7),
+			(NoneType n) => s7_nil(s7))();
 }
 
 struct S7Fun {

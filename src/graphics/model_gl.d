@@ -6,7 +6,6 @@ import bindbc.opengl;
 
 
 struct Mesh {
-
 	GLuint VAO, VBO;
 	uint num_verts;
 

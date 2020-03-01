@@ -4,6 +4,7 @@ import stdmath;
 
 import graphics.fancy_model;
 import graphics.shading;
+import graphics.tex;
 import windowing.key;
 
 struct NoneType{}
@@ -17,6 +18,7 @@ enum ScriptVarType {
 	Bool,
 
 	// math:
+	Vec2,
 	Vec3,
 	Matx4,
 
@@ -24,14 +26,14 @@ enum ScriptVarType {
 	FancyModel,
 	Shader,
 	Key,
-//	Texture,
+	Texture,
 
 	// special
 	OpaquePtr,
 	Any,
 	None,
 }
-alias ScriptVar = Sum!(long, float, string, bool, vec3f, mat4f, FancyModel, Shader, Key, void*, NoneType);
+alias ScriptVar = Sum!(long, float, string, bool, vec2f, vec3f, mat4f, FancyModel, Shader, Key, Texture, void*, NoneType);
 alias ScriptFun = ScriptVar delegate(ScriptVar[] args);
 ScriptVar None = ScriptVar(NoneType());
 
@@ -42,10 +44,12 @@ ScriptVarType script_typeof(ScriptVar v) {
 			(long l) => ScriptVarType.Int,
 			(float d) => ScriptVarType.Real,
 			(string s) => ScriptVarType.Str,
+			(vec2f v) => ScriptVarType.Vec2,
 			(vec3f v) => ScriptVarType.Vec3,
 			(mat4f m) => ScriptVarType.Matx4,
 			(FancyModel f) => ScriptVarType.FancyModel,
 			(Shader s) => ScriptVarType.Shader,
+			(Texture t) => ScriptVarType.Texture,
 
 			(void *v) => ScriptVarType.OpaquePtr,
 			//(ScriptVar s) => ScriptVarType.Any,
@@ -63,6 +67,8 @@ ScriptVarType script_typeof(T)() {
 		return ScriptVarType.Str;
 	} else static if (is(T == bool)) {
 		return ScriptVarType.Bool;
+	} else static if (is(T == vec2f)) {
+		return ScriptVarType.Vec2;
 	} else static if (is(T == vec3f)) {
 		return ScriptVarType.Vec3;
 	} else static if (is(T == mat4f)) {
@@ -71,11 +77,12 @@ ScriptVarType script_typeof(T)() {
 		return ScriptVarType.FancyModel;
 	} else static if (is(T == Shader)) {
 		return ScriptVarType.Shader;
-
+	} else static if (is(T == Texture)) {
+		return ScriptVarType.Texture;
 	} else static if (is(T == void*)) {
 		return ScriptVarType.OpaquePtr;
 	} else static if (is(T == void)) {
-		return ScriptVarType.NoneType;
+		return ScriptVarType.None;
 	} else static if (is(T == ScriptVar)) {
 		return ScriptVarType.Any;
 	} else {
