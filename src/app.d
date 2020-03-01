@@ -176,6 +176,11 @@ int real_main(string[] args) {
 		uint height = cast(uint)in_pixels.length;
 		ubyte[] pixels;
 		uint width;
+		if (depth != 1 && depth != 3 && depth != 4) {
+			error("Bad colour depth %s; must be 1, 3, or 4", depth);
+			return None;
+		}
+
 		foreach (in_row; in_pixels) {
 			ScriptVar[] row;
 			try {
@@ -199,10 +204,15 @@ int real_main(string[] args) {
 					(_) { error("Bad type for pixel"); assert(0); })();
 				} catch (Throwable) return None;
 
-				foreach_reverse (i; 0 .. depth) pixels ~= cast(ubyte)((p & (0xff << (8*i))) >> (8*i));
+				//foreach_reverse (i; 0 .. depth) pixels ~= cast(ubyte)((p & (0xff << (8*i))) >> (8*i));
+				if (depth == 1) pixels ~= [p&0xff, p&0xff, p&0xff, 0xff];
+				else if (depth == 3) pixels ~= [(p&0xff0000) >> 16, (p&0xff00) >> 8, p&0xff, 0xff];
+				else if (depth == 4) pixels ~= [(p&0xff000000) >> 24, (p&0xff000) >> 16, (p&0xff) >> 8, p&0xff];
 			}
 		}
-		return ScriptVar(new Texture(pixels, width, height, cast(ubyte)depth));
+
+		// colour depth set to 4 in Texture{} because we manually re-pack everything to be rgba
+		return ScriptVar(new Texture(pixels, width, height, 4));
 	});
 
 	Font[] fonts;
@@ -224,8 +234,8 @@ int real_main(string[] args) {
 
 	faux.expose_fun("draw_tex_ndc", (Texture t, vec2f loc) {
 		vec2f loc2;
-		loc2.x = loc.x + cast(float)t.w/ws.render_width;
-		loc2.y = loc.y + cast(float)t.h/ws.render_height;
+		loc2.x = loc.x + 2*cast(float)t.w/ws.render_width;
+		loc2.y = loc.y + 2*cast(float)t.h/ws.render_height;
 		queues.enqueue(new ShaderDraw2D(&gfx.gfx_extra.tex_copy, &tex_copy_mesh, [loc, loc2], t));
 	});
 
