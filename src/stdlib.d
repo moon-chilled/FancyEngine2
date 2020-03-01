@@ -18,7 +18,8 @@ import std.file: fexists = exists;
 import std.functional: toDelegate;
 import std.math: abs, trunc;
 import std.traits: isFloatingPoint, isIntegral, isNumeric, isSomeString;
-import std.variant: Sum = Algebraic, This;
+import std.variant: This;
+import sumtype: Sum = SumType, match;
 
 // Boring stuff: version flags are passed in as simple booleans, but we really
 // need them to be enums, so they're 1) always defined and 2) always have a

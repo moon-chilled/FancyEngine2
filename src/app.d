@@ -133,14 +133,14 @@ int real_main(string[] args) {
 			return ScriptVar(false);
 		}
 
-		Shader s = *vars[0].peek!Shader;
+		Shader s = vars[0].peek!Shader;
 
 		if (script_typeof(vars[1]) != ScriptVarType.FancyModel) {
 			error("Asked to draw model, but passed '%s' of type %s instead", vars[1], vars[1].script_typeof);
 			return ScriptVar(false);
 		}
 
-		FancyModel model = *vars[1].peek!FancyModel;
+		FancyModel model = vars[1].peek!FancyModel;
 
 		vars = vars[2 .. $];
 		Mat4fNamePair[] pairs;
@@ -148,8 +148,8 @@ int real_main(string[] args) {
 			if (script_typeof(vars[2*i]) != ScriptVarType.Str) { error("asked to set uniform on shader, but name was %s, not string", vars[2*i]); return ScriptVar(false); }
 			if (script_typeof(vars[2*i+1]) != ScriptVarType.Matx4) { error("asked to set uniform matrix on shader, but given %s, not matrix", vars[2*i+1]); return ScriptVar(false); }
 			Mat4fNamePair m;
-			m.name = *vars[2*i].peek!string;
-			m.to = *vars[2*i+1].peek!mat4f;
+			m.name = vars[2*i].peek!string;
+			m.to = vars[2*i+1].peek!mat4f;
 
 			pairs ~= m;
 			//TODO: m.from

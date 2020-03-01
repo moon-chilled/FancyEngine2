@@ -58,18 +58,17 @@ private void copy_to_s7_vec(float *dest, float[] src) {
 	}
 }
 private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var, s7_pointer[Key] key_to_symtab = null) {
-	import std.variant: visit;
-	return var.visit!(
+	return var.match!(
+			(bool b) => s7_make_boolean(s7, b),
+			(Key k) => key_to_symtab ? key_to_symtab[k] : s7_make_symbol(s7, k.key_to_str.cstr),
 			(long l) => s7_make_integer(s7, l),
 			(float d) => s7_make_real(s7, d),
 			(string s) => s7_make_string_with_length(s7, s.ptr, s.length),
-			(bool b) => s7_make_boolean(s7, b),
 			(vec3f v) { s7_pointer ret = s7_make_float_vector(s7, 3, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v); return ret; },
 			(mat4f m) { s7_pointer ret = s7_make_float_vector(s7, 16, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), m.v); return ret; },
 			(FancyModel f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
 			(Shader s) => s7_make_c_pointer(s7, New!ScriptVar(s)),
-			(Key k) => key_to_symtab ? key_to_symtab[k] : s7_make_symbol(s7, k.key_to_str.cstr),
-			(None) => s7_nil(s7))();
+			_ => s7_nil(s7))();
 }
 
 struct S7Fun {
@@ -115,7 +114,7 @@ class S7Script: Scriptlang {
 				} else foreach (i; 0 .. fargs.length) {
 					// allow casting from int to real
 					if (script_typeof(fargs[i]) == ScriptVarType.Int && fun.argtypes[i] == ScriptVarType.Real) {
-						fargs[i] = ScriptVar(cast(float)*fargs[i].peek!long);
+						fargs[i] = ScriptVar(cast(float)fargs[i].peek!long);
 					}
 
 					if ((script_typeof(fargs[i]) != fun.argtypes[i]) && (fun.argtypes[i] != ScriptVarType.Any)) {
@@ -217,7 +216,7 @@ class S7Script: Scriptlang {
  (lambda () (load "` ~ path ~ `") #t)
  (lambda args
   #f))`).cstr, s7_inlet(s7, s7_nil(s7)));
-		return *s7_to_script(s7, s7_obj).peek!bool;
+		return s7_to_script(s7, s7_obj).peek!bool;
 	}
 	void load(string path) {
 		s7_load(s7, path.cstr);

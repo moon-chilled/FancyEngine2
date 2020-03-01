@@ -24,7 +24,7 @@ enum ScriptVarType {
 	FancyModel,
 	Shader,
 	Key,
-	Texture,
+//	Texture,
 
 	// special
 	OpaquePtr,
@@ -33,26 +33,23 @@ enum ScriptVarType {
 }
 alias ScriptVar = Sum!(long, float, string, bool, vec3f, mat4f, FancyModel, Shader, Key, void*, NoneType);
 alias ScriptFun = ScriptVar delegate(ScriptVar[] args);
-ScriptVar None;
-shared static this() {
-	None = ScriptVar(NoneType());
-}
+ScriptVar None = ScriptVar(NoneType());
 
 ScriptVarType script_typeof(ScriptVar v) {
-	import std.variant: visit;
-	return v.visit!(
+	return v.match!(
+			(bool b) => ScriptVarType.Bool,
+			(Key k) => ScriptVarType.Key,
 			(long l) => ScriptVarType.Int,
 			(float d) => ScriptVarType.Real,
 			(string s) => ScriptVarType.Str,
-			(bool b) => ScriptVarType.Bool,
 			(vec3f v) => ScriptVarType.Vec3,
 			(mat4f m) => ScriptVarType.Matx4,
 			(FancyModel f) => ScriptVarType.FancyModel,
 			(Shader s) => ScriptVarType.Shader,
 
 			(void *v) => ScriptVarType.OpaquePtr,
-			(ScriptVar s) => ScriptVarType.Any,
-			(NoneType) => ScriptVarType.None)();
+			//(ScriptVar s) => ScriptVarType.Any,
+			(NoneType n) => ScriptVarType.None)();
 }
 
 // TODO: should this function use std.traits: Unqual(ified)?
@@ -113,7 +110,7 @@ interface ScriptlangImpl {
 				static if (is(A[i] == ScriptVar)) {
 					ret ~= "args[" ~ i.to!string ~ "], ";
 				} else {
-					ret ~= "cast(" ~ A[i].stringof ~ ")*args[" ~ i.to!string ~ "].peek!(" ~ OriginalType!(A[i]).stringof ~ "), ";
+					ret ~= "cast(" ~ A[i].stringof ~ ")args[" ~ i.to!string ~ "].peek!(" ~ OriginalType!(A[i]).stringof ~ "), ";
 				}
 			}
 			ret ~= ")";

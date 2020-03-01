@@ -13,7 +13,7 @@ import windowing.key;
 
 
 private ScriptVar lua_popvar(lua_State *l) {
-	ScriptVar ret;
+	ScriptVar ret = None;
 	switch (lua_type(l, -1)) {
 		case LUA_TNONE: case LUA_TNIL:
 			ret = None;
@@ -81,18 +81,17 @@ private ScriptVar lua_popvar(lua_State *l) {
 }
 
 private void lua_push_var(lua_State *l, ScriptVar var) {
-	import std.variant: visit;
-	var.visit!(
+	var.match!(
+		(bool b) => lua_pushboolean(l, b),
+		(Key k) => lua_pushlstring(l, k.key_to_str.ptr, k.key_to_str.length),
 		(long i) => lua_pushinteger(l, i),
 		(float d) => lua_pushnumber(l, d),
 		(string s) => lua_pushlstring(l, s.ptr, s.length),
-		(bool b) => lua_pushboolean(l, b),
 		(vec3f v) => memcpy(lua_newuserdata(l, float.sizeof * v.v.length), v.v.ptr, float.sizeof * v.v.length),
 		(mat4f m) => memcpy(lua_newuserdata(l, float.sizeof * m.v.length), m.v.ptr, float.sizeof * m.v.length),
 		(FancyModel f) => lua_pushlightuserdata(l, New!ScriptVar(f)),
 		(Shader s) => lua_pushlightuserdata(l, New!ScriptVar(s)),
-		(Key k) => lua_pushlstring(l, k.key_to_str.ptr, k.key_to_str.length),
-		(None) => lua_pushnil(l))();
+		_ => lua_pushnil(l))();
 }
 
 private void*[] _dont_gc_delegates;
@@ -171,7 +170,7 @@ class MoonJitScript: Scriptlang {
 					ScriptVar x = lua_popvar(l);
 					// allow automatic casting of ints to floats, since lua has no ints
 					if ((script_typeof(x) == ScriptVarType.Int) && (t == ScriptVarType.Real)) {
-						x = ScriptVar(cast(float)*x.peek!long);
+						x = ScriptVar(cast(float)x.peek!long);
 					}
 
 					if ((script_typeof(x) != t) && (t != ScriptVarType.Any)) {
@@ -261,7 +260,7 @@ class MoonJitScript: Scriptlang {
 
 		string err_msg;
 
-		if (lua_isstring(l, -1)) err_msg = *lua_popvar(l).peek!string;
+		if (lua_isstring(l, -1)) err_msg = lua_popvar(l).peek!string;
 		else err_msg = "unkown error";
 
 		fatal("LuaJIT: %s: %s", err_cat, err_msg);
