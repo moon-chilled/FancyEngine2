@@ -18,6 +18,33 @@ class Texture: Asset {
 	uint w, h;
 	GLuint tex_id;
 
+	this(ubyte[] data, uint width, uint height, ubyte clr_depth) {
+		if (data.length != width * height * clr_depth) fatal("%s != %s*%s*%s", data.length, width, height, clr_depth);
+
+		w = width;
+		h = height;
+
+		GLuint colour_fmt;
+		switch (clr_depth) {
+			case 1: colour_fmt = GL_RED; break;
+			case 3: colour_fmt = GL_RGB; break;
+			case 4: colour_fmt = GL_RGBA; break;
+			default: fatal("Need 3-byte or 4-byte colour depth, got %s", clr_depth); assert(0);
+		}
+
+		glGenTextures(1, &tex_id);
+		glBindTexture(GL_TEXTURE_2D, tex_id);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //TODO: make this configurable
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, colour_fmt, w, h, 0, colour_fmt, GL_UNSIGNED_BYTE, data.ptr);
+
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+
+
 	this(string fpath) {
 		if (fpath in texture_cache) {
 			w = texture_cache[fpath].w;

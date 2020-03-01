@@ -172,6 +172,38 @@ int real_main(string[] args) {
 	faux.expose_fun("make_shader", (string path) => Shader(fslurp(path ~ ".vert"), fslurp(path ~ ".frag"), gfx.gfx_context));
 
 	faux.expose_fun("make_tex", (string path) => new Texture(path));
+	faux.expose_fun("make_tex_from_data", (ScriptVar[] in_pixels, long depth) {
+		uint height = cast(uint)in_pixels.length;
+		ubyte[] pixels;
+		uint width;
+		foreach (in_row; in_pixels) {
+			ScriptVar[] row;
+			try {
+				in_row.match!(
+					(ScriptVar[] v) { row = v; },
+					(_) { error("Bad pixel data"); assert(0); })();
+			} catch (Throwable) return None;
+
+			if (!width) {
+				width = cast(uint)row.length;
+			} else if (width != row.length) {
+				error("Misaligned rows (%s != %s)", width, row.length);
+				return None;
+			}
+
+			foreach (in_p; row) {
+				long p;
+				try {
+				in_p.match!(
+					(long l) { p = l; },
+					(_) { error("Bad type for pixel"); assert(0); })();
+				} catch (Throwable) return None;
+
+				foreach_reverse (i; 0 .. depth) pixels ~= cast(ubyte)((p & (0xff << (8*i))) >> (8*i));
+			}
+		}
+		return ScriptVar(new Texture(pixels, width, height, cast(ubyte)depth));
+	});
 
 	Font[] fonts;
 	scope(exit) foreach (f; fonts) f.destroy();
