@@ -44,6 +44,12 @@ private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 			fatal("Got scheme float vector %s; not of length 3 or 16, so not a vec3 or mat4", s7_float_vector_elements(ptr)[0 .. s7_vector_length(ptr)]);
 			assert(0);
 		}
+	} else if (s7_is_list(s7, ptr)) {
+		ScriptVar[] ret;
+		do {
+			ret ~= s7_to_script(s7, s7_car(ptr));
+		} while (!s7_is_null(s7, ptr = s7_cdr(ptr)));
+		return ScriptVar(ret);
 	} else if (s7_is_c_pointer(ptr)) {
 		//!WARNING!XXX
 		// this is actually a little bit dangerous
@@ -58,28 +64,41 @@ private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 	}
 }
 
-private void copy_to_s7_vec(float *dest, float[] src) {
-	foreach (i; 0 .. src.length) {
-		dest[i] = src[i];
-	}
-}
 private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var, s7_pointer[Key] key_to_symtab = null) {
+	void copy_to_s7_vec(float *dest, float[] src) {
+		foreach (i; 0 .. src.length) {
+			dest[i] = src[i];
+		}
+	}
+
 	return var.match!(
-			(bool b) => s7_make_boolean(s7, b),
-			(Key k) => key_to_symtab ? key_to_symtab[k] : s7_make_symbol(s7, k.key_to_str.cstr),
-			(long l) => s7_make_integer(s7, l),
-			(float d) => s7_make_real(s7, d),
-			(string s) => s7_make_string_with_length(s7, s.ptr, s.length),
-			(vec2f v) { s7_pointer ret = s7_make_float_vector(s7, 2, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v); return ret; },
-			(vec3f v) { s7_pointer ret = s7_make_float_vector(s7, 3, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v); return ret; },
-			(mat4f m) { s7_pointer ret = s7_make_float_vector(s7, 16, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), m.v); return ret; },
-			(FancyModel f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
-			(Shader s) => s7_make_c_pointer(s7, New!ScriptVar(s)),
-			(Texture t) => s7_make_c_pointer(s7, New!ScriptVar(t)),
-			(Font f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
-			(void *v) => s7_nil(s7),
-			(NoneType n) => s7_nil(s7))();
+		(bool b) => s7_make_boolean(s7, b),
+		(Key k) => key_to_symtab ? key_to_symtab[k] : s7_make_symbol(s7, k.key_to_str.cstr),
+		(long l) => s7_make_integer(s7, l),
+		(float d) => s7_make_real(s7, d),
+		(string s) => s7_make_string_with_length(s7, s.ptr, s.length),
+		(vec2f v) { s7_pointer ret = s7_make_float_vector(s7, 2, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v); return ret; },
+		(vec3f v) { s7_pointer ret = s7_make_float_vector(s7, 3, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), v.v); return ret; },
+		(mat4f m) { s7_pointer ret = s7_make_float_vector(s7, 16, 0, null); copy_to_s7_vec(s7_float_vector_elements(ret), m.v); return ret; },
+		(ScriptVar[] arr) => arr_to_list(s7, arr),
+		(FancyModel f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
+		(Shader s) => s7_make_c_pointer(s7, New!ScriptVar(s)),
+		(Texture t) => s7_make_c_pointer(s7, New!ScriptVar(t)),
+		(Font f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
+		(void *v) => s7_nil(s7),
+		(NoneType n) => s7_nil(s7))();
 }
+
+private s7_pointer arr_to_list(s7_scheme *s7, ScriptVar[] arr) {
+	s7_pointer ret = s7_nil(s7);
+
+	foreach_reverse(a; arr) {
+		ret = s7_cons(s7, script_to_s7(s7, a), ret);
+	}
+
+	return ret;
+}
+
 
 struct S7Fun {
 	string name;
@@ -183,7 +202,7 @@ class S7Script: Scriptlang {
 			//but could outlive 'this', which destroys the 's7' ctx.
 			//or is that not an issue since both live basically for the lifetime of the program?
 
-			if (s7_is_function(p) || s7_is_procedure(p)) ret[sym] = ((p) => (ScriptVar[] args) => s7_to_script(s7, s7_call(s7, p, make_arglist(args))))(p);
+			if (s7_is_function(p) || s7_is_procedure(p)) ret[sym] = ((p) => (ScriptVar[] args) => s7_to_script(s7, s7_call(s7, p, arr_to_list(s7, args))))(p);
 			// ^^ need that indirection to properly close over p
 			// because otherwise it's closed over by reference
 			// meaning that all returned function pointers close over the last p we create (and that will be overwritten on future invocations)
@@ -194,20 +213,10 @@ class S7Script: Scriptlang {
 		return ret;
 	}
 
-	private s7_pointer make_arglist(ScriptVar[] args) {
-		s7_pointer ret = s7_nil(s7);
-		foreach_reverse(a; args) {
-			ret = s7_cons(s7, script_to_s7(s7, a, key_to_symtab), ret);
-		}
-
-		return ret;
-	}
-
-
 	ScriptVar call(string name, ScriptVar[] args = []) {
 		s7_pointer funcptr = s7_name_to_value(s7, name.cstr); // lisp-1 ftw!
 
-		return s7_to_script(s7, s7_call(s7, funcptr, make_arglist(args)));
+		return s7_to_script(s7, s7_call(s7, funcptr, arr_to_list(s7, args)));
 	}
 
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes, bool variadic = false) {
@@ -235,4 +244,5 @@ class S7Script: Scriptlang {
 	bool has_symbol(string name) {
 		return s7_symbol_table_find_name(s7, name.cstr) ? true : false;
 	}
+
 }

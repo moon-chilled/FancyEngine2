@@ -18,6 +18,9 @@ enum ScriptVarType {
 	Str,
 	Bool,
 
+	// composite types:
+	Array,
+
 	// math:
 	Vec2,
 	Vec3,
@@ -35,7 +38,7 @@ enum ScriptVarType {
 	Any,
 	None,
 }
-alias ScriptVar = Sum!(long, float, string, bool, vec2f, vec3f, mat4f, FancyModel, Shader, Key, Texture, Font, void*, NoneType);
+alias ScriptVar = Sum!(long, float, string, bool, vec2f, vec3f, mat4f, This[], FancyModel, Shader, Key, Texture, Font, void*, NoneType);
 alias ScriptFun = ScriptVar delegate(ScriptVar[] args);
 ScriptVar None = ScriptVar(NoneType());
 
@@ -49,6 +52,7 @@ ScriptVarType script_typeof(ScriptVar v) {
 			(vec2f v) => ScriptVarType.Vec2,
 			(vec3f v) => ScriptVarType.Vec3,
 			(mat4f m) => ScriptVarType.Matx4,
+			(ScriptVar[]) => ScriptVarType.Array,
 			(FancyModel f) => ScriptVarType.FancyModel,
 			(Shader s) => ScriptVarType.Shader,
 			(Texture t) => ScriptVarType.Texture,
@@ -76,6 +80,8 @@ ScriptVarType script_typeof(T)() {
 		return ScriptVarType.Vec3;
 	} else static if (is(T == mat4f)) {
 		return ScriptVarType.Matx4;
+	} else static if (is(T == ScriptVar[])) {
+		return ScriptVarType.Array;
 	} else static if (is(T == FancyModel)) {
 		return ScriptVarType.FancyModel;
 	} else static if (is(T == Shader)) {

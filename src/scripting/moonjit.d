@@ -92,6 +92,7 @@ private void lua_push_var(lua_State *l, ScriptVar var) {
 		(vec2f v) => memcpy(lua_newuserdata(l, float.sizeof * v.v.length), v.v.ptr, float.sizeof * v.v.length),
 		(vec3f v) => memcpy(lua_newuserdata(l, float.sizeof * v.v.length), v.v.ptr, float.sizeof * v.v.length),
 		(mat4f m) => memcpy(lua_newuserdata(l, float.sizeof * m.v.length), m.v.ptr, float.sizeof * m.v.length),
+		(ScriptVar[] arr) { fatal("Not supported arrays in lua yet"); assert(0); },
 		(FancyModel f) => lua_pushlightuserdata(l, New!ScriptVar(f)),
 		(Shader s) => lua_pushlightuserdata(l, New!ScriptVar(s)),
 		(Texture t) => lua_pushlightuserdata(l, New!ScriptVar(t)),
