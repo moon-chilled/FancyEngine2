@@ -197,7 +197,7 @@ class S7Script: Scriptlang {
 		}
 
 		foreach (sym; wanted_syms) {
-			s7_pointer p = s7_let_ref(s7, env, s7_make_symbol(s7, sym.cstr));
+			s7_pointer p = s7_let_ref(s7, env, s7_make_symbol(s7, sym.replace('_', '-').cstr));
 			//TODO: lifetime issue: currently, this closes around 's7'
 			//but could outlive 'this', which destroys the 's7' ctx.
 			//or is that not an issue since both live basically for the lifetime of the program?
@@ -220,6 +220,7 @@ class S7Script: Scriptlang {
 	}
 
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes, bool variadic = false) {
+		name = name.replace('_', '-');
 		long new_index;
 		synchronized (s7funslock) {
 			new_index = s7funs.length++;
