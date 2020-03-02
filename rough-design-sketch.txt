@@ -7,12 +7,12 @@ playing means it's running, it's normal
 when you pause it, its update loop stops getting run until you play it again
 So, for instance, when you enter the settings menu, the in-game scene with the monsters should be paused so the monsters stop attacking you and your mouse/keyboard events stop getting sent
 incidentally, event receiving is separate from play/pause/etc. (note to self: how _should_ this work?  Do you receive events if you're on and have the right to receive events?  Or should a paused/hibernated scene have events added to a queue that it can view when it turns on?  If so, should saved scenes be able to receive events?  Should it even be possible for more than one scene to receive events at once?  Yes, e.g. minimap should be interactable at the same time as the world).  (Ok, you should say "I want to be able to poll for events" *or* "I want you to call this callback with events")  (I've figured out!  Scene indicates input types accepted (poll, callback, poll and callback, none), and input enabled (yes, no).  Maybe this will work)
-When you hibernate a scene, it's the same as being paused, except it takes longer to turn it on again but it has less of a memory footprint
+When you hibernate a scene, it's the same as being paused, except the engine maybe does optimizations so it takes longer to turn it on again but it has less of a memory footprint
 So for instance, maybe a scene is a chunk of map; you keep all the chunks hibernated except for the one you're in, so you don't take up as much memory/cpu (note: this doesn't actually make sense given what scenes are, but: wait)
-Saved scenes have their state saved to disc and are immutable.  You can load them into any of the other states, at which point they will be mutable.  Scenes are not intended to be saved and loaded frequently; preferrably, you'll load all your scenes into a state of hibernation at the start, and then pause or play them as necessary.  A scene is *not* an asset (more on this later)
+Saved scenes have their state saved to disc and are immutable.  You can load them into any of the other states, at which point they will be mutable.  Scenes are not intended to be saved and loaded frequently; preferrably, you'll hibernate all your scenes, and then pause or play them as necessary.  A scene is *not* an asset (more on this later)
 
 
-The other thing is an *asset*.  An asset is one of: an image, a sound, a video, or Data.  Images, sounds, and videos come in whatever formats we want to support (probably, base should include support for bmp, png, wav, opus, and only support video if a dynamic copy of ffmpeg is supporte).  Data is for anything else, and comes in a couple of forms.  The simplest is Raw data: this is where you read a sequence of bytes from a file and do whatever the hell you want with them.  But there is also support for:
+The other thing is an *asset*.  An asset is one of: an image, a sound, a video, a model, or Data.  Maybe some other stuff too.  Images, sounds, and videos come in whatever formats we want to support (probably, base should include support for bmp, png, wav, opus, and only support video if a dynamic copy of ffmpeg is supporte).  Data is for anything else, and comes in a couple of forms.  The simplest is Raw data: this is where you read a sequence of bytes from a file and do whatever the hell you want with them.  But there is also support for:
 - TOML (for user-editable config files)
 - JSON (for sending across a network) (so, this is minified by default when writing it out; you can ask it to be prettified, if you want that for some reason)
 - XML (idk in case you like xml for some reason) (maybe this shouldn't be here because libxml is maybe kinda heavy)
@@ -20,12 +20,12 @@ The other thing is an *asset*.  An asset is one of: an image, a sound, a video, 
 Assets should probably have some kind of fancy caching/streaming system.  Something like this:
 * All assets under a certain size are kept in memory (up to some limit -- if you have 1,000,000 1kb files, and the memory bank size is 500mb, only half of them will be loaded into memory)
 * If we're approaching the 'soft' limit and some assets have been very rarely used/haven't been used in a while, they will be swapped out to disc to make room to load new files
- * this is where hibernation comes in: if you hibernate, your assets are weighed more heavily for being swapped out
- * If you then pause a hibernated scene, its assets are reconsidered for in-memory caching
+ * this is where hibernation comes in: if you hibernate, your assets are more likely to be swapped out
+ * If you then pause a hibernated scene, its assets are reconsidered for caching
 * Memory bank size can be a fixed number, or a proportion of system memory, or some combination of the two (e.g. a third of system memory + 500mb.  Or: min(system-memory*(2/3), 3gb)
 * The auto-cacher should Do The Right Thing by default.  However, you can override it in any number of ways
  - You can turn it off, and manually select resources that should be cached, streamed, or swapped out
- - You can set priority on various assets (e.g. I play this sound file frequently, but it doesn't matter that much so feel free to swap it out for something more important)
+ - You can set priority on various assets (e.g. even though I play this sound file frequently, it doesn't matter that much, so feel free to swap it out for something more important)
  - You can keep the auto-cacher on, but override it for some assets (e.g. I want to make sure these textures are *always* in memory even though I use them very rarely, because when they do show up it's very important they're visible right away without any hitches)
 
 Assets can be in two places: global, or scoped.  Global assets are accessible from any scene, scoped ones are only available from the scene where it's defined, and any children
@@ -34,45 +34,45 @@ Global assets can be namespaced (e.g. a::b::imgfoo.  Except don't use :: syntax 
 
 Okay, so what the hell is a scene?
 A scene defines a *mode of interaction*.  (It also stores state that's relevant to said interaction)
-Consider something like a jrpg.
+Consider something like a classic 2-d jrpg.
 First off, the main world is a scene.  It has you, terrain, other monsters; all have associated hitboxes (Data) and textures (image).   It polls for input every frame.  Its framebuffer is the whole window
 Then there's an HUD.  It tells you your HP, how much gold you have, etc.  Not much to say here.  It doesn't get any events, its framebuffer is the same size as the main world, but it has a z-index greater than the world (!), and draws everything transparent except for the actual health &c bars
 And, there's a minimap.  This has a similar structure to the HUD, except that it has a callback for mouse events.  When the mouse has been on a location in the minimap for longer than 0.5s, show a tooltip like 'forest'
 All well and good.  Now, let's say I press 'esc'.  Here's what happens:
  - The settings scene previously registered a callback for all keyboard events
- - That callback discards all events except for 'esc'
- - But now, having received an 'esc' event, it does the following:
+ - That callback knows to discard all events except for 'keydown esc'
+ - But now, after the user presses esc, it does the following:
    - It pauses the main world scene, and disallows it from getting input (if that's a thing)
-     - This pause is recursive, so the HUD and minimap scenes are paused too
-   - It enables a 'darken' shader on the mainworld scene: this just makes everything a bit darker, to make it clear it's in the background
-   - It enables the draw flag on the settings scene, so it can now draw on the screen.  Allocate for it a framebuffer the same size as the mainworld
+     - This pause is transitive, so the HUD and minimap scenes are paused too
+   - It swaps out the mainworld's texcopy shader for a texcopy-and-darken shader: this just makes everything a bit darker, to make it clear it's in the background
+   - It enables the draw flag on the settings scene, so it can now draw on the screen.  Allocate for it a framebuffer the same size as the mainworld, with a greater z-index
    - It enables polled input for the settings scene, and disables callback input for the same
  - Now, the settings scene handles its interactions however it wants to
  - when it detects the user is done with the settings, it does the following (basically the reverse of the previous time this happened):
    - pause the settings scene
    - disables polled input for settings
    - disables the draw flag on the settings scene
-   - disable the 'darken' shader on the mainworld scene
-   - recursively plays the minimap scene
+   - swap the 'darken' shader back out for the regular texcopy one, for the mainworld scene
+   - plays the minimap scene
    - enables input for the mainworld scene
-   - turn on the callback input in settings (so esc works again to go to the settings menu)
+   - re-enabled callback input for settings
    - quicksave (more on this later)
 
-Notice: this seems like a lot of arbitrary stuff every scene transition has to remember to do.  Yet, it's not.  #1: the needs of every scene will be different, even if they are similar.  #2 is that the settings scene *does its own cleanup*.  The main scene won't even realise it's been interrupted.  This compartmentalizes and localizes transitions; idiomatic use of the engine requires that each time a scene defines a transition one way, it defines the same transition the other way at the same time.  It's fairly easy to see in this way when a transition in does something that the transition out does not do.
+Notice: this seems like a lot of arbitrary stuff every scene transition has to remember to do.  Yet, it's not.  #1: the needs of every scene will be different, even if they are similar.  #2 is that the settings scene *does its own cleanup*.  The main scene won't even realise it's been interrupted.  This compartmentalizes and localizes transitions; idiomatic use of the engine requires that each time a scene defines a transition, it defines its inverse.
 
 We can easily envision a similar transition to an inventory, or to a fight menu.
 
 
 
 
-It is necessary to make a confesssion at this point.  I lied.  A scene isn't a mode of interaction.  Well-- conceptually, it is.  When you interact with the minimap, you interact with it in a fundamentally different way than with the world.  But to the player, there is one mode where you have a world and a minimap and an hud; there's another mode where you see a list of items and their properties and you can equip them.  To accomadate this, there is something called a Universe.  There is no concept of a universe in the engine, this is strictly a colloquialism.  A universe is a dependency tree of scenes, where each connection between nodes has some information that is transitively passed along.  So in this case, the mainworld scene indicates that it depends on the minimap, and it's pause state and input enabled state pass along.  Then, if something sets the mainworld's pause state, that pause travels along to the minimap.  HOWEVER!  The minimap can be paused without having any effect on the mainworld (note to self: should circular dependencies be allowed?).  A universe, then, is a single fully resolved dependency tree, including ONLY PATHS ALONG WHICH STATE CHANGES CAN TRAVEL; in the simplistic example expressed above, one universe would consist of the mainworld, HUD, and minimap, and another would consist of the settings.
+It is necessary to make a confesssion at this point.  I lied.  A scene isn't a mode of interaction.  Well-- conceptually, it is.  When you interact with the minimap, you interact with it in a fundamentally different way than with the world.  But to the player, there is one mode where you have a world and a minimap and an hud; there's another mode where you see a list of items and their properties and you can equip them.  To accomadate this, there is something called a Universe.  There is no concept of a universe in the engine, this is strictly a colloquialism.  A universe is a dependency tree of scenes, where each connection between nodes has some information that is transitively passed along.  So in this case, the mainworld scene indicates that it depends on the minimap, and its pause state and input enabled state pass along.  Then, if something sets the mainworld's pause state, that pause travels along to the minimap.  HOWEVER!  The minimap can be paused without having any effect on the mainworld (note to self: should circular dependencies be allowed?).  A universe, then, is a single fully resolved dependency tree, including ONLY PATHS ALONG WHICH STATE CHANGES CAN TRAVEL; in the simplistic example expressed above, one universe would consist of the mainworld, HUD, and minimap, and another would consist of the settings.
 
-Do note the above: only paths along which state change can travel.  Mainworld may express a dependency on some other scene but not state travels along that channel; in that case, that other scene is *not* part of mainworld's universe.  But also consider this:
+Do note the above: only paths along which state change can travel.  Mainworld may express a dependency on some other scene but something other than state travels along that channel; in that case, that other scene is *not* part of mainworld's universe.  But also consider this:
 
 a (input-state)=> b
 b (pause-state)=> c
 
-That is, when a's input state is changed, that applies to b, and when b's pause/play/save/hibernate state is changed, that applies to c.  Then, c is NOT PART OF A'S UNIVERSE.  Because no state change to a ever propagates to c.  For this reason, a universe can only be expressed in terms of a single root node and all its dependencies.  Therefore, for ease-of-use, most universes should have a 'blank' root scene that expresses dependencies (along which ALL changes are propagated) for all other top-level scenes in that universe.  So in this case, our mainworld universe would read:
+That is, when a's input state is changed, that applies to b, and when b's pause/play/save/hibernate state is changed, that applies to c.  Then, c is NOT PART OF A'S UNIVERSE.  Because no state change to a ever propagates to c.  For this reason, a universe can only be expressed in terms of a single root node and all its reverse dependencies.  Therefore, for ease-of-use, most universes should have a 'blank' root scene that expresses dependencies (along which ALL changes are propagated) for all other top-level scenes in that universe.  So in this case, our mainworld universe would read:
 
 mainworld-universe (all)=> mainworldscene
 mainworldscene (input-state, pause-state)=> minimapscene
