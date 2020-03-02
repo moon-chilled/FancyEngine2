@@ -98,6 +98,25 @@ struct Font {
 		have_kerning = FT_HAS_KERNING(face);
 	}
 
+	// pixel width
+	uint measure(string s, bool want_kerning = false) {
+		uint ret = 0;
+		char prev_char;
+		foreach (c; s) {
+			ret += atlas_map[c].advance/64;
+
+			// might want to calculate without kerning because you'll still get an approximately right result and performance will be better
+			if (have_kerning && want_kerning) {
+				FT_Vector kern;
+				FT_Get_Kerning(face, FT_Get_Char_Index(face, prev_char), FT_Get_Char_Index(face, c), 0, &kern);
+				ret += kern.x/64;
+				prev_char = c;
+			}
+		}
+
+		return ret;
+	}
+
 	void draw(float x, float y, string s) {
 		float[] verts;
 

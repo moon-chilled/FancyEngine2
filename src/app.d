@@ -240,6 +240,7 @@ int real_main(string[] args) {
 	});
 
 	faux.expose_fun("draw_text_ndc", (Font f, string text, vec2f loc) => queues.enqueue(new FontDraw(f, loc, text)));
+	faux.expose_fun("measure_text", (Font f, string text) => ScriptVar(cast(long)f.measure(text)));
 
 
 	faux.expose_fun("get_renderdims", () => vec2f(ws.render_width, ws.render_height));
