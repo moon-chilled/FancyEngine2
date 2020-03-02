@@ -14,8 +14,6 @@ import graphics.tex;
 import asset;
 
 import scripting;
-import scripting.s7;
-import scripting.moonjit;
 
 import sound.gorilla;
 
@@ -25,11 +23,9 @@ import queue;
 
 import scriptable;
 
-import repl;
-
 bool done;
 
-void dispatch(Event[] evs, GraphicsState gfx, ScriptManager script) {
+void dispatch(Event[] evs, GraphicsState gfx, SceneManager script) {
 	foreach (ev; evs) {
 		final switch (ev.type) {
 			case Evtype.Keydown:
@@ -56,12 +52,6 @@ struct G {
 
 int real_main(string[] args) {
 	load_all_libraries();
-	scope ScriptManager faux = new ScriptManager([
-			"scm": new S7Script(),
-			"lua": new MoonJitScript()]);
-
-	//scope Repl repl = new Repl(faux, "scm", &done);
-	//repl.start();
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2 - OpenGL";
@@ -116,13 +106,10 @@ int real_main(string[] args) {
 
 	scope GraphicsState gfx = new GraphicsState(ws);
 	scope GorillaAudio audio = new GorillaAudio();
-	//scope (exit) { destroy(gfx); destroy(audio); }
-	auto sound = audio.load_cache_sound("out.ogg");
-	audio.set_volume(sound, master_vol * music_vol);
-	audio.play(sound);
 
 	gfx.grab_mouse();
 
+	scope SceneManager faux = new SceneManager();
 
 	QueueManager queues = new QueueManager(5);
 
@@ -241,15 +228,18 @@ int real_main(string[] args) {
 
 	faux.expose_fun("draw_text_ndc", (Font f, string text, vec2f loc) => queues.enqueue(new FontDraw(f, loc, text)));
 	faux.expose_fun("measure_text", (Font f, string text) => ScriptVar(cast(long)f.measure(text)));
+	faux.expose_fun("measure_text_height", (Font f, string text) => ScriptVar(cast(long)f.measure_height(text)));
 
 
 	faux.expose_fun("get_renderdims", () => vec2f(ws.render_width, ws.render_height));
 	faux.expose_fun("get_texdims", (Texture t) => vec2f(t.w, t.h));
 
-	ulong frames;
+	faux.expose_fun("pause", (string s) => faux.pause(s));
+	faux.expose_fun("play", (string s) => faux.play(s));
 
-	faux.load_script("game.toml");
-	faux.init();
+	faux.load();
+
+	ulong frames;
 
 	import std.datetime.stopwatch: StopWatch, AutoStart;
 
@@ -290,6 +280,7 @@ mainloop:
 		//               /
 		if (something_worth_framing) {
 			faux.update();
+			g_nminusone = g_n;
 		}
 
 
@@ -299,24 +290,14 @@ mainloop:
 		//               /
 		faux.graphics_update();
 		queues.flush_current_frame();
+
+		global_pause_mutex.unlock();
 		gfx.blit();
 
 
-		///////////////////////////////////
-		////    DUMB       ////////////////
-		///     GLOBAL    /////////////////
-		//      STATE    /
-		g_nminusone = g_n;
-
-
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//
-		// TODO: don't need to re-set volume every loop.  Put this into
-		// sound manager, make it set a flag so that next time it's
-		// updated, the volume is changed.
-		audio.set_volume(sound, master_vol * music_vol);
 		audio.update(frame_time);
 
-		global_pause_mutex.unlock();
 	}
 
 	//repl.join();

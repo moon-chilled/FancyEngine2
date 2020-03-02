@@ -105,6 +105,8 @@ void post_window_setup(SDL_Window *window) {
 		info("Successfully booted OpenGL (mark II)");
 	}
 
+	//glClipControl(GL_UPPER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glEnable(GL_DEPTH_TEST);

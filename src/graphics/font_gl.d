@@ -98,6 +98,16 @@ struct Font {
 		have_kerning = FT_HAS_KERNING(face);
 	}
 
+	// max height.  Note that the actual outputted size will /not/ necessarily be measure_height() by measure()
+	uint measure_height(string s) {
+		uint ret = 0;
+		foreach (c; s) {
+			ret = max(ret, atlas_map[c].height);
+		}
+
+		return ret;
+	}
+
 	// pixel width
 	uint measure(string s, bool want_kerning = false) {
 		uint ret = 0;
@@ -138,8 +148,9 @@ struct Font {
 			float
 				x0 = x + cast(float)atlas_map[c].bearx / (.5*screen_width),
 				x1 = x0 + cast(float)atlas_map[c].width / (.5*screen_width),
-				y0 = y - (cast(float)atlas_map[c].height - atlas_map[c].beary) / (.5*screen_height),
-				y1 = y0 + cast(float)atlas_map[c].height / (.5*screen_height);
+				y1 = y + (cast(float)atlas_map[c].height - atlas_map[c].beary) / (.5*screen_height),
+				y0 = y - cast(float)atlas_map[c].beary / (.5*screen_height);
+
 
 			if (have_kerning) {
 				FT_Vector kern;
