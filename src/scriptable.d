@@ -57,7 +57,7 @@ class SceneManager {
 
 	void play(string scene_name) {
 		Scene s;
-		if (auto scn = scene_name in playing_scenes) {
+		if (auto scn = scene_name in paused_scenes) {
 			playing_scenes.remove(scene_name);
 			s = *scn;
 		} else if (auto scn = scene_name in saved_scenes) {
@@ -65,7 +65,7 @@ class SceneManager {
 			s = *scn;
 		//TODO: ditto for hibernating
 		} else {
-			error("No such non-paused scene '%s'", scene_name);
+			error("No such non-playing scene '%s'", scene_name);
 			return;
 		}
 

@@ -25,6 +25,8 @@ s7_pointer s7_eval_c_string_with_environment(s7_scheme *sc, in char *str, s7_poi
 s7_pointer s7_car(s7_pointer p);
 s7_pointer s7_cdr(s7_pointer p);
 
+s7_int s7_gc_protect(s7_scheme *sc, s7_pointer x);
+
 s7_pointer s7_load(s7_scheme *sc, in char *file);
 s7_pointer s7_load_with_environment(s7_scheme *sc, in char *filename, s7_pointer e);
 s7_pointer s7_add_to_load_path(s7_scheme *sc, in char *dir);

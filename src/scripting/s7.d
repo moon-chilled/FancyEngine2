@@ -198,6 +198,7 @@ class S7Script: Scriptlang {
 
 		foreach (sym; wanted_syms) {
 			s7_pointer p = s7_let_ref(s7, env, s7_make_symbol(s7, sym.replace('_', '-').cstr));
+			s7_gc_protect(s7, p);
 			//TODO: lifetime issue: currently, this closes around 's7'
 			//but could outlive 'this', which destroys the 's7' ctx.
 			//or is that not an issue since both live basically for the lifetime of the program?
