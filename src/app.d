@@ -204,8 +204,8 @@ int real_main(string[] args) {
 
 	Font[] fonts;
 	scope(exit) foreach (f; fonts) f.destroy();
-	faux.expose_fun("make_font", (string path) {
-			Font f = Font(path, 24, ws.render_width, ws.render_height, gfx.gfx_context);
+	faux.expose_fun("make_font", (string path, long height) {
+			Font f = Font(path, cast(uint)height, ws.render_width, ws.render_height, gfx.gfx_context);
 			fonts ~= f;
 			return f;
 	});

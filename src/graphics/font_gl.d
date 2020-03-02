@@ -35,6 +35,7 @@ struct Font {
 	bool have_kerning;
 
 	this(string fpath, uint height, uint scr_w, uint scr_h, GfxContext ctx) {
+		height *= 2; // need this for some reason??
 		this.height = height;
 		this.screen_width = scr_w;
 		this.screen_height = scr_h;
@@ -45,10 +46,10 @@ struct Font {
 
 		if (FT_New_Face(f, fpath.cstr, 0, &face)) fatal("FreeType: could not open face from file '%s", fpath);
 
-		// Note: per https://www.freetype.org/freetype2/docs/reference/ft2-base_interface.html#ft_set_pixel_sizes,
-		// We should probably set this.height to something out of FT_Request_Size()
-		// (Because the current system is causing problems)
-		FT_Set_Pixel_Sizes(face, 0, height);
+		FT_Size_RequestRec req;
+		req.type = FT_SIZE_REQUEST_TYPE_BBOX;
+		req.height = height << 6; // it's a 26.6 fractional point
+		FT_Request_Size(face, &req);
 
 		ubyte*[128] font_bitmaps;
 
