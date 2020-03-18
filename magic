@@ -1,0 +1,8 @@
+#!/bin/sh
+
+case $1 in
+	run) rlwrap sbcl --eval "(asdf:load-system :fe2)" --eval "(fe2-entry:main)" ;;
+	image) sbcl --eval "(asdf:make :fe2/image)" ;;
+	build) sbcl --eval "(asdf:make :fe2/release)" ;;
+	*) echo "Usage: $0 <run|image|build>"; exit 1
+esac
