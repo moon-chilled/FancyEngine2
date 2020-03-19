@@ -3,12 +3,18 @@
 
 (defsystem "fe2"
     :name "FancyEngine2"
-    :serial t
+    :serial nil
     :pathname "src/"
 
-    :serial t
-    :depends-on (#:sdl2 #:cl-opengl)
-    :components ((:file "fe2-entry"))
+    :depends-on (#:cl-opengl #:sdl2)
+
+    :components ((:file "win/win")
+		 (:file "opengl-gfx/gfx")
+		 (:file "meta")
+		 (:file "math/vec2" :depends-on ("meta"))
+;		 (:file "math/vec3")
+;		 (:file "math/vec4")
+		 (:file "fe2-entry" :depends-on ("win/win" "opengl-gfx/gfx")))
 
     :build-pathname "fancyengine2"
     :entry-point "fe2-entry:main")

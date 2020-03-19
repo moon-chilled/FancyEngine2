@@ -11,20 +11,15 @@
   (/ (+ x 1) 2))
 
 (defun main ()
-  (sdl2:with-init (:video :gamecontroller)
-    (sdl2:gl-set-attr :context-major-version 3)
-    (sdl2:gl-set-attr :context-minor-version 2)
-    (sdl2:gl-set-attr :context-profile-mask sdl2-ffi::+SDL-GL-CONTEXT-PROFILE-CORE+)
-    (setf cl-opengl-bindings::*gl-get-proc-address* #'sdl2::gl-get-proc-address)
+  (win:init)
 
-    (sdl2:with-window (win :title "FancyEngine2" :flags '(:shown :opengl))
-      (sdl2:with-gl-context (gl-context win)
-	(sdl2:with-event-loop (:method :poll)
-	  (:idle ()
-		 (incf *frames*)
-		 (gl:clear-color (normalize (sin (* .017 *frames*))) (normalize (* .017 (cos *frames*))) (normalize (* .5 (+ (sin (* .017 *frames*)) (cos (* .017 *frames*))))) 1)
-		 (gl:clear :color-buffer-bit)
-		 (gl:flush)
-		 (sdl2:gl-swap-window win))
+  (vec2:dec ((vec2:new 5 6) (vec2:new 8 9))
+	    (format t "I have (~a,~a) and (~a,~a)" x1 y1 x2 y2))
 
-	  (:quit () t))))))
+  (loop :for i :from 1 :to 30 :do
+       (incf *frames*)
+       (gfx:clear (normalize (sin (* .017 *frames*))) (normalize (* 0.017 (cos *frames*))) (normalize (* .5 (+ (sin (* .017 *frames*)) (cos (* .017 *frames*))))) 1)
+       (gfx:blit)
+       (win:blit))
+
+  (win:quit))
