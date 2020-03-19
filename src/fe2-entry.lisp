@@ -11,10 +11,19 @@
   (/ (+ x 1) 2))
 
 (defun main ()
+  (let ((v (vec2:new 5 6))
+	(u (vec2:new 9 16)))
+    (format t "Was ~a/~a~%" v u)
+    (vec2:dec v
+	      (format t "~a~%" x)
+	      (setf x 8.0)
+	      (format t "~a~%" x))
+    (format t "Now ~a/~a~%" v u))
+
   (win:init)
 
-  (vec2:dec ((vec2:new 5 6) (vec2:new 8 9))
-	    (format t "I have (~a,~a) and (~a,~a)" x1 y1 x2 y2))
+;  (vec2:dec ((vec2:new 5 6) (vec2:new 8 9))
+;	    (format t "I have (~a,~a) and (~a,~a)" x1 y1 x2 y2))
 
   (loop :for i :from 1 :to 30 :do
        (incf *frames*)

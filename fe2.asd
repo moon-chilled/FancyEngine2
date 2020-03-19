@@ -10,10 +10,9 @@
 
     :components ((:file "win/win")
 		 (:file "opengl-gfx/gfx")
-		 (:file "meta")
-		 (:file "math/vec2" :depends-on ("meta"))
-;		 (:file "math/vec3")
-;		 (:file "math/vec4")
+		 (:file "math/vec2")
+		 (:file "math/vec3")
+		 (:file "math/vec4")
 		 (:file "fe2-entry" :depends-on ("win/win" "opengl-gfx/gfx")))
 
     :build-pathname "fancyengine2"

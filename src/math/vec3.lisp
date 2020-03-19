@@ -10,24 +10,33 @@
   (make-array '(3) :element-type 'single-float :initial-contents (map 'vector (lambda(x)(coerce x'single-float)) (list x y z))))
 
 (defmacro dec-ext (n vecs body)
-  (if (cdr vecs)
+  (let ((vec-bind (gensym)))
+    `(let ((,vec-bind ,(car vecs)))
+       (symbol-macrolet ((,(intern (format nil "X~a" n)) (aref ,vec-bind 0))
+                         (,(intern (format nil "Y~a" n)) (aref ,vec-bind 1))
+                         (,(intern (format nil "Z~a" n)) (aref ,vec-bind 2))
 
-      `(let ((,(read-from-string (format nil "x~a" n)) (aref ,(car vecs) 0))
-             (,(read-from-string (format nil "y~a" n)) (aref ,(car vecs) 1))
-             (,(read-from-string (format nil "z~a" n)) (aref ,(car vecs) 2)))
-         (dec-ext ,(1+ n) ,(cdr vecs) ,body))
+                         (,(intern (format nil "R~a" n)) (aref ,vec-bind 0))
+                         (,(intern (format nil "G~a" n)) (aref ,vec-bind 1))
+                         (,(intern (format nil "B~a" n)) (aref ,vec-bind 2)))
 
-      `(let ((,(read-from-string (format nil "x~a" n)) (aref ,(car vecs) 0))
-             (,(read-from-string (format nil "y~a" n)) (aref ,(car vecs) 1))
-             (,(read-from-string (format nil "z~a" n)) (aref ,(car vecs) 2)))
-             ,@body)))
+         ,(if (cdr vecs)
+              `(dec-ext ,(1+ n) ,(cdr vecs) ,body)
+              `(progn ,@body))))))
 
 (defmacro dec (vec &rest body)
   (if (listp vec)
 
       `(dec-ext ,1 ,vec ,body)
 
-      `(let ((,(read-from-string "x") (aref ,vec 0))
-             (,(read-from-string "y") (aref ,vec 1))
-             (,(read-from-string "z") (aref ,vec 2)))
-         ,@body)))
+      (let ((vec-bind (gensym)))
+        `(let ((,vec-bind ,vec))
+           (symbol-macrolet ((,(intern "X") (aref ,vec-bind 0))
+                             (,(intern "Y") (aref ,vec-bind 1))
+                             (,(intern "Z") (aref ,vec-bind 2))
+
+                             (,(intern "R") (aref ,vec-bind 0))
+                             (,(intern "G") (aref ,vec-bind 1))
+                             (,(intern "B") (aref ,vec-bind 2)))
+
+              ,@body)))))
