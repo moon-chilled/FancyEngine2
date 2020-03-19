@@ -1,5 +1,13 @@
 # emacs turds
 \#*#
 
+# vim turds
+.*.swp
+.*.swo
+.*.swn
+.*.swm
+.*.swl
+
+# ...and my own
 fancyengine2
 fancyengine2.image
