@@ -47,9 +47,7 @@ class GraphicsState {
 			window.monitor_index = 0;
 		}
 
-		//this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED_DISPLAY(window.monitor_index), SDL_WINDOWPOS_UNDEFINED_DISPLAY(window.monitor_index), window.win_width, window.win_height, win_flags);
-		// SDL_WINDOWPOS_UNDEFINED_DISPLAY works only at compile-time in bindbc-sdl
-		this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED_MASK | window.monitor_index, SDL_WINDOWPOS_UNDEFINED_MASK | window.monitor_index, window.win_width, window.win_height, win_flags);
+		this.window = SDL_CreateWindow(window.title.cstr, SDL_WINDOWPOS_UNDEFINED_DISPLAY(window.monitor_index), SDL_WINDOWPOS_UNDEFINED_DISPLAY(window.monitor_index), window.win_width, window.win_height, win_flags);
 
 		if (!this.window) sdlerror;
 
