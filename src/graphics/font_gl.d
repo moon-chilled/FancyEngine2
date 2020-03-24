@@ -64,31 +64,28 @@ struct Font {
 
 		ubyte *font_bitmap = SysAllocator.allocate!ubyte(atlas_width * height);
 
-		glGenTextures(1, &tex_id);
-		glBindTexture(GL_TEXTURE_2D, tex_id);
+		glCreateTextures(GL_TEXTURE_2D, 1, &tex_id);
+		//glTextureParameteri(tex_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                //glTextureParameteri(tex_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTextureParameteri(tex_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTextureParameteri(tex_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		glTextureParameteri(tex_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTextureParameteri(tex_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTextureParameterfv(tex_id, GL_TEXTURE_BORDER_COLOR, [1f, 0, 0, 1].ptr);
+
+
+		glTextureStorage2D(tex_id, 1, GL_R8, atlas_width, height);
+
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, [1f, 0, 0, 1].ptr);
-
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, atlas_width, height, 0, GL_RED, GL_UNSIGNED_BYTE, null/*font_bitmap*/);
-
 		foreach (i; 32 .. 128) {
-			glTexSubImage2D(GL_TEXTURE_2D, 0, atlas_map[i].atlas_offset, 0, atlas_map[i].width, atlas_map[i].height, GL_RED, GL_UNSIGNED_BYTE, font_bitmaps[i]);
+			glTextureSubImage2D(tex_id, 0, atlas_map[i].atlas_offset, 0, atlas_map[i].width, atlas_map[i].height, GL_RED, GL_UNSIGNED_BYTE, font_bitmaps[i]);
 			SysAllocator.free(font_bitmaps[i]);
 		}
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
 
 		draw_shader = Shader(fslurp("dist/shaders/font_render.vert"), fslurp("dist/shaders/font_render.frag"), ctx);
-
-		glBindTexture(GL_TEXTURE_2D, tex_id);
-		glActiveTexture(GL_TEXTURE0);
 
 		draw_shader.set_int("font_atlas", 0);
 
@@ -175,10 +172,9 @@ struct Font {
 
 		character_model.load_verts(verts);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, tex_id);
-		//draw_shader.set_int("font_atlas", 0);
+		glBindTextureUnit(0, tex_id);
 		draw_shader.blit(character_model);
+		glBindTextureUnit(0, 0);
 	}
 
 	void destroy() {

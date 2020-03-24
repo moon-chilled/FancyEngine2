@@ -103,14 +103,14 @@ void post_window_setup(SDL_Window *window) {
 		info("Successfully booted OpenGL (mark II)");
 	}
 
-	//glClipControl(GL_UPPER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
-
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
+
+	glClipControl(GL_UPPER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
 
 	static if (build_type == BuildType.Dev) {
 		glEnable(GL_DEBUG_OUTPUT);
@@ -145,14 +145,12 @@ void set_wireframe(bool enabled) {
 }
 
 pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Window *win) {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDisable(GL_DEPTH_TEST);
 	int w, h;
 	SDL_GL_GetDrawableSize(win, &w, &h);
 	glViewport(0, 0, w, h);
 
-	glBindTexture(GL_TEXTURE_2D, extra.framebuffer.tex);
-	extra.tex_copy.blit(extra.mesh);
+	glBlitNamedFramebuffer(extra.framebuffer.fbo, 0, 0, 0, extra.framebuffer.w, extra.framebuffer.h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 	SDL_GL_SwapWindow(win);	
 

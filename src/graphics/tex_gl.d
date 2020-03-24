@@ -24,24 +24,22 @@ class Texture: Asset {
 		w = width;
 		h = height;
 
-		GLuint colour_fmt;
+		GLuint colour_fmt, internalfmt;
 		switch (clr_depth) {
-			case 1: colour_fmt = GL_RED; break;
-			case 3: colour_fmt = GL_RGB; break;
-			case 4: colour_fmt = GL_RGBA; break;
-			default: fatal("Need 3-byte or 4-byte colour depth, got %s", clr_depth); assert(0);
+			case 1: colour_fmt = GL_RED;  internalfmt = GL_R8;    break;
+			case 3: colour_fmt = GL_RGB;  internalfmt = GL_RGB8;  break;
+			case 4: colour_fmt = GL_RGBA; internalfmt = GL_RGBA8; break;
+			default: fatal("Need 1-, 3-, or 4-byte colour depth, got %s", clr_depth); assert(0);
 		}
 
-		glGenTextures(1, &tex_id);
-		glBindTexture(GL_TEXTURE_2D, tex_id);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //TODO: make this configurable
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glCreateTextures(GL_TEXTURE_2D, 1, &tex_id);
+		glTextureParameteri(tex_id, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+		glTextureParameteri(tex_id, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		glTextureParameteri(tex_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //TODO: make this configurable
+		glTextureParameteri(tex_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, colour_fmt, w, h, 0, colour_fmt, GL_UNSIGNED_BYTE, data.ptr);
-
-		glGenerateMipmap(GL_TEXTURE_2D);
+		glTextureStorage2D(tex_id, 1, internalfmt, w, h);
+		glTextureSubImage2D(tex_id, 0, 0, 0, w, h, colour_fmt, GL_UNSIGNED_BYTE, data.ptr);
 	}
 
 
@@ -64,23 +62,21 @@ class Texture: Asset {
 		w = width;
 		h = height;
 
-		GLuint colour_fmt;
+		GLuint colour_fmt, internalfmt;
 		switch (clr_depth) {
-			case 3: colour_fmt = GL_RGB; break;
-			case 4: colour_fmt = GL_RGBA; break;
+			case 3: colour_fmt = GL_RGB;  internalfmt = GL_RGB8;  break;
+			case 4: colour_fmt = GL_RGBA; internalfmt = GL_RGBA8; break;
 			default: fatal("Need 3-byte or 4-byte colour depth, got %s", clr_depth); assert(0);
 		}
 
-		glGenTextures(1, &tex_id);
-		glBindTexture(GL_TEXTURE_2D, tex_id);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //TODO: make this configurable
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glCreateTextures(GL_TEXTURE_2D, 1, &tex_id);
+		glTextureParameteri(tex_id, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+		glTextureParameteri(tex_id, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+		glTextureParameteri(tex_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //TODO: make this configurable
+		glTextureParameteri(tex_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		glTexImage2D(GL_TEXTURE_2D, 0, colour_fmt, w, h, 0, colour_fmt, GL_UNSIGNED_BYTE, tex_data);
-
-		glGenerateMipmap(GL_TEXTURE_2D);
+		glTextureStorage2D(tex_id, 1, internalfmt, w, h);
+		glTextureSubImage2D(tex_id, 0, 0, 0, w, h, colour_fmt, GL_UNSIGNED_BYTE, tex_data);
 
 		stbi_image_free(tex_data);
 
