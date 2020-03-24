@@ -115,7 +115,7 @@ class S7Script: Scriptlang {
 
 	this() {
 		s7 = s7_init();
-		log("Successfully booted %s", eval("(s7-version)"));
+		log("Successfully booted %s", eval("(*s7* 'version)"));
 
 		void real_push_log_msg(long ll, string str, string basic_str) { _real_push_log_msg(cast(LogLevel)ll, str, basic_str); }
 
