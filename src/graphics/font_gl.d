@@ -89,9 +89,8 @@ struct Font {
 
 		glBindTexture(GL_TEXTURE_2D, tex_id);
 		glActiveTexture(GL_TEXTURE0);
-		draw_shader.enter();
+
 		draw_shader.set_int("font_atlas", 0);
-		draw_shader.exit();
 
 		// dummy value for vertices because it'll be reset each time
 		// two vec2s: position and texture coordinates

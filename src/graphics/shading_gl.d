@@ -56,10 +56,10 @@ struct Shader {
 	void exit() { glUseProgram(0); }
 
 	void set_int(string id, GLint value) {
-		glUniform1i(glGetUniformLocation(program, id.cstr), value);
+		glProgramUniform1i(program, glGetUniformLocation(program, id.cstr), value);
 	}
 	void set_mat4(string id, mat4f value) {
-		glUniformMatrix4fv(glGetUniformLocation(program, id.cstr), 1, GL_TRUE, value.v.ptr);
+		glProgramUniformMatrix4fv(program, glGetUniformLocation(program, id.cstr), 1, GL_TRUE, value.v.ptr);
 	}
 
 	void blit(const ref Mesh model) {

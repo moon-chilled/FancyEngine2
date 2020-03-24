@@ -69,18 +69,18 @@ class ShaderSetMatricesAndDraw: Dispatchable {
 	}
 
 	void dispatch() {
-		shader.enter();
 		foreach (m; matrices) {
 			shader.set_mat4(m.name, m.to);
 		}
+
 		shader.blit(model);
 	}
 
 	void undispatch() {
-		shader.enter();
 		foreach_reverse (m; matrices) {
 			shader.set_mat4(m.name, m.from);
 		}
+
 		shader.blit(model);
 	}
 }

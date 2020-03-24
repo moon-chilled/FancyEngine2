@@ -56,8 +56,8 @@ void setup_aa(uint samples) {
 }
 
 void pre_window_setup() {
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 }
 
@@ -84,9 +84,7 @@ GfxExtra setup_extra(GfxContext ctx, WindowSpec ws) {
 			      -1,+1, 0,1,
 			      +1,+1, 1,1], [2, 2]));
 
-	ret.tex_copy.enter();
 	ret.tex_copy.set_int("screen_tex", 0);
-	ret.tex_copy.exit();
 
 	return ret;
 }
