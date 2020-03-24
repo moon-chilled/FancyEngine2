@@ -37,7 +37,7 @@ struct FancyModel {
 
 		if (!fpath.fexists) fatal("File '%s' does not exist", fpath);
 
-		const aiScene *scene = aiImportFile(fpath.cstr, aiPostProcessSteps.Triangulate | aiPostProcessSteps.OptimizeMeshes | aiPostProcessSteps.GenNormals | aiPostProcessSteps.FlipWindingOrder); // default winding order is counter-clockwise, we want clockwise
+		const aiScene *scene = aiImportFile(fpath.cstr, aiPostProcessSteps.Triangulate | aiPostProcessSteps.OptimizeMeshes | aiPostProcessSteps.GenNormals); // default winding order is counter-clockwise, we want clockwise, but the flip step in the shader turns the counter-clockwise triangles clockwise again
 		if (!scene || scene.mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene.mRootNode) {
 			fatal("Failed to properly load model '%s'.  AssImp says '%s'", fpath, aiGetErrorString());
 		}

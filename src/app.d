@@ -247,7 +247,7 @@ int real_main(string[] args) {
 	auto sw = StopWatch(AutoStart.yes);
 	float time_so_far = 0;
 	float avg_frame_time = physics_frame;
-mainloop:
+
 	while (!done) {
 		global_pause_mutex.lock();
 
@@ -263,6 +263,7 @@ mainloop:
 			something_worth_framing = true;
 			frames++;
 		}
+
 		if (something_worth_framing && !(frames % 5)) gfx.set_title(strfmt("%s %.2fms (%.f FPS)", title, avg_frame_time * 1000, 1/avg_frame_time));
 
 		///////////////////////////////////

@@ -174,7 +174,6 @@ struct Font {
 
 		glBindTextureUnit(0, tex_id);
 		draw_shader.blit(character_model);
-		glBindTextureUnit(0, 0);
 	}
 
 	void destroy() {

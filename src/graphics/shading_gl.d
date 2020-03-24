@@ -83,8 +83,7 @@ struct Shader {
 			glBindVertexArray(mesh.VAO);
 
 			foreach (int j; 0 .. cast(int)diffuse_textures.length) {
-				glActiveTexture(GL_TEXTURE0 + j);
-				glBindTexture(GL_TEXTURE_2D, diffuse_textures[j].tex_id);
+				glBindTextureUnit(j, diffuse_textures[j].tex_id);
 				set_int("diffuse" ~ j.tostr, j);
 			}
 
