@@ -162,4 +162,25 @@ interface ScriptlangImpl {
 
 abstract class Scriptlang: ScriptlangImpl { this() {} }
 
-alias ScriptedFunction = ScriptVar delegate(ScriptVar[] args = []);
+private string current_scene_name = null;
+
+string get_current_scene_name() { return current_scene_name; }
+
+struct ScriptedFunction {
+	@disable this();
+	this(ScriptVar delegate(ScriptVar[]) fun) { this.fun = fun; }
+	string owned_scene_name;
+	private ScriptVar delegate(ScriptVar[] args = []) fun;
+	ScriptVar opCall(ScriptVar[] args = []) {
+		if (!owned_scene_name) fatal("ScriptedFunction does not belong to any scene");
+
+		string old_scene_name = current_scene_name;
+		current_scene_name = owned_scene_name;
+
+		ScriptVar ret = fun(args);
+
+		current_scene_name = old_scene_name;
+
+		return ret;
+	}
+}

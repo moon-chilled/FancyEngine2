@@ -50,7 +50,7 @@ void _real_push_log_msg(LogLevel ll, string str, string basic_str) {
 	}
 
 	// TODO: globally pause everything?
-	if (ll >= msg_log_level) {
+	if (ll >= msg_log_level && build_type == BuildType.Release) {
 		import core.thread: Thread;
 
 

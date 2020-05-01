@@ -30,12 +30,20 @@ class SceneManager {
                         saved_scenes[s] = scn;
                 }
 
-		foreach (s; pause_s) {
-			pause(s);
-		}
 		foreach (s; play_s) {
 			play(s);
 		}
+		foreach (s; pause_s) {
+			pause(s);
+		}
+	}
+
+	Scene *get_scene(string name) {
+		if (auto scn = name in playing_scenes) return scn;
+		if (auto scn = name in paused_scenes) return scn;
+		if (auto scn = name in saved_scenes) return scn;
+
+		return null;
 	}
 
 	void pause(string scene_name) {
@@ -71,8 +79,8 @@ class SceneManager {
 
 		playing_scenes[scene_name] = s;
 		if (s.fresh) {
-			s.fresh = false;
 			s.init();
+			s.fresh = false;
 		}
 	}
 
@@ -100,8 +108,10 @@ class SceneManager {
 
 class Scene {
 	// fresh => newly loaded from saving, need to init()
-	package bool fresh = true;
+	bool fresh = true;
 
+	string name;
+	ScriptVar[string] env;
 	ScriptedFunction[] inits;
 	ScriptedFunction[] updates;
 	ScriptedFunction[] gfx_updates;
@@ -109,10 +119,11 @@ class Scene {
 	ScriptedFunction[] mousehandlers;
 
 	this(Scriptlang[string] languages, string scene_name) {
+		name = scene_name;
 		import config;
 
 		string[] fnames;
-		Configure(scene_name ~ ".scene/scene.toml", Table("Scene"), "files", &fnames);
+		Configure(name ~ ".scene/scene.toml", Table("Scene"), "files", &fnames);
 
 		foreach (fname; fnames) {
 			string ext = fname.split('.')[$-1];
@@ -121,13 +132,20 @@ class Scene {
 				continue;
 			}
 
-			auto funs = languages[ext].load_getsyms(scene_name ~ ".scene/" ~ fname, ["update", "graphics_update", "init", "keyhandler", "mousehandler"]);
+			auto funs = languages[ext].load_getsyms(name ~ ".scene/" ~ fname, ["update", "graphics_update", "init", "keyhandler", "mousehandler"]);
 
-			if (auto fn = ("update" in funs)) updates ~= *fn;
-			if (auto fn = ("graphics_update" in funs)) gfx_updates ~= *fn;
-			if (auto fn = ("init" in funs)) inits ~= *fn;
-			if (auto fn = ("keyhandler" in funs)) keyhandlers ~= *fn;
-			if (auto fn = ("mousehandler" in funs)) mousehandlers ~= *fn;
+			foreach (k, v;
+				["update":		&updates,
+				 "graphics_update":	&gfx_updates,
+				 "init":		&inits,
+				 "keyhandler":		&keyhandlers,
+				 "mousehandler":	&mousehandlers]) {
+
+				if (auto fn = (k in funs)) {
+					*v ~= *fn;
+					(*v)[$-1].owned_scene_name = name;
+				}
+			}
 		}
 	}
 

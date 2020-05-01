@@ -156,7 +156,7 @@ pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Windo
 
 	glBindFramebuffer(GL_FRAMEBUFFER, extra.framebuffer.fbo);
 	glViewport(0, 0, extra.framebuffer.w, extra.framebuffer.h);
-	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 }
 
 pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {

@@ -113,6 +113,28 @@ int real_main(string[] args) {
 
 	QueueManager queues = new QueueManager(5);
 
+
+
+	faux.expose_fun("get_var", (string s) {
+		Scene *scn = faux.get_scene(get_current_scene_name());
+		if (!scn) { error("Asked to get var from nonexistent scene %s", s); return None; }
+
+		if (auto ret = s in scn.env) return *ret;
+		else return None;
+	});
+
+	faux.expose_fun("set_var", (string s, ScriptVar v) {
+		Scene *scn = faux.get_scene(get_current_scene_name());
+		if (!scn) { error("Asked to set var on nonexistent scene %s", get_current_scene_name()); return; }
+
+		if (auto o = s in scn.env) {
+			ScriptVar old = *o;
+			queues.enqueue(new SetVar(&scn.env, old, v, s));
+		} else {
+			scn.env[s] = v;
+		}
+	});
+
 	faux.expose_fun("shader_set_and_blit", (ScriptVar[] vars) {
 		if (vars.length < 2 || vars.length % 2 != 0) error("Asked to draw shader with bad params (%s)", vars);
 		if (script_typeof(vars[0]) != ScriptVarType.Shader) {
@@ -293,6 +315,7 @@ int real_main(string[] args) {
 		queues.flush_current_frame();
 
 		global_pause_mutex.unlock();
+
 		gfx.blit();
 
 

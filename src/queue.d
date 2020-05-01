@@ -39,16 +39,16 @@ class GfxUngrabMouse: Dispatchable {
 
 class SetVar: Dispatchable {
 	import scripting;
-	ScriptVar[string][string] *dict;
+	ScriptVar[string] *dict;
 	ScriptVar from, to;
 	string namespace, name;
 
-	this(ScriptVar[string][string] *dict, ScriptVar from, ScriptVar to, string namespace, string name) {
-		this.dict = dict; this.from = from; this.to = to; this.namespace = namespace; this.name = name;
+	this(ScriptVar[string] *dict, ScriptVar from, ScriptVar to, string name) {
+		this.dict = dict; this.from = from; this.to = to; this.name = name;
 	}
 
-	void dispatch() { (*dict)[namespace][name] = to; }
-	void undispatch() { (*dict)[namespace][name] = from; }
+	void dispatch() { (*dict)[name] = to; }
+	void undispatch() { (*dict)[name] = from; }
 }
 
 struct Mat4fNamePair {

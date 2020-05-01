@@ -203,7 +203,7 @@ class S7Script: Scriptlang {
 			//but could outlive 'this', which destroys the 's7' ctx.
 			//or is that not an issue since both live basically for the lifetime of the program?
 
-			if (s7_is_function(p) || s7_is_procedure(p)) ret[sym] = ((p) => (ScriptVar[] args) => s7_to_script(s7, s7_call(s7, p, arr_to_list(s7, args))))(p);
+			if (s7_is_function(p) || s7_is_procedure(p)) ret[sym] = ScriptedFunction((((p) => (ScriptVar[] args) => s7_to_script(s7, s7_call(s7, p, arr_to_list(s7, args))))(p)));
 			// ^^ need that indirection to properly close over p
 			// because otherwise it's closed over by reference
 			// meaning that all returned function pointers close over the last p we create (and that will be overwritten on future invocations)

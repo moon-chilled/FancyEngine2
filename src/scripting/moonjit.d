@@ -246,7 +246,7 @@ class MoonJitScript: Scriptlang {
 			}
 
 			int p = luaL_ref(l, LUA_REGISTRYINDEX);
-			ret[sym] = ((p) => (ScriptVar[] args) { lua_rawgeti(l, LUA_REGISTRYINDEX, p); foreach (a; args) lua_push_var(l, a); checkerror(lua_pcall(l, cast(int)args.length, 1, 0)); return lua_popvar(l);})(p);
+			ret[sym] = ScriptedFunction(((p) => (ScriptVar[] args) { lua_rawgeti(l, LUA_REGISTRYINDEX, p); foreach (a; args) lua_push_var(l, a); checkerror(lua_pcall(l, cast(int)args.length, 1, 0)); return lua_popvar(l);})(p));
 		}
 
 		return ret;
