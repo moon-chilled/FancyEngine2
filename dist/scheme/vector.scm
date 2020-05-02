@@ -10,12 +10,13 @@
 (define (vec2n x y z)
   (vec2-normalize (float-vector x y)))
 
-(define (get-x vec) (float-vector-ref vec 0))
-(define (get-r vec) (float-vector-ref vec 0))
-(define (get-y vec) (float-vector-ref vec 1))
-(define (get-g vec) (float-vector-ref vec 1))
-(define (get-z vec) (float-vector-ref vec 2))
-(define (get-b vec) (float-vector-ref vec 2))
+; todo: dilambda/setter
+(define (.x vec) (float-vector-ref vec 0))
+(define (.r vec) (float-vector-ref vec 0))
+(define (.y vec) (float-vector-ref vec 1))
+(define (.g vec) (float-vector-ref vec 1))
+(define (.z vec) (float-vector-ref vec 2))
+(define (.b vec) (float-vector-ref vec 2))
 
 (define-macro (vec3-dec vec . code)
               `(let ((x (float-vector-ref ,vec 0))
@@ -31,15 +32,15 @@
 
 (define (vec3-cross l r)
   (vec3-dec l
-            (vec3 (- (* y (get-z r)) (* z (get-y r)))
-                  (- (* z (get-x r)) (* x (get-z r)))
-                  (- (* x (get-y r)) (* y (get-x r))))))
+            (vec3 (- (* y (.z r)) (* z (.y r)))
+                  (- (* z (.x r)) (* x (.z r)))
+                  (- (* x (.y r)) (* y (.x r))))))
 
 (define (vec3-dot l r)
   (+
-    (* (get-x l) (get-x r))
-    (* (get-y l) (get-y r))
-    (* (get-z l) (get-z r))))
+    (* (.x l) (.x r))
+    (* (.y l) (.y r))
+    (* (.z l) (.z r))))
 
 (define (vec3-normalize vec)
   (vec3-dec vec
@@ -61,9 +62,9 @@
       (vec3- (vec3 0 0 0) l)
 
       (vec3-dec l (let ((ret (vec3
-                               (- x (get-x (car extra)))
-                               (- y (get-y (car extra)))
-                               (- z (get-z (car extra))))))
+                               (- x (.x (car extra)))
+                               (- y (.y (car extra)))
+                               (- z (.z (car extra))))))
                     (if (null? (cdr extra))
                         ret
                         (apply vec3- (cons ret (cdr extra))))))))
@@ -74,9 +75,9 @@
       l
 
       (vec3-dec l (let ((ret (vec3
-                               (+ x (get-x (car extra)))
-                               (+ y (get-y (car extra)))
-                               (+ z (get-z (car extra))))))
+                               (+ x (.x (car extra)))
+                               (+ y (.y (car extra)))
+                               (+ z (.z (car extra))))))
                     (if (null? (cdr extra))
                         ret
                         (apply vec3+ (cons ret (cdr extra))))))))
@@ -92,8 +93,8 @@
       (vec2- (vec2 0 0 0) l)
 
       (vec2-dec l (let ((ret (vec2
-                               (- x (get-x (car extra)))
-                               (- y (get-y (car extra))))))
+                               (- x (.x (car extra)))
+                               (- y (.y (car extra))))))
                     (if (null? (cdr extra))
                         ret
                         (apply vec2- (cons ret (cdr extra))))))))
@@ -104,8 +105,8 @@
       l
 
       (vec2-dec l (let ((ret (vec2
-                               (+ x (get-x (car extra)))
-                               (+ y (get-y (car extra))))))
+                               (+ x (.x (car extra)))
+                               (+ y (.y (car extra))))))
                     (if (null? (cdr extra))
                         ret
                         (apply vec2+ (cons ret (cdr extra))))))))

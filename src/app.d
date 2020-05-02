@@ -26,6 +26,10 @@ import scriptable;
 bool done;
 
 void dispatch(Event[] evs, GraphicsState gfx, SceneManager script) {
+	// squish all mouse events into one
+	long ms_deltay = 0, ms_deltax = 0, ms_ypos = 0, ms_xpos = 0;
+	bool have_ms = false;
+
 	foreach (ev; evs) {
 		final switch (ev.type) {
 			case Evtype.Keydown:
@@ -36,13 +40,19 @@ void dispatch(Event[] evs, GraphicsState gfx, SceneManager script) {
 				break;
 			case Evtype.Mousemove:
 				//TODO: remove need for casts
-				script.mousehandler(ScriptVar(cast(long)ev.mouse.deltay), ScriptVar(cast(long)ev.mouse.deltax), ScriptVar(cast(long)ev.mouse.ypos), ScriptVar(cast(long)ev.mouse.xpos));
+				ms_deltay += ev.mouse.deltay;
+				ms_deltax += ev.mouse.deltax;
+				ms_ypos = ev.mouse.ypos;
+				ms_xpos = ev.mouse.xpos;
+				have_ms = true;
 				break;
 			case Evtype.Keypress: break;
 			case Evtype.Quit:
 				done = true;
 		}
 	}
+
+	if (have_ms) script.mousehandler(ScriptVar(cast(long)ms_deltay), ScriptVar(cast(long)ms_deltax), ScriptVar(cast(long)ms_ypos), ScriptVar(cast(long)ms_xpos));
 }
 
 struct G {
@@ -174,6 +184,16 @@ int real_main(string[] args) {
 
 	faux.expose_fun("grab_mouse", { g_n.am_grabbed = true; queues.enqueue(new GfxGrabMouse(gfx, g_nminusone.am_grabbed)); });
 	faux.expose_fun("ungrab_mouse", { g_n.am_grabbed = false; queues.enqueue(new GfxUngrabMouse(gfx, g_nminusone.am_grabbed)); });
+	faux.expose_fun("togglegrab_mouse", {
+		g_n.am_grabbed = !g_nminusone.am_grabbed;
+		if (g_n.am_grabbed) queues.enqueue(new GfxGrabMouse(gfx, false));
+		else queues.enqueue(new GfxUngrabMouse(gfx, true));
+
+		// vvv doesn't work because Dispatchable is an interface, not a class
+		// so the whole ternary expr gets type Object
+		// TODO: bug dmd about it
+		//queues.enqueue(g_n.am_grabbed ? new GfxGrabMouse(gfx, false) : new GfxUngrabMouse(gfx, true));
+	});
 
 	faux.expose_fun("clear", (float r, float g, float b) { g_n.clear_clr = vec3f(r, g, b); queues.enqueue(new GfxClear(gfx, g_n.clear_clr, g_nminusone.clear_clr)); });
 
@@ -314,6 +334,7 @@ int real_main(string[] args) {
 		///               /////////////////
 		//               /
 		poll_events().dispatch(gfx, faux);
+		queues.flush_current_frame();
 
 
 		//ALSO ALL THIS SHIT THROUGH SOUND
@@ -325,6 +346,7 @@ int real_main(string[] args) {
 		if (something_worth_framing) {
 			faux.update();
 			g_nminusone = g_n;
+			queues.flush_current_frame();
 		}
 
 

@@ -25,15 +25,15 @@ class SceneManager {
 				"playing-scenes", &play_s,
 				"paused-scenes", &pause_s);
 
-		foreach (s; scene_s) {
+		foreach (string s; scene_s) {
                         auto scn = new Scene(languages, s);
                         saved_scenes[s] = scn;
                 }
 
-		foreach (s; play_s) {
+		foreach (string s; play_s) {
 			play(s);
 		}
-		foreach (s; pause_s) {
+		foreach (string s; pause_s) {
 			pause(s);
 		}
 	}
@@ -43,17 +43,20 @@ class SceneManager {
 		if (auto scn = name in paused_scenes) return scn;
 		if (auto scn = name in saved_scenes) return scn;
 
+		log("scenes are %s, %s, %s, couldn't find %s", playing_scenes, paused_scenes, saved_scenes, name);
+
 		return null;
 	}
 
 	void pause(string scene_name) {
 		Scene s;
+		Scene[string] *src;
 		if (auto scn = scene_name in playing_scenes) {
-			playing_scenes.remove(scene_name);
 			s = *scn;
+			src = &playing_scenes;
 		} else if (auto scn = scene_name in saved_scenes) {
-			saved_scenes.remove(scene_name);
 			s = *scn;
+			src = &saved_scenes;
 		} else if (auto scn = scene_name in paused_scenes) {
 			return;
 		} else {
@@ -61,16 +64,25 @@ class SceneManager {
 			return;
 		}
 
+		if (!s.loaded && !s.loading) {
+			s.loading = true;
+			s.preload();
+			s.loading = false;
+			s.loaded = true;
+		}
+
+		(*src).remove(scene_name);
 		paused_scenes[scene_name] = s;
 	}
 
 	void play(string scene_name) {
 		Scene s;
+		Scene[string] *src;
 		if (auto scn = scene_name in paused_scenes) {
-			playing_scenes.remove(scene_name);
 			s = *scn;
+			src = &paused_scenes;
 		} else if (auto scn = scene_name in saved_scenes) {
-			saved_scenes.remove(scene_name);
+			src = &saved_scenes;
 			s = *scn;
 		} else if (auto scn = scene_name in playing_scenes) {
 			return;
@@ -79,9 +91,18 @@ class SceneManager {
 			return;
 		}
 
+		if (!s.loaded && !s.loading) {
+			s.loading = true;
+			s.preload();
+			s.loading = false;
+			s.loaded = true;
+		}
+
+		(*src).remove(scene_name);
 		playing_scenes[scene_name] = s;
+
 		if (s.fresh) {
-			s.init();
+			s.enter();
 			s.fresh = false;
 		}
 	}
@@ -113,7 +134,7 @@ class SceneManager {
 
 
 class Scene {
-	// fresh => newly loaded from saving, need to init()
+	// fresh => newly loaded from saving, need to enter()
 	bool fresh = true;
 
 	// loaded => preload function has been run,
@@ -123,7 +144,7 @@ class Scene {
 
 	string name;
 	ScriptVar[string] env;
-	ScriptedFunction[] inits;
+	ScriptedFunction[] entrances;
 	ScriptedFunction[] preloads;
 	ScriptedFunction[] unloads;
 	ScriptedFunction[] updates;
@@ -145,17 +166,17 @@ class Scene {
 				continue;
 			}
 
-			auto funs = languages[ext].load_getsyms(name ~ ".scene/" ~ fname, ["update", "graphics_update", "init", "keyhandler", "mousehandler"]);
-
-			foreach (k, v;
-				["update":		&updates,
+			auto fd=["update":		&updates,
 				 "preload":		&preloads,
 				 "unload":		&unloads,
 				 "graphics_update":	&gfx_updates,
-				 "init":		&inits,
+				 "enter":		&entrances,
 				 "keyhandler":		&keyhandlers,
-				 "mousehandler":	&mousehandlers]) {
+				 "mousehandler":	&mousehandlers];
 
+			auto funs = languages[ext].load_getsyms(name ~ ".scene/" ~ fname, fd.keys);
+
+			foreach (k, v; fd) {
 				if (auto fn = (k in funs)) {
 					*v ~= *fn;
 					(*v)[$-1].owned_scene_name = name;
@@ -165,8 +186,8 @@ class Scene {
 	}
 
 	//TODO: why do I need to pass [] to these functions?
-	void init() {
-		foreach (g; inits) g([]);
+	void enter() {
+		foreach (g; entrances) g([]);
 	}
 
 	void preload() {

@@ -205,6 +205,8 @@ class S7Script: Scriptlang {
 				vname ~= pre_src[i];
 			}
 
+			// TODO @perf: pre-hash vname, generate a slot for it
+			// and replace with pointer (rather than hash)
 			post_src ~= strfmt(` (vref "%s") `, vname);
 		}
 

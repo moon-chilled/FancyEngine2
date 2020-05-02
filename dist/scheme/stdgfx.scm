@@ -1,6 +1,6 @@
 (define (normalize-coord coord)
-  (let ((rx (get-x (get-renderdims)))
-        (ry (get-y (get-renderdims))))
+  (let ((rx (.x (get-renderdims)))
+        (ry (.y (get-renderdims))))
     (vec2-dec coord
               (vec2
                 (* 2 (/ (- x (* .5 rx)) rx))
