@@ -13,6 +13,7 @@ import graphics.font;
 
 import windowing.key;
 
+// note: this is currently BROKEN
 
 private ScriptVar lua_popvar(lua_State *l) {
 	ScriptVar ret = None;

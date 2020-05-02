@@ -150,7 +150,12 @@ pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Windo
 	SDL_GL_GetDrawableSize(win, &w, &h);
 	glViewport(0, 0, w, h);
 
-	glBlitNamedFramebuffer(extra.framebuffer.fbo, 0, 0, 0, extra.framebuffer.w, extra.framebuffer.h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	// XXX: this causes flickering with mesa+dri3.
+	//glBlitNamedFramebuffer(extra.framebuffer.fbo, 0, 0, 0, extra.framebuffer.w, extra.framebuffer.h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, extra.framebuffer.tex);
+	extra.tex_copy.blit(extra.mesh);
 
 	SDL_GL_SwapWindow(win);	
 
