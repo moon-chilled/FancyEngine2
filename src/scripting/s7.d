@@ -191,7 +191,27 @@ class S7Script: Scriptlang {
 
 		ScriptedFunction[string] ret;
 
-		if (!s7_load_with_environment(s7, path.cstr, env)) {
+		string pre_src = fslurp(path);
+		string post_src;
+		for (size_t i = 0; i < pre_src.length; i++) {
+			if (pre_src[i] != '$') {
+				post_src ~= pre_src[i];
+				continue;
+			}
+
+			string vname = "";
+			while ((i+1) < pre_src.length && !isspace(pre_src[i+1]) && pre_src[i+1] != '(' && pre_src[i+1] != ')' && pre_src[i+1] != '\'' && pre_src[i+1] != '"' && pre_src[i+1] != '$') {
+				i++;
+				vname ~= pre_src[i];
+			}
+
+			post_src ~= strfmt(` (vref "%s") `, vname);
+		}
+
+		fspurt("fe2-tmp.scm", post_src);
+		scope (exit) { fdelete("fe2-tmp.scm"); }
+
+		if (!s7_load_with_environment(s7, "fe2-tmp.scm", env)) {
 			error("Failed to load %s", path);
 			return ret;
 		}

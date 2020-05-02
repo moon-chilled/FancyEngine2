@@ -8,6 +8,7 @@ import logging;
 import stdmem;
 
 import core.sync.mutex: Mutex;
+import std.uni: isspace = isWhite;
 import std.algorithm: contains = canFind;
 import std.algorithm.comparison: min, max, clamp;
 import std.algorithm.iteration: reduce = fold, sum;
@@ -99,13 +100,22 @@ T[] filter(alias fun, T)(T[] original) {
 	return ret;
 }
 
-
 string fslurp(string fname) {
 	import std.file: read;
 	if (!fexists(fname)) {
 		fatal("Unable to read file %s", fname);
 	}
 	return cast(string)read(fname);
+}
+
+void fspurt(string fname, string text) {
+	import std.file: write;
+	write(fname, text);
+}
+
+void fdelete(string fname) {
+	import std.file: remove;
+	remove(fname);
 }
 
 __gshared bool is_sdl_loaded;
