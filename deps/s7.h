@@ -1,13 +1,13 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "8.17"
-#define S7_DATE "2020-3-25"
+#define S7_VERSION "8.18"
+#define S7_DATE "2020-5-1"
 
 #include <stdint.h>           /* for int64_t */
 
-typedef int64_t s7_int;       /* This sets the size of integers in Scheme; it needs to be big enough to accomodate a C pointer. */
-typedef float s7_double;     /*   similarly for Scheme reals; only double works in C++ */
+typedef int64_t s7_int;
+typedef float s7_double;
 
 #ifndef __cplusplus
 #ifndef _MSC_VER
@@ -70,6 +70,7 @@ s7_pointer s7_load_with_environment(s7_scheme *sc, const char *filename, s7_poin
 s7_pointer s7_load_path(s7_scheme *sc);                              /* *load-path* */
 s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir);      /* (set! *load-path* (cons dir *load-path*)) */
 s7_pointer s7_autoload(s7_scheme *sc, s7_pointer symbol, s7_pointer file_or_function);  /* (autoload symbol file-or-function) */
+void s7_autoload_set_names(s7_scheme *sc, const char **names, s7_int size);
 
   /* the load path is a list of directories to search if load can't find the file passed as its argument.
    *
@@ -154,7 +155,7 @@ s7_pointer s7_gc_unprotect_via_location(s7_scheme *sc, s7_int loc);
    */
 
 bool s7_is_eq(s7_pointer a, s7_pointer b);                                   /* (eq? a b) */
-bool s7_is_eqv(s7_pointer a, s7_pointer b);                                  /* (eqv? a b) */
+bool s7_is_eqv(s7_scheme *sc, s7_pointer a, s7_pointer b);                   /* (eqv? a b) */
 bool s7_is_equal(s7_scheme *sc, s7_pointer a, s7_pointer b);                 /* (equal? a b) */
 bool s7_is_equivalent(s7_scheme *sc, s7_pointer x, s7_pointer y);            /* (equivalent? x y) */
 
@@ -424,7 +425,7 @@ s7_pointer s7_define_constant_with_documentation(s7_scheme *sc, const char *name
   /* These functions add a symbol and its binding to either the top-level environment
    *    or the 'env' passed as the second argument to s7_define.
    *
-   *    s7_define_variable(sc, "*features*", sc->NIL);
+   *    s7_define_variable(sc, "*features*", s7_nil(sc));
    *
    * in s7.c is equivalent to the top level form
    *
@@ -486,8 +487,7 @@ s7_pointer s7_define_macro(s7_scheme *sc, const char *name, s7_function fnc, s7_
    *   global (top-level) environment, with the function as its value.  For example, the Scheme
    *   function 'car' is essentially:
    *
-   *     s7_pointer g_car(s7_scheme *sc, s7_pointer args) 
-   *       {return(s7_car(sc, s7_car(sc, args)));}
+   *     s7_pointer g_car(s7_scheme *sc, s7_pointer args) {return(s7_car(s7_car(args)));}
    *
    *   then bound to the name "car":
    *
@@ -574,8 +574,6 @@ s7_pointer s7_make_iterator(s7_scheme *sc, s7_pointer e);      /* (make-iterator
 bool s7_is_iterator(s7_pointer obj);                           /* (iterator? obj) */
 bool s7_iterator_is_at_end(s7_scheme *sc, s7_pointer obj);     /* (iterator-at-end? obj) */
 s7_pointer s7_iterate(s7_scheme *sc, s7_pointer iter);         /* (iterate iter) */
-
-void s7_autoload_set_names(s7_scheme *sc, const char **names, s7_int size);
 
 s7_pointer s7_copy(s7_scheme *sc, s7_pointer args);            /* (copy ...) */
 s7_pointer s7_fill(s7_scheme *sc, s7_pointer args);            /* (fill! ...) */
@@ -880,6 +878,7 @@ void s7_set_gc_stats(s7_scheme *sc, bool on);                        /* (set! (*
  * 
  *        s7 changes
  *
+ * 23-Apr:    added s7_scheme* initial argument to s7_is_eqv.
  * 9-Mar:     move openlets to (*s7* 'openlets), s7-version to (*s7* 'version), deprecate nan.0 and inf.0.
  * 17-Feb:    s7_let_field_ref|set for *s7* access. *function* to replace __func__.
  *            deprecate __func__, s7_print_length, s7_float_format_precision, s7_set_gc_stats.
