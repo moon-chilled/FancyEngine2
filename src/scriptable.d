@@ -54,9 +54,10 @@ class SceneManager {
 		} else if (auto scn = scene_name in saved_scenes) {
 			saved_scenes.remove(scene_name);
 			s = *scn;
-		//TODO: ditto for hibernating
+		} else if (auto scn = scene_name in paused_scenes) {
+			return;
 		} else {
-			error("No such non-paused scene '%s'", scene_name);
+			error("Tried to pause nonexistent scene '%s'", scene_name);
 			return;
 		}
 
@@ -71,9 +72,10 @@ class SceneManager {
 		} else if (auto scn = scene_name in saved_scenes) {
 			saved_scenes.remove(scene_name);
 			s = *scn;
-		//TODO: ditto for hibernating
+		} else if (auto scn = scene_name in playing_scenes) {
+			return;
 		} else {
-			error("No such non-playing scene '%s'", scene_name);
+			error("Tried to play nonexistent scene '%s'", scene_name);
 			return;
 		}
 
@@ -86,6 +88,10 @@ class SceneManager {
 
 	void expose_fun(T...)(T args) {
 		foreach (l; languages.values) l.expose_fun(args);
+	}
+
+	void expose_vfun(T...)(T args) {
+		foreach (l; languages.values) l.expose_vfun(args);
 	}
 
 	void update() {
@@ -110,9 +116,16 @@ class Scene {
 	// fresh => newly loaded from saving, need to init()
 	bool fresh = true;
 
+	// loaded => preload function has been run,
+	// loading => preload or unload function is currently running
+	bool loaded = false, loading = false;
+
+
 	string name;
 	ScriptVar[string] env;
 	ScriptedFunction[] inits;
+	ScriptedFunction[] preloads;
+	ScriptedFunction[] unloads;
 	ScriptedFunction[] updates;
 	ScriptedFunction[] gfx_updates;
 	ScriptedFunction[] keyhandlers;
@@ -136,6 +149,8 @@ class Scene {
 
 			foreach (k, v;
 				["update":		&updates,
+				 "preload":		&preloads,
+				 "unload":		&unloads,
 				 "graphics_update":	&gfx_updates,
 				 "init":		&inits,
 				 "keyhandler":		&keyhandlers,
@@ -152,6 +167,14 @@ class Scene {
 	//TODO: why do I need to pass [] to these functions?
 	void init() {
 		foreach (g; inits) g([]);
+	}
+
+	void preload() {
+		foreach (g; preloads) g([]);
+	}
+
+	void unload() {
+		foreach (g; unloads) g([]);
 	}
 
 	void update() {

@@ -135,7 +135,7 @@ int real_main(string[] args) {
 		}
 	});
 
-	faux.expose_fun("shader_set_and_blit", (ScriptVar[] vars) {
+	faux.expose_vfun("shader_set_and_blit", (ScriptVar[] vars) {
 		if (vars.length < 2 || vars.length % 2 != 0) error("Asked to draw shader with bad params (%s)", vars);
 		if (script_typeof(vars[0]) != ScriptVarType.Shader) {
 			error("Asked to draw with shader, but passed %s object of type %s instead", vars[0], vars[0].script_typeof);
@@ -168,7 +168,7 @@ int real_main(string[] args) {
 		queues.enqueue(new ShaderSetMatricesAndDraw(s, pairs, model));
 
 		return ScriptVar(true);
-	}, cast(ScriptVarType[])[], true);
+	});
 
 	G g_nminusone, g_n;
 
@@ -256,8 +256,29 @@ int real_main(string[] args) {
 	faux.expose_fun("get_renderdims", () => vec2f(ws.render_width, ws.render_height));
 	faux.expose_fun("get_texdims", (Texture t) => vec2f(t.w, t.h));
 
-	faux.expose_fun("pause", (string s) => faux.pause(s));
-	faux.expose_fun("play", (string s) => faux.play(s));
+	faux.expose_vfun("play", (ScriptVar[] args) {
+		if (args.length == 0) { faux.play(get_current_scene_name()); return ScriptVar(true); }
+
+		ScriptVar ret = true;
+		foreach (a; args) {
+			a.match!((string s) => faux.play(s),
+				(_) { error("'play' expects a string parameter, got '%s' instead", a); ret = false; })();
+		}
+
+		return ret;
+	});
+	faux.expose_vfun("pause", (ScriptVar[] args) {
+		if (args.length == 0) { faux.pause(get_current_scene_name()); return ScriptVar(true); }
+
+		ScriptVar ret = true;
+		foreach (a; args) {
+			a.match!((string s) => faux.pause(s),
+				(_) { error("'pause' expects a string parameter, got '%s' instead", a); ret = false; })();
+		}
+
+		return ret;
+	});
+
 
 	faux.load();
 

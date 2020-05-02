@@ -108,6 +108,7 @@ interface ScriptlangImpl {
 	void exec(string text); //TODO: remove this.  It's a temporary kludge; even eval shouldn't really be allowed
 	ScriptVar call(string name, ScriptVar[] args = []);
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes, bool variadic = false);
+	final void expose_vfun(string name, ScriptFun fun) { expose_fun(name, fun, cast(ScriptVarType[])[], true); }
 
 	final void expose_fun(R, A...)(string name, R function(A) fun) {
 		expose_fun(name, toDelegate(fun));
