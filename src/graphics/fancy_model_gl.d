@@ -1,5 +1,6 @@
 module graphics.fancy_model_gl;
 import stdlib;
+import stdmath;
 import cstdlib;
 import bindbc.opengl;
 import bindbc.assimp;
@@ -73,8 +74,8 @@ struct FancyModel {
 
 				// tex coords
 				if (mesh.mTextureCoords[0]) {
-					vertices ~= mesh.mTextureCoords[0][i].x;
-					vertices ~= mesh.mTextureCoords[0][i].y;
+					vertices ~= fmod(mesh.mTextureCoords[0][i].x, 1);
+					vertices ~= fmod(mesh.mTextureCoords[0][i].y, 1);
 				} else {
 					// for alignment:
 					vertices ~= 0;
