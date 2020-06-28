@@ -221,7 +221,7 @@ class MoonJitScript: Scriptlang {
 		checkerror(lua_pcall(l, 0, 0, 0));
 	}
 	
-	ScriptedFunction[string] load_getsyms(string path, string[] wanted_syms) {
+	ScriptedFunctionBase[string] load_getsyms(string path, string[] wanted_syms) {
 		lua_getfield(l, LUA_GLOBALSINDEX, "fe2_new_env");
 		if (lua_isnoneornil(l, -1)) fatal("LuaJIT: can't get fe2_new_env");
 		checkerror(lua_pcall(l, 0, 1, 0));
@@ -238,7 +238,7 @@ class MoonJitScript: Scriptlang {
 		checkerror(lua_pcall(l, 3, 1, 0));
 		checkerror(lua_pcall(l, 0, 0, 0));
 
-		ScriptedFunction[string] ret;
+		ScriptedFunctionBase[string] ret;
 
 		foreach (sym; wanted_syms) {
 			lua_getfield(l, idx, sym.cstr);
@@ -247,7 +247,7 @@ class MoonJitScript: Scriptlang {
 			}
 
 			int p = luaL_ref(l, LUA_REGISTRYINDEX);
-			ret[sym] = ScriptedFunction(((p) => (ScriptVar[] args) { lua_rawgeti(l, LUA_REGISTRYINDEX, p); foreach (a; args) lua_push_var(l, a); checkerror(lua_pcall(l, cast(int)args.length, 1, 0)); return lua_popvar(l);})(p));
+			ret[sym] = ((p) => (ScriptVar[] args) { lua_rawgeti(l, LUA_REGISTRYINDEX, p); foreach (a; args) lua_push_var(l, a); checkerror(lua_pcall(l, cast(int)args.length, 1, 0)); return lua_popvar(l);})(p);
 		}
 
 		return ret;

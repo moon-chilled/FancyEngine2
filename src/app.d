@@ -15,6 +15,8 @@ import asset;
 
 import scripting;
 
+import threaded_script;
+
 import sound.gorilla;
 
 import config;
@@ -122,7 +124,6 @@ int real_main(string[] args) {
 	scope SceneManager faux = new SceneManager();
 
 	QueueManager queues = new QueueManager(5);
-
 
 
 	faux.expose_fun("get_var", (string s) {
@@ -366,6 +367,8 @@ int real_main(string[] args) {
 		audio.update(frame_time);
 
 	}
+
+	faux.close();
 
 	//repl.join();
 	//destroy(repl);

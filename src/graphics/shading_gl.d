@@ -7,6 +7,7 @@ import windowing.windows_gl;
 import graphics.tex_gl;
 import graphics.model_gl;
 import graphics.fancy_model_gl;
+import graphics.gl_thread;
 
 import bindbc.opengl;
 
@@ -30,6 +31,7 @@ struct Shader {
 		GLuint vertex_shader = compile_shader(ShaderType.Vertex, vertex_src);
 		GLuint fragment_shader = compile_shader(ShaderType.Fragment, fragment_src);
 
+		glwait({
 		program = glCreateProgram();
 		glAttachShader(program, vertex_shader);
 		glAttachShader(program, fragment_shader);
@@ -50,57 +52,70 @@ struct Shader {
 				if (error_len) info("Program runlog: %s", error);
 			}
 		}
+		});
 	}
 
-	void enter() { glUseProgram(program); }
-	void exit() { glUseProgram(0); }
+	private void penter() { glUseProgram(program); }
+	private void pexit() { glUseProgram(0); }
 
-	void set_int(string id, GLint value) {
+	private void pset_int(string id, GLint value) {
 		glProgramUniform1i(program, glGetUniformLocation(program, id.cstr), value);
 	}
-	void set_mat4(string id, mat4f value) {
+	private void pset_mat4(string id, mat4f value) {
 		glProgramUniformMatrix4fv(program, glGetUniformLocation(program, id.cstr), 1, GL_TRUE, value.v.ptr);
 	}
 
+	void set_int(string id, GLint value) {
+		glwait({penter(); pset_int(id, value); pexit();});
+	}
+	void set_mat4(string id, mat4f value) {
+		glwait({penter(); pset_mat4(id, value); pexit();});
+	}
+
 	void blit(const ref Mesh model) {
-		enter();
+		glwait({
+		penter();
 
 		glBindVertexArray(model.VAO);
 		glDrawArrays(GL_TRIANGLES, 0, model.num_verts);
 		glBindVertexArray(0);
 
-		exit();
+		pexit();
+		});
+	}
+
+	private void pblit(const ref FancyMesh mesh) {
+		foreach (i; 0 .. cast(int)mesh.diffuse_textures.length) {
+			glBindTextureUnit(i, mesh.diffuse_textures[i].tex_id);
+			pset_int("diffuse" ~ i.tostr, i);
+		}
+
+		glBindVertexArray(mesh.VAO);
+
+		glDrawElements(GL_TRIANGLES, cast(uint)mesh.indices.length, GL_UNSIGNED_INT, null);
 	}
 
 	void blit(const ref FancyModel model) {
-		enter();
+		glwait({
+		penter();
 
-		foreach (i; 0 .. model.stupid_meshes.length) {
-			const Mesh mesh = model.stupid_meshes[i];
-			const Texture[] diffuse_textures = model.meta_diffuse_textures[i];
-			uint num_indices = cast(uint)model.meta_indices[i].length;
+		foreach (ref m; model.meshes) pblit(m);
 
-			glBindVertexArray(mesh.VAO);
-
-			foreach (int j; 0 .. cast(int)diffuse_textures.length) {
-				glBindTextureUnit(j, diffuse_textures[j].tex_id);
-				set_int("diffuse" ~ j.tostr, j);
-			}
-
-			glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, null);
-		}
-
-		exit();
+		pexit();
+		});
 	}
 
 	void destruct() {
-		glDeleteProgram(program);
+		glwait({glDeleteProgram(program);});
 	}
 }
 
 
 private GLuint compile_shader(ShaderType type, string src) {
-	GLuint ret = glCreateShader(type);
+	GLuint ret;
+
+       	glwait({
+	ret = glCreateShader(type);
 
 	glShaderSource(ret, 1, [src.cstr].ptr, [cast(int)src.length].ptr);
 	glCompileShader(ret);
@@ -117,6 +132,7 @@ private GLuint compile_shader(ShaderType type, string src) {
 	} else if (error_len) {
 		info("OpenGL log while compiling shader: %s", src, error);
 	}
+	});
 
 	return ret;
 }

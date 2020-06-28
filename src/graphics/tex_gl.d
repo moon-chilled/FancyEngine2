@@ -64,9 +64,10 @@ class Texture: Asset {
 
 		GLuint colour_fmt, internalfmt;
 		switch (clr_depth) {
+			case 1: colour_fmt = GL_RED;  internalfmt = GL_R8;    break;
 			case 3: colour_fmt = GL_RGB;  internalfmt = GL_RGB8;  break;
 			case 4: colour_fmt = GL_RGBA; internalfmt = GL_RGBA8; break;
-			default: fatal("Need 3-byte or 4-byte colour depth, got %s", clr_depth); assert(0);
+			default: fatal("Need 1-, 3-, or 4-byte colour depth, got %s", clr_depth); assert(0);
 		}
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &tex_id);

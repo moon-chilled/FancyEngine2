@@ -22,6 +22,11 @@ import std.traits: isFloatingPoint, isIntegral, isNumeric, isSomeString;
 import std.variant: This;
 import sumtype: Sum = SumType, match;
 
+auto sorted(T)(T[] arr) {
+	import std.algorithm.sorting: sort;
+	return sort(arr.dup);
+}
+
 // Boring stuff: version flags are passed in as simple booleans, but we really
 // need them to be enums, so they're 1) always defined and 2) always have a
 // valid value

@@ -9,6 +9,7 @@ import graphics.framebuffer_gl;
 import graphics.shading_gl;
 import graphics.model_gl;
 import windowing.windows;
+import graphics.gl_thread;
 
 struct GfxContext {
 	SDL_GLContext gl_context;
@@ -19,8 +20,6 @@ struct GfxExtra {
 	Shader tex_copy;
 	Mesh mesh;
 }
-
-
 
 // in order to do aa properly, we need to make sure we don't ask for more
 // samples than the card is willing to do, otherwise bad stuff happens.
@@ -64,7 +63,9 @@ void pre_window_setup() {
 enum auxiliary_sdl_window_flags = SDL_WINDOW_OPENGL;
 
 GfxContext setup_context(SDL_Window *window) {
-	GfxContext ret = GfxContext(SDL_GL_CreateContext(window));
+	glthread_start();
+	GfxContext ret;
+       	glwait({ret = GfxContext(SDL_GL_CreateContext(window));});
 	if (ret.gl_context is null) {
 		fatal("Error creating OpenGL context.  SDL says '%s'", SDL_GetError().dstr);
 	}
@@ -90,9 +91,9 @@ GfxExtra setup_extra(GfxContext ctx, WindowSpec ws) {
 }
 
 
-
 void post_window_setup(SDL_Window *window) {
-	GLSupport status = loadOpenGL();
+	GLSupport status;
+       	glwait({status = loadOpenGL();});
 	if (status == GLSupport.noContext) {
 		fatal("Unable to configure OpenGL context.");
 	} else if (status == GLSupport.noLibrary) {
@@ -103,31 +104,36 @@ void post_window_setup(SDL_Window *window) {
 		info("Successfully booted OpenGL (mark II)");
 	}
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CW);
+	glwait({
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		glFrontFace(GL_CW);
 
-	glClipControl(GL_UPPER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
+		glClipControl(GL_UPPER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
 
-	static if (build_type == BuildType.Dev) {
-		glEnable(GL_DEBUG_OUTPUT);
-		extern (C) void gl_debugmsg(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) nothrow {
-			try { log("OpenGL: '%s'", message.dstr); } catch (Throwable) {}
+		static if (build_type == BuildType.Dev) {
+			glEnable(GL_DEBUG_OUTPUT);
+			extern (C) void gl_debugmsg(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) nothrow {
+				try { log("OpenGL: '%s'", message.dstr); } catch (Throwable) {}
+			}
+
+			glDebugMessageCallback(&gl_debugmsg, null);
 		}
 
-		glDebugMessageCallback(&gl_debugmsg, null);
-	}
+		info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
+	});
 
-	info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
 }
 
 void set_vsync(bool enabled) {
-	if (SDL_GL_SetSwapInterval(enabled) == -1) {
-		warning("unable to set vsync.  SDL says: '%s'", SDL_GetError().dstr);
-	}
+	glwait({
+		if (SDL_GL_SetSwapInterval(enabled) == -1) {
+			warning("unable to set vsync.  SDL says: '%s'", SDL_GetError().dstr);
+		}
+	});
 
 	//TODO: add adaptive sync support (SDL_GL_SetSwapInterval(-1)
 }
@@ -138,13 +144,15 @@ void set_fullscreen(bool enabled) {
 
 void set_wireframe(bool enabled) {
 	if (enabled) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glwait({glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);});
 	} else {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glwait({glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);});
 	}
 }
 
 pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Window *win) {
+	glwait({
+
 	glDisable(GL_DEPTH_TEST);
 	int w, h;
 	SDL_GL_GetDrawableSize(win, &w, &h);
@@ -154,6 +162,7 @@ pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Windo
 	//glBlitNamedFramebuffer(extra.framebuffer.fbo, 0, 0, 0, extra.framebuffer.w, extra.framebuffer.h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glBindTexture(GL_TEXTURE_2D, extra.framebuffer.tex);
 	extra.tex_copy.blit(extra.mesh);
 
@@ -162,12 +171,17 @@ pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Windo
 	glBindFramebuffer(GL_FRAMEBUFFER, extra.framebuffer.fbo);
 	glViewport(0, 0, extra.framebuffer.w, extra.framebuffer.h);
 	glEnable(GL_DEPTH_TEST);
+
+	});
 }
 
 pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {
+	glwait({
 	glClearColor(r, g, b, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	});
 }
 
 void gfx_end(GfxContext ctx) {
+	glthread_stop();
 }
