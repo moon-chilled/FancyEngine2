@@ -210,10 +210,11 @@ class S7Script: Scriptlang {
 			post_src ~= strfmt(` (vref "%s") `, vname);
 		}
 
-		fspurt("fe2-tmp.scm", post_src);
-		scope (exit) { fdelete("fe2-tmp.scm"); }
+		string opath = path ~ "f";
+		fspurt(opath, post_src);
+		scope (exit) { fdelete(opath); }
 
-		if (!s7_load_with_environment(s7, "fe2-tmp.scm", env)) {
+		if (!s7_load_with_environment(s7, opath.cstr, env)) {
 			error("Failed to load %s", path);
 			return ret;
 		}
