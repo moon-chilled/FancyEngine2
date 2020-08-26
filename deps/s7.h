@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "8.18"
-#define S7_DATE "2020-5-1"
+#define S7_VERSION "9.5"
+#define S7_DATE "26-8-20"
 
 #include <stdint.h>           /* for int64_t */
 
@@ -54,6 +54,7 @@ bool s7_is_valid(s7_scheme *sc, s7_pointer arg);                     /* does 'ar
 bool s7_is_c_pointer(s7_pointer arg);                                /* (c-pointer? arg) */
 bool s7_is_c_pointer_of_type(s7_pointer arg, s7_pointer type);
 void *s7_c_pointer(s7_pointer p);
+void *s7_c_pointer_with_type(s7_scheme *sc, s7_pointer p, s7_pointer expected_type, const char *caller, s7_int argnum);
 s7_pointer s7_c_pointer_type(s7_pointer p);
 s7_pointer s7_make_c_pointer(s7_scheme *sc, void *ptr);              /* these are for passing uninterpreted C pointers through Scheme */
 s7_pointer s7_make_c_pointer_with_type(s7_scheme *sc, void *ptr, s7_pointer type, s7_pointer info);
@@ -215,6 +216,7 @@ s7_pointer s7_cddaar(s7_pointer p);
 bool s7_is_list(s7_scheme *sc, s7_pointer p);                                /* (list? p) -> (or (pair? p) (null? p)) */
 bool s7_is_proper_list(s7_scheme *sc, s7_pointer p);                         /* (proper-list? p) */
 s7_int s7_list_length(s7_scheme *sc, s7_pointer a);                          /* (length a) */
+s7_pointer s7_make_list(s7_scheme *sc, s7_int len, s7_pointer init);         /* (make-list len init) */
 s7_pointer s7_list(s7_scheme *sc, s7_int num_values, ...);                   /* (list ...) */
 s7_pointer s7_list_nl(s7_scheme *sc, s7_int num_values, ...);                /* (list ...) arglist should be NULL terminated (more error checks than s7_list) */
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a);                          /* (reverse a) */
@@ -290,6 +292,11 @@ s7_pointer s7_vector_set_n(s7_scheme *sc, s7_pointer vector, s7_pointer value, s
 s7_int s7_vector_dimensions(s7_pointer vec, s7_int *dims, s7_int dims_size); /* vector dimensions */
 s7_int s7_vector_offsets(s7_pointer vec, s7_int *offs, s7_int offs_size);    
 
+s7_int s7_int_vector_ref(s7_pointer vec, s7_int index);
+s7_int s7_int_vector_set(s7_pointer vec, s7_int index, s7_int value);
+s7_double s7_float_vector_ref(s7_pointer vec, s7_int index);
+s7_double s7_float_vector_set(s7_pointer vec, s7_int index, s7_double value);
+
 s7_pointer s7_make_vector(s7_scheme *sc, s7_int len);                                 /* (make-vector len) */
 s7_pointer s7_make_int_vector(s7_scheme *sc, s7_int len, s7_int dims, s7_int *dim_info);
 s7_pointer s7_make_float_vector(s7_scheme *sc, s7_int len, s7_int dims, s7_int *dim_info);
@@ -344,7 +351,7 @@ const char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);       /* (
   /*    don't free the string */
 void s7_flush_output_port(s7_scheme *sc, s7_pointer p);                     /* (flush-output-port port) */
 
-typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_READ_BYTE, S7_PEEK_CHAR, S7_IS_CHAR_READY} s7_read_t;
+typedef enum {S7_READ, S7_READ_CHAR, S7_READ_LINE, S7_PEEK_CHAR, S7_IS_CHAR_READY, S7_NUM_READ_CHOICES} s7_read_t;
 s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, uint8_t c, s7_pointer port));  
 s7_pointer s7_open_input_function(s7_scheme *sc, s7_pointer (*function)(s7_scheme *sc, s7_read_t read_choice, s7_pointer port));
 
@@ -422,6 +429,7 @@ s7_pointer s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
 s7_pointer s7_define_variable_with_documentation(s7_scheme *sc, const char *name, s7_pointer value, const char *help);
 s7_pointer s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value);
 s7_pointer s7_define_constant_with_documentation(s7_scheme *sc, const char *name, s7_pointer value, const char *help);
+s7_pointer s7_define_constant_with_environment(s7_scheme *sc, s7_pointer envir, const char *name, s7_pointer value);
   /* These functions add a symbol and its binding to either the top-level environment
    *    or the 'env' passed as the second argument to s7_define.
    *
@@ -566,6 +574,13 @@ s7_pointer s7_typed_dilambda(s7_scheme *sc,
 		       s7_int set_req_args, s7_int set_opt_args,
 		       const char *documentation,
  		       s7_pointer get_sig, s7_pointer set_sig);
+s7_pointer s7_dilambda_with_environment(s7_scheme *sc, s7_pointer envir,
+					const char *name,
+					s7_pointer (*getter)(s7_scheme *sc, s7_pointer args),
+					s7_int get_req_args, s7_int get_opt_args,
+					s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
+					s7_int set_req_args, s7_int set_opt_args,
+					const char *documentation);
 
 s7_pointer s7_values(s7_scheme *sc, s7_pointer args);          /* (values ...) */
 
@@ -674,87 +689,87 @@ typedef s7_double (*s7_float_function)(s7_scheme *sc, s7_pointer args);
 s7_float_function s7_float_optimize(s7_scheme *sc, s7_pointer expr);
 
 typedef s7_double (*s7_d_t)(void);
-void s7_set_d_function(s7_pointer f, s7_d_t df);
+void s7_set_d_function(s7_scheme *sc, s7_pointer f, s7_d_t df);
 s7_d_t s7_d_function(s7_pointer f);
 
 typedef s7_double (*s7_d_d_t)(s7_double x);
-void s7_set_d_d_function(s7_pointer f, s7_d_d_t df);
+void s7_set_d_d_function(s7_scheme *sc, s7_pointer f, s7_d_d_t df);
 s7_d_d_t s7_d_d_function(s7_pointer f);
 
 typedef s7_double (*s7_d_dd_t)(s7_double x1, s7_double x2);
-void s7_set_d_dd_function(s7_pointer f, s7_d_dd_t df);
+void s7_set_d_dd_function(s7_scheme *sc, s7_pointer f, s7_d_dd_t df);
 s7_d_dd_t s7_d_dd_function(s7_pointer f);
 
 typedef s7_double (*s7_d_ddd_t)(s7_double x1, s7_double x2, s7_double x3);
-void s7_set_d_ddd_function(s7_pointer f, s7_d_ddd_t df);
+void s7_set_d_ddd_function(s7_scheme *sc, s7_pointer f, s7_d_ddd_t df);
 s7_d_ddd_t s7_d_ddd_function(s7_pointer f);
 
 typedef s7_double (*s7_d_dddd_t)(s7_double x1, s7_double x2, s7_double x3, s7_double x4);
-void s7_set_d_dddd_function(s7_pointer f, s7_d_dddd_t df);
+void s7_set_d_dddd_function(s7_scheme *sc, s7_pointer f, s7_d_dddd_t df);
 s7_d_dddd_t s7_d_dddd_function(s7_pointer f);
 
 typedef s7_double (*s7_d_v_t)(void *v);
-void s7_set_d_v_function(s7_pointer f, s7_d_v_t df);
+void s7_set_d_v_function(s7_scheme *sc, s7_pointer f, s7_d_v_t df);
 s7_d_v_t s7_d_v_function(s7_pointer f);
 
 typedef s7_double (*s7_d_vd_t)(void *v, s7_double d);
-void s7_set_d_vd_function(s7_pointer f, s7_d_vd_t df);
+void s7_set_d_vd_function(s7_scheme *sc, s7_pointer f, s7_d_vd_t df);
 s7_d_vd_t s7_d_vd_function(s7_pointer f);
 
 typedef s7_double (*s7_d_vdd_t)(void *v, s7_double x1, s7_double x2);
-void s7_set_d_vdd_function(s7_pointer f, s7_d_vdd_t df);
+void s7_set_d_vdd_function(s7_scheme *sc, s7_pointer f, s7_d_vdd_t df);
 s7_d_vdd_t s7_d_vdd_function(s7_pointer f);
 
 typedef s7_double (*s7_d_vid_t)(void *v, s7_int i, s7_double d);
-void s7_set_d_vid_function(s7_pointer f, s7_d_vid_t df);
+void s7_set_d_vid_function(s7_scheme *sc, s7_pointer f, s7_d_vid_t df);
 s7_d_vid_t s7_d_vid_function(s7_pointer f);
 
 typedef s7_double (*s7_d_p_t)(s7_pointer p);
-void s7_set_d_p_function(s7_pointer f, s7_d_p_t df);
+void s7_set_d_p_function(s7_scheme *sc, s7_pointer f, s7_d_p_t df);
 s7_d_p_t s7_d_p_function(s7_pointer f);
 
 typedef s7_double (*s7_d_pd_t)(s7_pointer v, s7_double x);
-void s7_set_d_pd_function(s7_pointer f, s7_d_pd_t df);
+void s7_set_d_pd_function(s7_scheme *sc, s7_pointer f, s7_d_pd_t df);
 s7_d_pd_t s7_d_pd_function(s7_pointer f);
 
 typedef s7_double (*s7_d_7pi_t)(s7_scheme *sc, s7_pointer v, s7_int i);
-void s7_set_d_7pi_function(s7_pointer f, s7_d_7pi_t df);
+void s7_set_d_7pi_function(s7_scheme *sc, s7_pointer f, s7_d_7pi_t df);
 s7_d_7pi_t s7_d_7pi_function(s7_pointer f);
 
 typedef s7_double (*s7_d_7pid_t)(s7_scheme *sc, s7_pointer v, s7_int i, s7_double d);
-void s7_set_d_7pid_function(s7_pointer f, s7_d_7pid_t df);
+void s7_set_d_7pid_function(s7_scheme *sc, s7_pointer f, s7_d_7pid_t df);
 s7_d_7pid_t s7_d_7pid_function(s7_pointer f);
 
 typedef s7_double (*s7_d_id_t)(s7_int i, s7_double d);
-void s7_set_d_id_function(s7_pointer f, s7_d_id_t df);
+void s7_set_d_id_function(s7_scheme *sc, s7_pointer f, s7_d_id_t df);
 s7_d_id_t s7_d_id_function(s7_pointer f);
 
 typedef s7_double (*s7_d_ip_t)(s7_int i, s7_pointer p);
-void s7_set_d_ip_function(s7_pointer f, s7_d_ip_t df);
+void s7_set_d_ip_function(s7_scheme *sc, s7_pointer f, s7_d_ip_t df);
 s7_d_ip_t s7_d_ip_function(s7_pointer f);
 
 typedef s7_int (*s7_i_i_t)(s7_int x);
-void s7_set_i_i_function(s7_pointer f, s7_i_i_t df);
+void s7_set_i_i_function(s7_scheme *sc, s7_pointer f, s7_i_i_t df);
 s7_i_i_t s7_i_i_function(s7_pointer f);
 
 typedef s7_int (*s7_i_7d_t)(s7_scheme *sc, s7_double x);
-void s7_set_i_7d_function(s7_pointer f, s7_i_7d_t df);
+void s7_set_i_7d_function(s7_scheme *sc, s7_pointer f, s7_i_7d_t df);
 s7_i_7d_t s7_i_7d_function(s7_pointer f);
 
 typedef s7_int (*s7_i_ii_t)(s7_int i1, s7_int i2);
-void s7_set_i_ii_function(s7_pointer f, s7_i_ii_t df);
+void s7_set_i_ii_function(s7_scheme *sc, s7_pointer f, s7_i_ii_t df);
 s7_i_ii_t s7_i_ii_function(s7_pointer f);
 
 typedef s7_int (*s7_i_7p_t)(s7_scheme *sc, s7_pointer p);
-void s7_set_i_7p_function(s7_pointer f, s7_i_7p_t df);
+void s7_set_i_7p_function(s7_scheme *sc, s7_pointer f, s7_i_7p_t df);
 s7_i_7p_t s7_i_7p_function(s7_pointer f);
 
 typedef bool (*s7_b_p_t)(s7_pointer p);
-void s7_set_b_p_function(s7_pointer f, s7_b_p_t df);
+void s7_set_b_p_function(s7_scheme *sc, s7_pointer f, s7_b_p_t df);
 s7_b_p_t s7_b_p_function(s7_pointer f);
 
 typedef s7_pointer (*s7_p_d_t)(s7_scheme *sc, s7_double x);
-void s7_set_p_d_function(s7_pointer f, s7_p_d_t df);
+void s7_set_p_d_function(s7_scheme *sc, s7_pointer f, s7_p_d_t df);
 s7_p_d_t s7_p_d_function(s7_pointer f);
 
 /* Here is an example of using these functions; more extensive examples are in clm2xen.c in sndlib, and in s7.c.
@@ -769,7 +784,7 @@ s7_p_d_t s7_p_d_function(s7_pointer f);
  * void plusone_init(s7_scheme *sc)
  * {
  *   s7_define_safe_function(sc, "plusone", g_plusone, 1, 0, false, "");
- *   s7_set_i_i_function(s7_name_to_value(sc, "plusone"), plusone);
+ *   s7_set_i_i_function(sc, s7_name_to_value(sc, "plusone"), plusone);
  * }
  * --------
  * gcc -c plus.c -fPIC -O2 -lm
@@ -833,19 +848,26 @@ s7_pointer s7_apply_n_9(s7_scheme *sc, s7_pointer args,
   #include <mpfr.h>
   #include <mpc.h>
 
-  bool s7_is_bignum(s7_pointer obj);
   mpfr_t *s7_big_real(s7_pointer x);
-  mpz_t *s7_big_integer(s7_pointer x);
-  mpq_t *s7_big_ratio(s7_pointer x);
-  mpc_t *s7_big_complex(s7_pointer x);
+  mpz_t  *s7_big_integer(s7_pointer x);
+  mpq_t  *s7_big_ratio(s7_pointer x);
+  mpc_t  *s7_big_complex(s7_pointer x);
+
+  bool s7_is_bignum(s7_pointer obj);
+  bool s7_is_big_real(s7_pointer x);
+  bool s7_is_big_integer(s7_pointer x);
+  bool s7_is_big_ratio(s7_pointer x);
+  bool s7_is_big_complex(s7_pointer x);
+
+  s7_pointer s7_make_big_real(s7_scheme *sc, mpfr_t *val);
   s7_pointer s7_make_big_integer(s7_scheme *sc, mpz_t *val);
   s7_pointer s7_make_big_ratio(s7_scheme *sc, mpq_t *val);
-  s7_pointer s7_make_big_real(s7_scheme *sc, mpfr_t *val);
   s7_pointer s7_make_big_complex(s7_scheme *sc, mpc_t *val);
 #endif
 
 
 /* -------------------------------------------------------------------------------- */
+
 #if (!DISABLE_DEPRECATED)
 typedef s7_int s7_Int;
 typedef s7_double s7_Double;
@@ -856,21 +878,6 @@ typedef s7_double s7_Double;
 #define s7_make_object        s7_make_c_object
 #define s7_mark_object        s7_mark
 #define s7_UNSPECIFIED(Sc)    s7_unspecified(Sc)
-
-s7_int s7_print_length(s7_scheme *sc);                               /* (*s7* 'print-length) */
-s7_int s7_set_print_length(s7_scheme *sc, s7_int new_len);           /* (set! (*s7* 'print-length) new_len), but returns old value */
-s7_int s7_float_format_precision(s7_scheme *sc);                     /* (*s7* 'float-format-precision) */
-s7_int s7_set_float_format_precision(s7_scheme *sc, s7_int new_len); /* (set! (*s7* 'float-format-precision) new_len), but returns old value */
-void s7_set_gc_stats(s7_scheme *sc, bool on);                        /* (set! (*s7* 'gc-stats) on) */
-
-#else
-
-#define s7_set_gc_stats(Sc, On)                  s7_let_field_set(Sc, s7_make_symbol(Sc, "gc-stats"), On)
-#define s7_print_length(Sc)           s7_integer(s7_let_field_ref(Sc, s7_make_symbol(Sc, "print-length")))
-#define s7_float_format_precision(Sc) s7_integer(s7_let_field_ref(Sc, s7_make_symbol(Sc, "float-format-precision")))
-#define s7_set_print_length(Sc, Val)             s7_let_field_set(Sc, s7_make_symbol(Sc, "print-length"), s7_make_integer(Sc, Val))
-#define s7_set_float_format_precision(Sc, Val)   s7_let_field_set(Sc, s7_make_symbol(Sc, "float-format-precision"), s7_make_integer(Sc, Val))
-/* but the last two used to return the old value -- these return the new value */
 #endif
 
 
@@ -878,6 +885,15 @@ void s7_set_gc_stats(s7_scheme *sc, bool on);                        /* (set! (*
  * 
  *        s7 changes
  *
+ * 5-Aug:     s7_make_list.
+ * 31-July:   add s7_define_constant_with_environment and s7_dilambda_with_environment.
+ * 29-July:   open-input|output-function. add S7_NUM_READ_CHOICES to s7_read_t enum and remove (unused) S7_READ_BYTE.
+ * 20-July:   s7_c_pointer_with_type. notcurses_s7.c and nrepl.scm. *autoload-hook*. 
+ * 8-July:    s7_int|float_vector_ref|set. subvector parameter order changed.
+ * 17-June:   removed deprecated *s7* accessors.
+ * 20-May:    libarb_s7.c.
+ * 12-May:    s7_is_big*.
+ * 6-May:     added s7_scheme* initial arguments to s7_set_* opt_func calls (s7_set_d_d_function for example).
  * 23-Apr:    added s7_scheme* initial argument to s7_is_eqv.
  * 9-Mar:     move openlets to (*s7* 'openlets), s7-version to (*s7* 'version), deprecate nan.0 and inf.0.
  * 17-Feb:    s7_let_field_ref|set for *s7* access. *function* to replace __func__.

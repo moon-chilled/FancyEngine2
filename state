@@ -7,17 +7,17 @@ text offset by _ should not be overlooked
 text offset by * is simply emphasized
 
 /a computer is a tool that does state transformations/
-a state transformation is: x -> x' (read: x' is derived from x)
-an example is: x+5 => x' (read: x' is equivalent to x+5)
-a state transformation is _analogous_ to a function; x -> x' is _analogous_ to a type signature; x+5 => x' is _analogous_ to a function body
+a state transformation is: x → x' (read: x' is derived from x)
+an example is: x+5 ⇒ x' (read: x' is equivalent to x+5)
+a state transformation is _analogous_ to a function; x → x' is _analogous_ to a type signature; x+5 ⇒ x' is _analogous_ to a function body
 
 (above disregards mutation)
 
-/a video games is a set of arbitrary rules to facilitate interactions/
-an interaction is an augmented state transformation that looks like this: x y -> x'
-(or: x y z w b r... -> x', but not x y z -> x' y', which is two interactions: x y z -> x'; x y z -> y')
+/a video game is a set of arbitrary rules to facilitate interactions/
+an interaction is an augmented state transformation that looks like this: x y → x'
+(or: x y z w b r... → x', but not x y z → x' y', which is two interactions: x y z → x'; x y z → y')
 
-video games usually consider 'state' (S) to be a singleton, and 'step' to be the transformation S -> S'
+video games usually consider 'state' (S) to be a singleton, and 'step' to be the transformation S → S'
 separation of concerns is difficult to wrangle because step usually mutates in place
 that is, it writes directly to S, and then reads back what it wrote later
 parallelism is hard because data dependency is implicit and convoluted
@@ -34,14 +34,15 @@ since you can not read from S', it must be derived wholly from S
 
 there are no data dependency issues, so updaters may all be run concurrently
 several problems:
-race conditions (concurrency irrelevant); if updater 1 issues 5 => x, and updater 2 issues 8 => x, one will happen 'first' and the other will be overwritten
+race conditions (concurrency irrelevant); if updater 1 issues 5 ⇒ x, and updater 2 issues 8 ⇒ x, one will happen 'first' and the other will be overwritten
 algorithms + intuition generally expect the invariant: write k to x, read from x, get back k. this is *never* true in fe2 unless x=k already
 observation: the violation of the above invariant makes code difficult to write and read, requires lots of seemingly-redundant intermediates
 
 fe2 v2's solution: real separation of concerns
 singleton state was a mistake. model data as many independent pieces of state
-every piece of state takes an associated transformation function that knows how to do S x -> x'
+every piece of state takes an associated transformation function that knows how to do S x → x'
+(S is the singleton global state, but it cannot be written to; there is no S')
 all transformations are dispatched concurrently
 all modifications are cached, but are available to the updater that issued them
-(S x -> x') writes to x' and reads initially from x, but them from x' after the first write. But (S y -> y') can read only from x
+(S x → x') writes to x' and reads initially from x, but them from x' after the first write. But (S y → y') can read only from x
 (TODO- fe2 is nyi)
