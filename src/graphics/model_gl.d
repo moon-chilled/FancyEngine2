@@ -2,6 +2,7 @@ module graphics.model_gl;
 import stdlib;
 import cstdlib;
 import bindbc.opengl;
+import graphics.gl_thread;
 
 
 
@@ -13,6 +14,7 @@ struct Mesh {
 	private uint one_vertex_size;
 
 	this(float[] vertices, uint[] sizes) {
+		glwait({
 		glGenVertexArrays(1, &VAO);
 		glBindVertexArray(VAO);
 
@@ -38,10 +40,12 @@ struct Mesh {
 
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		});
 	}
 
 	// TODO: don't hardcode for floats (GL_FLOAT, float.sizeof, etc.)
 	void load_verts(float[] vertices) {
+		glwait({
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
@@ -51,5 +55,6 @@ struct Mesh {
 
 		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		});
 	}
 }

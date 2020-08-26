@@ -2,6 +2,8 @@ module graphics.tex_gl;
 import stdlib;
 import cstdlib;
 
+import graphics.gl_thread;
+
 import asset;
 import windowing.windows_gl;
 
@@ -32,6 +34,7 @@ class Texture: Asset {
 			default: fatal("Need 1-, 3-, or 4-byte colour depth, got %s", clr_depth); assert(0);
 		}
 
+		glwait({
 		glCreateTextures(GL_TEXTURE_2D, 1, &tex_id);
 		glTextureParameteri(tex_id, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 		glTextureParameteri(tex_id, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
@@ -40,6 +43,7 @@ class Texture: Asset {
 
 		glTextureStorage2D(tex_id, 1, internalfmt, w, h);
 		glTextureSubImage2D(tex_id, 0, 0, 0, w, h, colour_fmt, GL_UNSIGNED_BYTE, data.ptr);
+		});
 	}
 
 
@@ -70,6 +74,7 @@ class Texture: Asset {
 			default: fatal("Need 1-, 3-, or 4-byte colour depth, got %s", clr_depth); assert(0);
 		}
 
+		glwait({
 		glCreateTextures(GL_TEXTURE_2D, 1, &tex_id);
 		glTextureParameteri(tex_id, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 		glTextureParameteri(tex_id, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
@@ -78,6 +83,7 @@ class Texture: Asset {
 
 		glTextureStorage2D(tex_id, 1, internalfmt, w, h);
 		glTextureSubImage2D(tex_id, 0, 0, 0, w, h, colour_fmt, GL_UNSIGNED_BYTE, tex_data);
+		});
 
 		stbi_image_free(tex_data);
 

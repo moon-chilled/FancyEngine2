@@ -8,6 +8,7 @@ import windowing.windows_gl;
 
 import graphics.model_gl;
 import graphics.shading_gl;
+import graphics.gl_thread;
 
 import bindbc.opengl;
 import bindbc.freetype;
@@ -63,6 +64,7 @@ struct Font {
 		}
 
 		ubyte *font_bitmap = SysAllocator.allocate!ubyte(atlas_width * height);
+		glwait({
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &tex_id);
 		//glTextureParameteri(tex_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -83,7 +85,7 @@ struct Font {
 			SysAllocator.free(font_bitmaps[i]);
 		}
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
+		});
 
 		draw_shader = Shader(fslurp("dist/shaders/font_render.vert"), fslurp("dist/shaders/font_render.frag"), ctx);
 
@@ -172,13 +174,15 @@ struct Font {
 
 		character_model.load_verts(verts);
 
+		glwait({
 		glBindTextureUnit(0, tex_id);
 		draw_shader.blit(character_model);
+		});
 	}
 
 	void destroy() {
 		FT_Done_Face(face);
 		FT_Done_FreeType(f);
-		glDeleteTextures(1, &tex_id);
+		glwait({glDeleteTextures(1, &tex_id);});
 	}
 }

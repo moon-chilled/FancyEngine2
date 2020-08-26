@@ -7,6 +7,7 @@ import bindbc.assimp;
 
 import graphics.model;
 import graphics.tex;
+import graphics.gl_thread;
 
 struct Vertex {
 	vec3f position;
@@ -31,6 +32,7 @@ struct FancyMesh {
 	}
 
 	void load_verts() {
+		glwait({
 		glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &VBO);
 		glGenBuffers(1, &EBO);
@@ -58,6 +60,7 @@ struct FancyMesh {
 		glBindVertexArray(0);
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		});
 	}
 }
 
