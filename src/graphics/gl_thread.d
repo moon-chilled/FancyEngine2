@@ -38,6 +38,7 @@ private void opengl_thread(Tid parent) {
 
 private __gshared Tid gl_tid;
 
+/+
 void gldo(void delegate() fn) {
 	if (am_gl_thread)
 		fn();
@@ -52,7 +53,9 @@ void gldo(void function() fn) {
 	else
 		send(gl_tid, cast(shared)fn);
 }
++/
 void glwait(void delegate() fn) {
+	//fn(); return;
 	if (am_gl_thread)
 		fn();
 		//fatal("recursive gl");

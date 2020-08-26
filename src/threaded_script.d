@@ -20,6 +20,7 @@ private struct ScriptedFunctionWrapper {
 	string ext;
 	string path;
 	string[] wanted_syms;
+	uint[] uuids; // length of last two is identical
 }
 
 static this() {
@@ -35,17 +36,19 @@ private string current_scene_name = null;
 string get_current_scene_name() { return current_scene_name; }
 
 struct ScriptedFunction {
-	package size_t serial;
+	package uint serial;
 	string owned_scene_name;
 
-	package this(size_t serial) { this.serial = serial; }
+	package this(uint serial) { this.serial = serial; }
 
 	ScriptVar opCall(ScriptVar[] args = []) {
 		if (!owned_scene_name) fatal("ScriptedFunctionBase does not belong to any scene");
+		if (owned_scene_name == "game3d")
+			log("scripting %s", owned_scene_name);
 
 		ScriptVar ret = None;
 
-		synchronized {
+		//synchronized {
 			string old_scene_name = current_scene_name;
 			current_scene_name = owned_scene_name;
 
@@ -56,12 +59,14 @@ struct ScriptedFunction {
 				}
 			+/
 
-			synchronized(ThreadedScripter.this_thread_lock)
+			//synchronized(ThreadedScripter.this_thread_lock) {
+				//log("=> %s, %s", serial, ThreadedScripter.get_scripted_functions);
 				ret = ThreadedScripter.get_scripted_functions[serial](args);
+			//}
 			
 
 			current_scene_name = old_scene_name;
-		}
+		//}
 
                 return ret;
 	}
@@ -70,7 +75,13 @@ struct ScriptedFunction {
 private struct ThreadLocalBaggage {
 	Scriptlang[string] languages;
 	Mutex mutex;
-	ScriptedFunctionBase[] scripted_functions;
+	ScriptedFunctionBase[uint] scripted_functions;
+}
+
+private uint get_uuid() {
+	static uint r = 0;
+	// start at 1; 0 can be a sentinel
+	return ++r;
 }
 
 static final __gshared class ThreadedScripter {
@@ -85,7 +96,7 @@ static final __gshared class ThreadedScripter {
 			fatal("%s not in threads?", thisTid);
 		return baggage[thisTid].languages; }
 
-	static package ScriptedFunctionBase[] get_scripted_functions() {
+	static package ScriptedFunctionBase[uint] get_scripted_functions() {
 		return baggage[thisTid].scripted_functions;
 	}
 
@@ -94,19 +105,35 @@ static final __gshared class ThreadedScripter {
 	static ScriptedFunction[string] load_getsyms(string ext, string path, string[] wanted_syms) {
 		ScriptedFunction[string] ret;
 
-		synchronized loaded_scripted_funs ~= ScriptedFunctionWrapper(ext, path, wanted_syms);
+		auto sfw = ScriptedFunctionWrapper(ext, path);
+		uint[] uuids;
+		string[] received_syms;
+		uint[] received_uuids;
 
+		foreach (key; wanted_syms) uuids ~= get_uuid();
 		synchronized (baggage_mutex) foreach (ref k; baggage.keys) {
 			synchronized (baggage[k].mutex) {
 				ScriptedFunctionBase[string] base = baggage[k].languages[ext].load_getsyms(path, wanted_syms);
-				foreach (key; base.keys.sorted) {
-					baggage[k].scripted_functions ~= base[key];
+				foreach (i; 0 .. wanted_syms.length) {
+					if (wanted_syms[i] !in base) continue;
+					baggage[k].scripted_functions[uuids[i]] = base[wanted_syms[i]];
 
-					// TODO: enforce well-ordering?
-					ret[key] = ScriptedFunction(baggage[k].scripted_functions.length-1);
+					// TODO better scheme than a hashtable lookup for _every call_
+					ret[wanted_syms[i]] = ScriptedFunction(uuids[i]);
+					if (i==0) {
+						received_syms ~= wanted_syms[i];
+						received_uuids ~= uuids[i];
+					}
 				}
 			}
 		}
+
+		assert(received_syms.length == received_uuids.length);
+		sfw.wanted_syms = received_syms;
+		sfw.uuids = received_uuids;
+		synchronized loaded_scripted_funs ~= sfw;
+
+		foreach (t; baggage.values) logs(t.scripted_functions);
 
 		return ret;
 	}
@@ -148,13 +175,15 @@ static final __gshared class ThreadedScripter {
 			}
 		}
 
-		ScriptedFunctionBase[] scripted_functions;
+		ScriptedFunctionBase[uint] scripted_functions;
 		foreach (lsf; loaded_scripted_funs) {
 			auto o = langs[lsf.ext].load_getsyms(lsf.path, lsf.wanted_syms);
-			foreach (v; o.keys.sorted) {
-				scripted_functions ~= o[v];
+			foreach (i; 0 .. lsf.wanted_syms.length) {
+				scripted_functions[lsf.uuids[i]] = o[lsf.wanted_syms[i]];
 			}
 		}
+
+		//foreach (t; baggage.values) logs(t.scripted_functions);
 
 		synchronized (baggage_mutex) {
 			baggage[thisTid] = ThreadLocalBaggage(langs, new Mutex(), scripted_functions);

@@ -89,23 +89,38 @@ class SceneManager {
 		log("asking to preload");
 		import std.concurrency;
 		import core.atomic;
+		/+
+		s.loading = true;
+		s.preload();
+		s.loading = false;
+		s.loaded = true;
+		+/
 		Preloader p = get_free_preloader();
-		//atomicOp!"+="(p.working, 1);
-		p.working++;
+		atomicOp!"+="(p.working, 1);
+		//p.working++;
 		send(p.tid, cast(shared)PreloadScene(s));
 		receiveOnly!AckPreloadScene();
 	}
 	private void unload(Scene s) {
 		import std.concurrency;
 		import core.atomic;
+		/+
+		s.loading = true;
+		s.unload();
+		s.loaded = false;
+		s.loading = false;
+		+/
+		/+
 		Preloader p = get_free_preloader();
 		//atomicOp!"+="(p.working, 1);
 		p.working++;
 		send(p.tid, cast(shared)UnloadScene(s));
 		receiveOnly!AckUnloadScene();
+		+/
 	}
 	private void enter(Scene s) {
 		if (s.loading) {
+			log("deferring entry of loading scene %s", s.name);
 			s.defer_enter = true;
 		} else {
 			s.enter();
@@ -160,6 +175,7 @@ class SceneManager {
 		playing_scenes[scene_name] = s;
 
 		if (s.fresh) {
+			log("entering fresh %s", scene_name);
 			enter(s);
 			s.fresh = false;
 		}
@@ -286,9 +302,9 @@ class Scene {
 	void preload() {
 		log("in preload woo");
 		foreach (g; preloads) {
-			log("actually about to preload x");
+			log("actually about to preload %s", name);
 			g([]);
-			log("actually did preload x");
+			log("actually did preload %s", name);
 		}
 		log("out preload woo");
 	}

@@ -18,7 +18,7 @@ struct UnloadScene{Scene s;}
 
 class Preloader {
 	Tid tid;
-	uint working = 0; // number of tasks on this preloader's queue
+	shared uint working = 0; // number of tasks on this preloader's queue
 }
 
 shared uint thread_num = 0;
@@ -54,8 +54,8 @@ void preloader(Tid parent, shared Preloader self) {
 				s.s.loading = true;
 				send(parent, AckUnloadScene());
 				(cast()s.s).unload();
-				s.s.loading = false;
 				s.s.loaded = false;
+				s.s.loading = false;
 				atomicOp!"-="(self.working, 1);
 			},
 			

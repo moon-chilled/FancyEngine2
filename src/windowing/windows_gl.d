@@ -153,6 +153,7 @@ void set_wireframe(bool enabled) {
 
 pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Window *win) {
 	glwait({
+	SDL_GL_MakeCurrent(win, ctx.gl_context);
 
 	glDisable(GL_DEPTH_TEST);
 	int w, h;
