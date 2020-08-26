@@ -115,10 +115,10 @@ class S7Script: Scriptlang {
 
 	this() {
 		import std.concurrency;
-		log("ENTER (not yet) (%s)", thisTid);
+		//log("ENTER (not yet) (%s)", thisTid);
 		s7 = s7_init();
 		log("Successfully booted %s (%s) (%s)", eval("(*s7* 'version)"), s7, thisTid);
-		scope(exit)log("and now EXIT (%s) (%s)", s7, thisTid);
+		//scope(exit)log("and now EXIT (%s) (%s)", s7, thisTid);
 
 		void real_push_log_msg(long ll, string str, string basic_str) { _real_push_log_msg(cast(LogLevel)ll, str, basic_str); }
 
@@ -188,14 +188,14 @@ class S7Script: Scriptlang {
 	}
 	void exec(string text) {
 		import std.concurrency;
-		log("ENTER (%s) (%s)", s7, thisTid);
-		scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
+		//log("ENTER (%s) (%s)", s7, thisTid);
+		//scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
 		s7_eval_c_string(s7, text.cstr);
 	}
 	ScriptedFunctionBase[string] load_getsyms(string path, string[] wanted_syms) {
 		import std.concurrency;
-		log("ENTER (%s) (%s)", s7, thisTid);
-		scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
+		//log("ENTER (%s) (%s)", s7, thisTid);
+		//scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
 		s7_pointer env;
 		env = s7_inlet(s7, s7_nil(s7));
 
@@ -249,8 +249,8 @@ class S7Script: Scriptlang {
 
 	ScriptVar call(string name, ScriptVar[] args = []) {
 		import std.concurrency;
-		log("ENTER(%s) (%s) (%s)", name, s7, thisTid);
-		scope(exit)log("EXIT(%s) (%s) (%s)", name, s7, thisTid);
+		//log("ENTER(%s) (%s) (%s)", name, s7, thisTid);
+		//scope(exit)log("EXIT(%s) (%s) (%s)", name, s7, thisTid);
 		s7_pointer funcptr = s7_name_to_value(s7, name.cstr); // lisp-1 ftw!
 
 		return s7_to_script(s7, s7_call(s7, funcptr, arr_to_list(s7, args)));
@@ -258,8 +258,8 @@ class S7Script: Scriptlang {
 
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes, bool variadic = false) {
 		import std.concurrency;
-		log("ENTER (%s) (%s)", s7, thisTid);
-		scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
+		//log("ENTER (%s) (%s)", s7, thisTid);
+		//scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
 
 		name = name.replace('_', '-');
 		long new_index;
@@ -281,8 +281,8 @@ class S7Script: Scriptlang {
 	}
 	void load(string path) {
 		import std.concurrency;
-		log("ENTER (%s) (%s)", s7, thisTid);
-		scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
+		//log("ENTER (%s) (%s)", s7, thisTid);
+		//scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
 		s7_load(s7, path.cstr);
 	}
 

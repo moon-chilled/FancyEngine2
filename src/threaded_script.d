@@ -56,8 +56,9 @@ struct ScriptedFunction {
 				}
 			+/
 
-				synchronized(ThreadedScripter.this_thread_lock)
+			synchronized(ThreadedScripter.this_thread_lock)
 				ret = ThreadedScripter.get_scripted_functions[serial](args);
+			
 
 			current_scene_name = old_scene_name;
 		}
@@ -74,6 +75,7 @@ private struct ThreadLocalBaggage {
 
 static final __gshared class ThreadedScripter {
 	static __gshared ThreadLocalBaggage[Tid] baggage;
+	static __gshared Mutex baggage_mutex;
 
 	static __gshared private ScriptedFunctionWrapper[] loaded_scripted_funs;
 	static __gshared private ScriptFunWrap[] exposed_funs;
@@ -94,14 +96,14 @@ static final __gshared class ThreadedScripter {
 
 		synchronized loaded_scripted_funs ~= ScriptedFunctionWrapper(ext, path, wanted_syms);
 
-		foreach (ref b; baggage.values) {
-			synchronized (b.mutex) {
-				ScriptedFunctionBase[string] base = b.languages[ext].load_getsyms(path, wanted_syms);
+		synchronized (baggage_mutex) foreach (ref k; baggage.keys) {
+			synchronized (baggage[k].mutex) {
+				ScriptedFunctionBase[string] base = baggage[k].languages[ext].load_getsyms(path, wanted_syms);
 				foreach (key; base.keys.sorted) {
-					b.scripted_functions ~= base[key];
+					baggage[k].scripted_functions ~= base[key];
 
 					// TODO: enforce well-ordering?
-					ret[key] = ScriptedFunction(b.scripted_functions.length-1);
+					ret[key] = ScriptedFunction(baggage[k].scripted_functions.length-1);
 				}
 			}
 		}
@@ -136,7 +138,7 @@ static final __gshared class ThreadedScripter {
 		}
 	}
 
-	static package void add_this_thread() {
+	static void add_this_thread() {
 		if (thisTid in baggage) fatal("Attempted to add current thread to threaded script, but was already present?");
 		Scriptlang[string] langs = get_new_languagepack();
 
@@ -154,8 +156,12 @@ static final __gshared class ThreadedScripter {
 			}
 		}
 
-		synchronized {
+		synchronized (baggage_mutex) {
 			baggage[thisTid] = ThreadLocalBaggage(langs, new Mutex(), scripted_functions);
 		}
+	}
+
+	shared static this() {
+		baggage_mutex = new Mutex();
 	}
 }

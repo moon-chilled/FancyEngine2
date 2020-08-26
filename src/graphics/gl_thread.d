@@ -23,7 +23,10 @@ private void opengl_thread(Tid parent) {
 			(GlReqStopthread _) => done = true,
                         (shared void delegate() fn) => fn(),
                         (shared void function() fn) => fn(),
-			(GlReqSyncOp fn) { fn.fn(); send(fn.sender, GlAckSyncOp()); });
+			(GlReqSyncOp fn) {
+				fn.fn();
+				send(fn.sender, GlAckSyncOp());
+			});
         }
 
 	send(parent, GlAckStopthread());

@@ -8,6 +8,7 @@ import std.concurrency;
 
 import std.variant;
 
+struct AckPreloadEnter{}
 struct ReqPreloadExit{}
 struct AckPreloadExit{}
 struct AckPreloadScene{}
@@ -28,6 +29,8 @@ void preloader(Tid parent, shared Preloader self) {
 	log("Initialized worker thread #%s", my_thread);
 
 	bool done = false;
+
+	send(parent, AckPreloadEnter());
 
 	while (!done) {
 		receive(

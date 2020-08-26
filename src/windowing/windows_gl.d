@@ -63,6 +63,7 @@ void pre_window_setup() {
 enum auxiliary_sdl_window_flags = SDL_WINDOW_OPENGL;
 
 GfxContext setup_context(SDL_Window *window) {
+	log("About to start gl thread");
 	glthread_start();
 	GfxContext ret;
        	glwait({ret = GfxContext(SDL_GL_CreateContext(window));});
@@ -183,5 +184,5 @@ pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {
 }
 
 void gfx_end(GfxContext ctx) {
-	glthread_stop();
+	//glthread_stop();
 }

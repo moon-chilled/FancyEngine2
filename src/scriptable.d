@@ -12,11 +12,12 @@ class SceneManager {
 	// hibernating_scenes
 	Scene[string] playing_scenes, paused_scenes, saved_scenes;
 
-	this(uint num_workers = 1) {
+	this(uint num_workers = 4) {
 		foreach (_; 0 .. num_workers) {
 			import std.concurrency;
 			preloaders ~= new Preloader();
 			preloaders[$-1].tid = spawn(&preloader, thisTid, cast(shared)preloaders[$-1]);
+			receiveOnly!AckPreloadEnter();
 		}
 
 	}
