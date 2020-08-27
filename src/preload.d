@@ -63,7 +63,7 @@ void preloader(Tid parent, shared Preloader self) {
 				atomicOp!"-="(self.working, 1);
 			},
 			
-			(Variant v) => fatal("Got unexpected message of type %s...", v));
+			(Variant v) => warning("Got unexpected message of type %s...", v));
 		} catch (Throwable t) { log("fatal error in preload: %s", t); }
 	}
 

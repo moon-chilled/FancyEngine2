@@ -185,5 +185,4 @@ pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {
 }
 
 void gfx_end(GfxContext ctx) {
-	glthread_stop();
 }

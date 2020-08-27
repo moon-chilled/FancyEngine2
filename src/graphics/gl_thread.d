@@ -67,4 +67,4 @@ void glwait(void delegate() fn) {
 void glwait(void function() fn) { glwait(toDelegate(fn)); }
 
 void glthread_start() { gl_tid = spawn(&opengl_thread, thisTid); }
-void glthread_stop() { send(gl_tid, GlReqStopthread()); receiveOnly!GlAckStopthread(); }
+shared static ~this() { send(gl_tid, GlReqStopthread()); receiveOnly!GlAckStopthread(); }
