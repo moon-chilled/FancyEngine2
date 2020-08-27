@@ -4,6 +4,8 @@ import cstdlib;
 
 import scriptable;
 
+import threaded_script;
+
 import std.concurrency;
 
 import std.variant;
@@ -24,6 +26,7 @@ class Preloader {
 shared uint thread_num = 0;
 
 void preloader(Tid parent, shared Preloader self) {
+	ThreadedScripter.add_this_thread();
 	import core.atomic;
 	uint my_thread = atomicOp!"+="(thread_num, 1) - 1;
 	log("Initialized worker thread #%s", my_thread);
@@ -33,6 +36,7 @@ void preloader(Tid parent, shared Preloader self) {
 	send(parent, AckPreloadEnter());
 
 	while (!done) {
+		try {
 		receive(
 			(ReqPreloadExit r) {
 				done = true;
@@ -60,6 +64,7 @@ void preloader(Tid parent, shared Preloader self) {
 			},
 			
 			(Variant v) => fatal("Got unexpected message of type %s...", v));
+		} catch (Throwable t) { log("fatal error in preload: %s", t); }
 	}
 
 	log("Out worker thread #%s", my_thread);

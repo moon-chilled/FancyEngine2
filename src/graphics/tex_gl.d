@@ -55,7 +55,8 @@ class Texture: Asset {
 			return;
 		}
 
-		if (!fpath.fexists) fatal("tried to read nonexistent texture '%s'", fpath);
+		import std.file: getcwd;
+		if (!fpath.fexists) fatal("tried to read nonexistent texture '%s' (in %s)", fpath, getcwd);
 		int clr_depth;
 
 		int width;

@@ -85,7 +85,6 @@ struct Shader {
 	}
 
 	private void pblit(const ref FancyMesh mesh) {
-		log("drawing fancy mesh component with vao %s", mesh.VAO);
 		foreach (i; 0 .. cast(int)mesh.diffuse_textures.length) {
 			glBindTextureUnit(i, mesh.diffuse_textures[i].tex_id);
 			pset_int("diffuse" ~ i.tostr, i);

@@ -110,13 +110,11 @@ class SceneManager {
 		s.loaded = false;
 		s.loading = false;
 		+/
-		/+
 		Preloader p = get_free_preloader();
-		//atomicOp!"+="(p.working, 1);
-		p.working++;
+		atomicOp!"+="(p.working, 1);
+		//p.working++;
 		send(p.tid, cast(shared)UnloadScene(s));
 		receiveOnly!AckUnloadScene();
-		+/
 	}
 	private void enter(Scene s) {
 		if (s.loading) {

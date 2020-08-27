@@ -64,6 +64,7 @@ struct G {
 
 int real_main(string[] args) {
 	load_all_libraries();
+	ThreadedScripter.add_this_thread();
 
 	static if (gfx_backend == GfxBackend.OpenGL) {
 		string title = "FE2 - OpenGL";

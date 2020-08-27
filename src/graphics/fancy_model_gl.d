@@ -82,9 +82,9 @@ struct FancyModel {
 		}
 
 		string cwd = getcwd();
-		chdir(fpath.split("/")[0 .. $ - 1].join("/"));
+		//chdir(fpath.split("/")[0 .. $ - 1].join("/"));
 		load_meshes(scene.mRootNode, scene);
-		chdir(cwd);
+		//chdir(cwd);
 
 		// synchronized (opengl_lock)
 		foreach (ref m; meshes) {

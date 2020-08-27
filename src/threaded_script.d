@@ -23,14 +23,6 @@ private struct ScriptedFunctionWrapper {
 	uint[] uuids; // length of last two is identical
 }
 
-static this() {
-	synchronized {
-		log("Adding thread %s", thisTid);
-		ThreadedScripter.add_this_thread();
-		log("Added thread %s", thisTid);
-	}
-}
-
 private string current_scene_name = null;
                                                                                                                                        
 string get_current_scene_name() { return current_scene_name; }
@@ -43,30 +35,18 @@ struct ScriptedFunction {
 
 	ScriptVar opCall(ScriptVar[] args = []) {
 		if (!owned_scene_name) fatal("ScriptedFunctionBase does not belong to any scene");
-		if (owned_scene_name == "game3d")
-			log("scripting %s", owned_scene_name);
 
 		ScriptVar ret = None;
 
-		//synchronized {
-			string old_scene_name = current_scene_name;
-			current_scene_name = owned_scene_name;
+		string old_scene_name = current_scene_name;
+		current_scene_name = owned_scene_name;
 
-			/+
-				if (thisTid !in ThreadedScripter.thread_scripted_functions) {
-					ThreadedScripter.add_this_thread();
-					return this.opCall(args);
-				}
-			+/
 
-			//synchronized(ThreadedScripter.this_thread_lock) {
-				//log("=> %s, %s", serial, ThreadedScripter.get_scripted_functions);
-				ret = ThreadedScripter.get_scripted_functions[serial](args);
-			//}
-			
+		synchronized(ThreadedScripter.this_thread_lock)
+			ret = ThreadedScripter.get_scripted_functions[serial](args);
+		
 
-			current_scene_name = old_scene_name;
-		//}
+		current_scene_name = old_scene_name;
 
                 return ret;
 	}
@@ -133,8 +113,6 @@ static final __gshared class ThreadedScripter {
 		sfw.uuids = received_uuids;
 		synchronized loaded_scripted_funs ~= sfw;
 
-		foreach (t; baggage.values) logs(t.scripted_functions);
-
 		return ret;
 	}
 
@@ -188,6 +166,7 @@ static final __gshared class ThreadedScripter {
 		synchronized (baggage_mutex) {
 			baggage[thisTid] = ThreadLocalBaggage(langs, new Mutex(), scripted_functions);
 		}
+		assert(thisTid in baggage);
 	}
 
 	shared static this() {
