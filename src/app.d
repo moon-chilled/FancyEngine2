@@ -5,9 +5,10 @@ import stdmath;
 import windowing.windows;
 import windowing.key;
 
+import graphics.graphics_manager;
 import graphics.fancy_model;
 import graphics.font;
-import graphics.model;
+import graphics.mesh;
 import graphics.shading;
 import graphics.tex;
 
@@ -85,7 +86,6 @@ int real_main(string[] args) {
 			"fullscreen", &fs,
 			"borders", &borders,
 			"vsync", &vs,
-			"wireframe", &wireframe,
 			"msaa", &aa_samples,
 			"physics_fps", &physics_fps,
 			"monitor_index", &monitor_index,
@@ -117,8 +117,9 @@ int real_main(string[] args) {
 	ws.title = title;
 
 
-	scope GraphicsState gfx = new GraphicsState(ws);
 	scope GorillaAudio audio = new GorillaAudio();
+	scope GraphicsState gfx = new GraphicsState(ws);
+	scope GraphicsManager gm = new GraphicsManager(gfx);
 
 	gfx.grab_mouse();
 
@@ -177,7 +178,7 @@ int real_main(string[] args) {
 		}
 
 		//TODO: bump allocator
-		queues.enqueue(new ShaderSetMatricesAndDraw(s, pairs, model));
+		queues.enqueue(new ShaderSetMatricesAndDraw(gm, s, pairs, model));
 
 		return ScriptVar(true);
 	});
@@ -197,12 +198,12 @@ int real_main(string[] args) {
 		//queues.enqueue(g_n.am_grabbed ? new GfxGrabMouse(gfx, false) : new GfxUngrabMouse(gfx, true));
 	});
 
-	faux.expose_fun("clear", (float r, float g, float b) { g_n.clear_clr = vec3f(r, g, b); queues.enqueue(new GfxClear(gfx, g_n.clear_clr, g_nminusone.clear_clr)); });
+	faux.expose_fun("clear", (float r, float g, float b) { g_n.clear_clr = vec3f(r, g, b); queues.enqueue(new GfxClear(gm, g_n.clear_clr, g_nminusone.clear_clr)); });
 
-	faux.expose_fun("make_fancy_model", (string s) => FancyModel(s));
-	faux.expose_fun("make_shader", (string path) => Shader(fslurp(path ~ ".vert"), fslurp(path ~ ".frag"), gfx.gfx_context));
+	faux.expose_fun("make_fancy_model", (string s) => gm.new_fancy_model(s));
+	faux.expose_fun("make_shader", (string path) => gm.new_shader(fslurp(path ~ ".vert"), fslurp(path ~ ".frag")));
 
-	faux.expose_fun("make_tex", (string path) => new Texture(path));
+	faux.expose_fun("make_tex", (string path) => gm.new_texture(path));
 	faux.expose_fun("make_tex_from_data", (ScriptVar[] in_pixels, long depth) {
 		uint height = cast(uint)in_pixels.length;
 		ubyte[] pixels;
@@ -243,34 +244,26 @@ int real_main(string[] args) {
 		}
 
 		// colour depth set to 4 in Texture{} because we manually re-pack everything to be rgba
-		return ScriptVar(new Texture(pixels, width, height, 4));
+		return ScriptVar(gm.new_texture(pixels, width, height, 4));
 	});
 
 	Font[] fonts;
 	scope(exit) foreach (f; fonts) f.destroy();
 	faux.expose_fun("make_font", (string path, long height) {
-			Font f = Font(path, cast(uint)height, ws.render_width, ws.render_height, gfx.gfx_context);
+			Font f = gm.new_font(path, cast(uint)height, ws.render_width, ws.render_height);
 			fonts ~= f;
 			return f;
 	});
 
 
-	Mesh tex_copy_mesh = Mesh([-1,+1, 0,1,
-				   +1,-1, 1,0,
-				   -1,-1, 0,0,
-
-				   +1,-1, 1,0,
-				   -1,+1, 0,1,
-				   +1,+1, 1,1], [2, 2]);
-
 	faux.expose_fun("draw_tex_ndc", (Texture t, vec2f loc) {
 		vec2f loc2;
 		loc2.x = loc.x + 2*cast(float)t.w/ws.render_width;
 		loc2.y = loc.y + 2*cast(float)t.h/ws.render_height;
-		queues.enqueue(new ShaderDraw2D(&gfx.gfx_extra.tex_copy, &tex_copy_mesh, [loc, loc2], t));
+		queues.enqueue(new TexCopy2D(gm, t, [loc, loc2]));
 	});
 
-	faux.expose_fun("draw_text_ndc", (Font f, string text, vec2f loc) => queues.enqueue(new FontDraw(f, loc, text)));
+	faux.expose_fun("draw_text_ndc", (Font f, string text, vec2f loc) => queues.enqueue(new FontDraw(gm, f, loc, text)));
 	faux.expose_fun("measure_text", (Font f, string text) => ScriptVar(cast(long)f.measure(text)));
 	faux.expose_fun("measure_text_height", (Font f, string text) => ScriptVar(cast(long)f.measure_height(text)));
 
@@ -361,7 +354,7 @@ int real_main(string[] args) {
 
 		global_pause_mutex.unlock();
 
-		gfx.blit();
+		gm.blit();
 
 
 		//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\//

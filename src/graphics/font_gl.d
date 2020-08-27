@@ -4,11 +4,10 @@ import stdmath;
 import cstdlib;
 
 import asset;
-import windowing.windows_gl;
+import graphics.windows_gl;
 
-import graphics.model_gl;
+import graphics.mesh_gl;
 import graphics.shading_gl;
-import graphics.gl_thread;
 
 import bindbc.opengl;
 import bindbc.freetype;
@@ -19,7 +18,7 @@ struct Font {
 	uint height;
 	uint atlas_width;
 	Shader draw_shader;
-	Mesh character_model;
+	Mesh character_mesh;
 
 	private struct char_spec {
 		uint atlas_offset; // memory offset (only in x direction)
@@ -35,7 +34,7 @@ struct Font {
 	FT_Face face;
 	bool have_kerning;
 
-	this(string fpath, uint height, uint scr_w, uint scr_h, GfxContext ctx) {
+	package this(string fpath, uint height, uint scr_w, uint scr_h, GfxContext ctx) {
 		height *= 2; // need this for some reason??
 		this.height = height;
 		this.screen_width = scr_w;
@@ -64,7 +63,6 @@ struct Font {
 		}
 
 		ubyte *font_bitmap = SysAllocator.allocate!ubyte(atlas_width * height);
-		glwait({
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &tex_id);
 		//glTextureParameteri(tex_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -85,7 +83,6 @@ struct Font {
 			SysAllocator.free(font_bitmaps[i]);
 		}
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-		});
 
 		draw_shader = Shader(fslurp("dist/shaders/font_render.vert"), fslurp("dist/shaders/font_render.frag"), ctx);
 
@@ -93,7 +90,7 @@ struct Font {
 
 		// dummy value for vertices because it'll be reset each time
 		// two vec2s: position and texture coordinates
-		character_model = Mesh([], [2, 2]);
+		character_mesh = Mesh([], [2, 2]);
 		have_kerning = FT_HAS_KERNING(face);
 	}
 
@@ -126,7 +123,7 @@ struct Font {
 		return ret;
 	}
 
-	void draw(float x, float y, string s) {
+	package void draw(float x, float y, string s) {
 		float[] verts;
 
 		char prev_char = 0;
@@ -172,17 +169,15 @@ struct Font {
 			x += (atlas_map[c].advance/64.) / (.5*screen_width);
 		}
 
-		character_model.load_verts(verts);
+		character_mesh.load_verts(verts);
 
-		glwait({
 		glBindTextureUnit(0, tex_id);
-		draw_shader.blit(character_model);
-		});
+		draw_shader.blit(character_mesh);
 	}
 
-	void destroy() {
+	package void destroy() {
 		FT_Done_Face(face);
 		FT_Done_FreeType(f);
-		glwait({glDeleteTextures(1, &tex_id);});
+		glDeleteTextures(1, &tex_id);
 	}
 }

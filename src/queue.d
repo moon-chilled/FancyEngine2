@@ -12,12 +12,12 @@ interface Dispatchable {
 
 class GfxClear: Dispatchable {
 	import stdmath;
-	import windowing.windows;
-	GraphicsState gs;
+	import graphics.graphics_manager;
+	GraphicsManager gm;
 	vec3f colour, old_colour;
-	this(GraphicsState gs, vec3f colour, vec3f old_colour) { this.gs = gs; this.colour = colour; this.old_colour = old_colour; }
-	void dispatch() { clear(gs, colour.r, colour.g, colour.b); }
-	void undispatch() { clear(gs, old_colour.r, old_colour.g, old_colour.b); }
+	this(GraphicsManager gm, vec3f colour, vec3f old_colour) { this.gm = gm; this.colour = colour; this.old_colour = old_colour; }
+	void dispatch() { gm.clear(colour.r, colour.g, colour.b); }
+	void undispatch() { gm.clear(old_colour.r, old_colour.g, old_colour.b); }
 }
 
 class GfxGrabMouse: Dispatchable {
@@ -60,48 +60,52 @@ struct Mat4fNamePair {
 class ShaderSetMatricesAndDraw: Dispatchable {
 	import graphics.shading;
 	import graphics.fancy_model;
+	import graphics.graphics_manager;
+	GraphicsManager gm;
 	Shader shader;
 	Mat4fNamePair[] matrices;
 	FancyModel model;
 
-	this(Shader shader, Mat4fNamePair[] matrices, FancyModel model) {
-		this.shader = shader; this.matrices = matrices; this.model = model;
+	this(GraphicsManager gm, Shader shader, Mat4fNamePair[] matrices, FancyModel model) {
+		this.gm = gm; this.shader = shader; this.matrices = matrices; this.model = model;
 	}
 
 	void dispatch() {
 		foreach (m; matrices) {
-			shader.set_mat4(m.name, m.to);
+			gm.shader_set_mat4(shader, m.name, m.to);
 		}
 
-		shader.blit(model);
+		gm.shader_blit(shader, model);
 	}
 
 	void undispatch() {
 		foreach_reverse (m; matrices) {
-			shader.set_mat4(m.name, m.from);
+			gm.shader_set_mat4(shader, m.name, m.from);
 		}
 
-		shader.blit(model);
+		gm.shader_blit(shader, model);
 	}
 }
 
 class ShaderDraw2D: Dispatchable {
-	import graphics.model;
+	import graphics.mesh;
 	import graphics.shading;
 	import stdmath;
 	import graphics.tex;
+	import graphics.graphics_manager;
 
+	GraphicsManager gm;
 	Mesh *mesh;
 	Shader *shader;
 	vec2f[2] bounds;
 	Texture tex;
 
-	this(Shader *shader, Mesh *mesh, vec2f[2] bounds, Texture tex) { this.shader = shader; this.mesh = mesh; this.bounds = bounds; this.tex = tex; }
+	this(GraphicsManager gm, Shader *shader, Mesh *mesh, vec2f[2] bounds, Texture tex) {
+		this.gm = gm; this.shader = shader; this.mesh = mesh; this.bounds = bounds; this.tex = tex;
+	}
 	void dispatch() {
-		//todo gl should be opaque here
-		import graphics.gl_thread;
-		glwait({
-		mesh.load_verts([bounds[0].x,bounds[1].y, 0,1,
+		gm.mesh_load_verts(*mesh,
+				[bounds[0].x,bounds[1].y, 0,1,
 				 bounds[1].x,bounds[0].y, 1,0,
 				 bounds[0].x,bounds[0].y, 0,0,
 
@@ -109,9 +113,25 @@ class ShaderDraw2D: Dispatchable {
 				 bounds[0].x,bounds[1].y, 0,1,
 				 bounds[1].x,bounds[1].y, 1,1]);
 
-		upload_texture(0, tex);
-		shader.blit(*mesh);
-		});
+		gm.shader_blit(*shader, *mesh, tex); //tex=0
+	}
+	void undispatch() { dispatch(); }
+}
+class TexCopy2D: Dispatchable {
+	import graphics.mesh;
+	import stdmath;
+	import graphics.tex;
+	import graphics.graphics_manager;
+
+	GraphicsManager gm;
+	vec2f[2] bounds;
+	Texture tex;
+
+	this(GraphicsManager gm, Texture tex, vec2f[2] bounds) {
+		this.gm = gm; this.tex = tex; this.bounds = bounds;
+	}
+	void dispatch() {
+		gm.texture_blit(tex, bounds);
 	}
 	void undispatch() { dispatch(); }
 }
@@ -120,12 +140,14 @@ class ShaderDraw2D: Dispatchable {
 class FontDraw: Dispatchable {
 	import graphics.font;
 	import stdmath;
+	import graphics.graphics_manager;
+	GraphicsManager gm;
 	Font font;
 	vec2f loc;
 	string text;
-	this(Font font, vec2f loc, string text) { this.font = font; this.loc = loc; this.text = text; }
+	this(GraphicsManager gm, Font font, vec2f loc, string text) { this.gm = gm; this.font = font; this.loc = loc; this.text = text; }
 	void dispatch() {
-		font.draw(loc.x, loc.y, text);
+		gm.draw_text(font, loc.x, loc.y, text);
 	}
 	void undispatch() { dispatch(); }
 }

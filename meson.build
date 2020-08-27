@@ -26,7 +26,7 @@ if get_option('graphics_backend') == 'opengl'
   d_versions += 'GL_33'   # for bindbc-opengl
   d_versions += 'GL_ARB'  # bindbc-gl: load all supported ARB/KHR extensions
 
-  fancy_source += ['src/graphics/gl_thread.d', 'src/graphics/fancy_model_gl.d', 'src/graphics/font_gl.d', 'src/graphics/framebuffer_gl.d', 'src/graphics/model_gl.d', 'src/graphics/shading_gl.d', 'src/graphics/tex_gl.d', 'src/windowing/windows_gl.d']
+  fancy_source += ['src/graphics/graphics_manager_gl.d', 'src/graphics/fancy_model_gl.d', 'src/graphics/font_gl.d', 'src/graphics/framebuffer_gl.d', 'src/graphics/mesh_gl.d', 'src/graphics/shading_gl.d', 'src/graphics/tex_gl.d', 'src/graphics/windows_gl.d']
   fancy_source += gl_source
 elif get_option('graphics_backend') == 'vulkan'
   d_versions += '_Gfx_is_vulkan'
@@ -45,7 +45,7 @@ elif get_option('buildtype') == 'release'
 endif
 
 
-fancy_source += ['src/app.d', 'src/asset.d', 'src/config.d', 'src/cstdlib.d', 'src/logging.d', 'src/scriptable.d', 'src/preload.d', 'src/threaded_script.d', 'src/stdlib.d', 'src/stdmem.d', 'src/stdmath.d', 'src/sumtype.d', 'src/sound/gorilla.d', 'src/graphics/fancy_model.d', 'src/graphics/font.d', 'src/graphics/framebuffer.d', 'src/graphics/model.d', 'src/graphics/shading.d', 'src/graphics/tex.d', 'src/scripting/package.d', 'src/scripting/moonjit.d', 'src/scripting/s7.d', 'src/scripting/s7_lib_interface.d', 'src/windowing/key.d', 'src/windowing/windows.d', 'src/queue.d']
+fancy_source += ['src/app.d', 'src/asset.d', 'src/config.d', 'src/cstdlib.d', 'src/logging.d', 'src/scriptable.d', 'src/preload.d', 'src/threaded_script.d', 'src/stdlib.d', 'src/stdmem.d', 'src/stdmath.d', 'src/sumtype.d', 'src/sound/gorilla.d', 'src/graphics/fancy_model.d', 'src/graphics/font.d', 'src/graphics/framebuffer.d', 'src/graphics/graphics_manager.d', 'src/graphics/mesh.d', 'src/graphics/shading.d', 'src/graphics/tex.d', 'src/scripting/package.d', 'src/scripting/moonjit.d', 'src/scripting/s7.d', 'src/scripting/s7_lib_interface.d', 'src/windowing/key.d', 'src/windowing/windows.d', 'src/queue.d']
 include_dirs = include_directories('src', 'deps/bindbc-opengl/source', 'deps/bindbc-sdl/source', 'deps/erupted/source', 'deps/gfm/math', 'deps/bindbc-assimp/source', 'deps/bindbc-loader/source', 'deps/toml/src', 'deps/intel-intrinsics/source', 'deps/bindbc-lua/source/', 'deps/bindbc-freetype/source')
 
 link_args = []

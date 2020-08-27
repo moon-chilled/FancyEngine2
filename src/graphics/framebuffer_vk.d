@@ -12,9 +12,6 @@ import erupted;
 struct Framebuffer {
 	uint w, h;
 
-	@disable this(this);
-	@disable this();
-
 	this(uint w, uint h, GfxContext ctx) {
 	}
 

@@ -5,7 +5,7 @@ import cstdlib;
 
 import windowing.windows_vk;
 import graphics.tex_vk;
-import graphics.model_vk;
+import graphics.mesh_vk;
 import graphics.fancy_model_vk;
 
 import erupted;
@@ -24,8 +24,6 @@ void upload_texture(uint pos, Texture tex) {
 } //TODO: move this to another file
 
 struct Shader {
-	@disable this();
-
 	this(string vertex_src, string fragment_src, GfxContext ctx) {
 		/+
 		GLuint vertex_shader = compile_shader(ShaderType.Vertex, vertex_src);
@@ -59,12 +57,12 @@ struct Shader {
 		//glUniformMatrix4fv(glGetUniformLocation(program, id.cstr), 1, GL_TRUE, value.v.ptr);
 	}
 
-	void blit(const ref Mesh model) {
+	void blit(const ref Mesh mesh) {
 		/+
 		glUseProgram(program);
 
-		glBindVertexArray(model.VAO);
-		glDrawArrays(GL_TRIANGLES, 0, model.num_verts);
+		glBindVertexArray(mesh.VAO);
+		glDrawArrays(GL_TRIANGLES, 0, mesh.num_verts);
 		glBindVertexArray(0);
 		+/
 	}

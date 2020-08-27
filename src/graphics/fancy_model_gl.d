@@ -5,9 +5,8 @@ import cstdlib;
 import bindbc.opengl;
 import bindbc.assimp;
 
-import graphics.model;
+import graphics.mesh;
 import graphics.tex;
-import graphics.gl_thread;
 
 struct Vertex {
 	vec3f position;
@@ -17,6 +16,8 @@ struct Vertex {
 	vec3f bitangent;
 }
 
+//TODO free resources
+
 struct FancyMesh {
 	GLuint VAO, VBO, EBO;
 
@@ -24,15 +25,14 @@ struct FancyMesh {
 	uint[] indices;
 	Texture[] diffuse_textures, specular_textures;
 
-	this(Vertex[] vertices, uint[] indices, Texture[] diffuse_textures, Texture[] specular_textures) {
+	package this(Vertex[] vertices, uint[] indices, Texture[] diffuse_textures, Texture[] specular_textures) {
 		this.vertices = vertices;
 		this.indices = indices;
 		this.diffuse_textures = diffuse_textures;
 		this.specular_textures = specular_textures;
 	}
 
-	void load_verts() {
-		glwait({
+	package void load_verts() {
 		glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &VBO);
 		glGenBuffers(1, &EBO);
@@ -60,17 +60,14 @@ struct FancyMesh {
 		glBindVertexArray(0);
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		});
 	}
 }
 
 
 struct FancyModel {
-	@disable this();
-
 	FancyMesh[] meshes;
 
-	this(string fpath) {
+	package this(string fpath) {
 		import std.file: getcwd, chdir;
 
 		if (!fpath.fexists) fatal("File '%s' does not exist", fpath);
@@ -93,7 +90,7 @@ struct FancyModel {
 		trace("Loaded model %s with %s meshes", fpath, meshes.length);
 	}
 
-	void load_meshes(const aiNode *node, const aiScene *scene) {
+	package void load_meshes(const aiNode *node, const aiScene *scene) {
 		foreach (sss; 0 .. node.mNumMeshes) {
 			const aiMesh *mesh = scene.mMeshes[node.mMeshes[sss]];
 			Vertex[] vertices;
@@ -138,7 +135,7 @@ struct FancyModel {
 	}
 }
 
-Texture[] load_materials(const aiMaterial *material, aiTextureType type) {
+private Texture[] load_materials(const aiMaterial *material, aiTextureType type) {
 	Texture[] ret;
 	foreach (i; 0 .. aiGetMaterialTextureCount(material, type)) {
 		aiString fpath;

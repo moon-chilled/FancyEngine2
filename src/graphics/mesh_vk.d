@@ -1,4 +1,4 @@
-module graphics.model_vk;
+module graphics.mesh_vk;
 import stdlib;
 import cstdlib;
 import erupted;

@@ -6,16 +6,14 @@ import graphics.framebuffer;
 
 import windowing.key;
 static if (gfx_backend == GfxBackend.Vulkan) {
-	import windowing.windows_vk;
+	import graphics.windows_vk;
 } else static if (gfx_backend == GfxBackend.OpenGL) {
-	import windowing.windows_gl;
+	import graphics.windows_gl;
 }
 
 import bindbc.sdl;
 
 class GraphicsState {
-	GfxContext gfx_context;
-	GfxExtra gfx_extra;
 	SDL_Window *window; // maybe I should allow for multiple windows.  But meh
 	WindowSpec window_spec;
 
@@ -57,16 +55,11 @@ class GraphicsState {
 
 		SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
 
-		gfx_context = setup_context(this.window);
-
-		post_window_setup(this.window);
-
+		/+
 		if (window.vsync == Vsyncstate.On) set_vsync(true);
 		else if (window.vsync == Vsyncstate.Off) set_vsync(false);
+		+/
 
-		set_wireframe(window.wireframe);
-
-		gfx_extra = setup_extra(gfx_context, window);
 	}
 
 	void grab_mouse() {
@@ -80,7 +73,6 @@ class GraphicsState {
 	}
 
 	~this() {
-		gfx_end(gfx_context);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
 	}
@@ -103,7 +95,6 @@ struct WindowSpec {
 	uint render_width, render_height;
 	Fullscreenstate fullscreen;
 	bool borders;
-	bool wireframe;
 	Vsyncstate vsync;
 	int aa_samples;
 	uint monitor_index;
@@ -111,14 +102,6 @@ struct WindowSpec {
 private void sdlerror() {
 	fatal("SDL Error: %s", SDL_GetError().dstr);
 }
-
-pragma(inline, true) void blit(GraphicsState gs) {
-	gfx_blit(gs.gfx_context, gs.gfx_extra, gs.window);
-}
-pragma(inline, true) void clear(GraphicsState gs, float r, float g, float b) {
-	gfx_clear(gs.gfx_context, r, g, b);
-}
-
 
 Event[] poll_events() {
 	Event[] ret;

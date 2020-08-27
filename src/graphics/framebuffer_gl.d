@@ -3,25 +3,18 @@ import stdlib;
 import cstdlib;
 
 import asset;
-import windowing.windows_gl;
+import graphics.windows_gl;
 
 import bindbc.opengl;
-
-import graphics.gl_thread;
-
 
 struct Framebuffer {
 	GLuint fbo, /*rbo,*/ tex, tex2;
 	uint w, h;
 
-	@disable this(this);
-	@disable this();
-
-	this(uint w, uint h, GfxContext ctx) {
+	package this(uint w, uint h, GfxContext ctx) {
 		this.w = w;
 		this.h = h;
 
-		glwait({
 		glCreateFramebuffers(1, &fbo);
 
 		//glGenRenderbuffers(1, &rbo);
@@ -46,13 +39,10 @@ struct Framebuffer {
 
 		if (glCheckNamedFramebufferStatus(fbo, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 			fatal("OpenGL: unable to create framebuffer");
-		});
 	}
 
-	~this() {
-		glwait({
+	package void destroy() {
 		glDeleteTextures(1, &tex);
 		glDeleteFramebuffers(1, &fbo);
-		});
 	}
 }
