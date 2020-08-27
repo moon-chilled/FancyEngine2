@@ -200,6 +200,7 @@ class MoonJitScript: Scriptlang {
 		ScriptVarType *msig = SysAllocator.allocate!ScriptVarType(argtypes.length);
 		memcpy(msig, argtypes.ptr, argtypes.length * ScriptVarType.sizeof);
 
+		//lua_Integer ~~ ptrdiff_t, so big enough to represent any (valid) unsigned length 
 		lua_pushinteger(l, variadic ? lua_Integer(-1) : argtypes.length);
 		lua_pushlightuserdata(l, msig);
 		lua_pushlightuserdata(l, fun.ptr);

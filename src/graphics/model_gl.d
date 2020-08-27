@@ -38,8 +38,8 @@ struct Mesh {
 
 		num_verts = cast(uint)vertices.length / one_vertex_size;
 
-		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 		});
 	}
 
@@ -53,8 +53,8 @@ struct Mesh {
 
 		num_verts = cast(uint)vertices.length / one_vertex_size;
 
-		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 		});
 	}
 }

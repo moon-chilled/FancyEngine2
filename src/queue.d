@@ -98,6 +98,9 @@ class ShaderDraw2D: Dispatchable {
 
 	this(Shader *shader, Mesh *mesh, vec2f[2] bounds, Texture tex) { this.shader = shader; this.mesh = mesh; this.bounds = bounds; this.tex = tex; }
 	void dispatch() {
+		//todo gl should be opaque here
+		import graphics.gl_thread;
+		glwait({
 		mesh.load_verts([bounds[0].x,bounds[1].y, 0,1,
 				 bounds[1].x,bounds[0].y, 1,0,
 				 bounds[0].x,bounds[0].y, 0,0,
@@ -108,6 +111,7 @@ class ShaderDraw2D: Dispatchable {
 
 		upload_texture(0, tex);
 		shader.blit(*mesh);
+		});
 	}
 	void undispatch() { dispatch(); }
 }
