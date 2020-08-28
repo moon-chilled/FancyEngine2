@@ -1,0 +1,31 @@
+This program makes use of the following external code:
+
+SDL, licensed under the zlib license:
+
+OGG, licensed under the BSD 3-clause license:
+
+Vorbis, licensed under the BSD 3-clause license:
+
+BindBC utilities and wrappers for SDL2, OpenGL, and Assimp, licensed under the
+Boost Software License:
+
+The GFM math library, which was placed into the public domain.
+
+Auburn Sounds' intel intrinsics library, licensed under the Boost Software
+License:
+
+The Assimp, licensed under the 3-clause BSD license:
+
+Poly2Tri, licensed under the 3-clause BSD license:
+
+Gorilla audio, licensed under the MIT license.  Originally maintained by Final
+Form Games; source code for the modified version used in this distribution is
+available at https://github.com/moon-chilled/gorilla-audio:
+
+D implementation of TOML, licensed under the MIT license:
+
+FreeType, licensed under the FreeType License:
+
+sumtype, licensed under the MIT license:
+
+S7 scheme (BSD)

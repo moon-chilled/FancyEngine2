@@ -1,10 +1,10 @@
-module graphics.model_gl;
+module graphics.mesh_gl;
 import stdlib;
 import cstdlib;
 import bindbc.opengl;
 
 
-
+//TODO free resources
 struct Mesh {
 	GLuint VAO, VBO;
 	uint num_verts;
@@ -12,7 +12,7 @@ struct Mesh {
 	private uint[] sizes;
 	private uint one_vertex_size;
 
-	this(float[] vertices, uint[] sizes) {
+	package this(float[] vertices, uint[] sizes) {
 		glGenVertexArrays(1, &VAO);
 		glBindVertexArray(VAO);
 
@@ -36,12 +36,12 @@ struct Mesh {
 
 		num_verts = cast(uint)vertices.length / one_vertex_size;
 
-		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 	}
 
 	// TODO: don't hardcode for floats (GL_FLOAT, float.sizeof, etc.)
-	void load_verts(float[] vertices) {
+	package void load_verts(float[] vertices) {
 		glBindVertexArray(VAO);
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
@@ -49,7 +49,7 @@ struct Mesh {
 
 		num_verts = cast(uint)vertices.length / one_vertex_size;
 
-		glBindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 	}
 }

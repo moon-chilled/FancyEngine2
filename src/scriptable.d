@@ -1,19 +1,40 @@
 module scriptable;
 import stdlib;
 
+import preload;
 import scripting;
-import scripting.s7;
-import scripting.moonjit;
+
+import threaded_script;
 
 class SceneManager {
-	Scriptlang[string] languages;
+	Preloader[] preloaders;
 
 	// hibernating_scenes
 	Scene[string] playing_scenes, paused_scenes, saved_scenes;
 
-	this() {
-		languages = ["scm": new S7Script(),
-			     "lua": new MoonJitScript()];
+	this(uint num_workers = 4) {
+		foreach (_; 0 .. num_workers) {
+			import std.concurrency;
+			preloaders ~= new Preloader();
+			preloaders[$-1].tid = spawn(&preloader, thisTid, cast(shared)preloaders[$-1]);
+			receiveOnly!AckPreloadEnter();
+		}
+
+	}
+
+	void close() {
+		import std.concurrency;
+
+		foreach (p; preloaders) {
+			send(p.tid, ReqPreloadExit());
+		}
+		foreach (p; preloaders) {
+			receiveOnly!AckPreloadExit();
+		}
+
+		foreach (s; playing_scenes) if (s.loaded) { s.unload(); s.loaded = false; }
+		foreach (s; paused_scenes) if (s.loaded) { s.unload(); s.loaded = false; }
+		//foreach (s; saved_scenes) if (s.loaded) s.unload();
 	}
 
 	void load() {
@@ -26,7 +47,7 @@ class SceneManager {
 				"paused-scenes", &pause_s);
 
 		foreach (string s; scene_s) {
-                        auto scn = new Scene(languages, s);
+                        auto scn = new Scene(s);
                         saved_scenes[s] = scn;
                 }
 
@@ -48,6 +69,45 @@ class SceneManager {
 		return null;
 	}
 
+	private Preloader get_free_preloader() {
+		uint minw = uint.max;
+		size_t idx;
+
+		foreach (i; 0 .. preloaders.length) {
+			if (!preloaders[i].working) return preloaders[i];
+
+			if (preloaders[i].working < minw) {
+				minw = preloaders[i].working;
+				idx = i;
+			}
+		}
+
+		return preloaders[idx];
+	}
+
+	private void preload(Scene s) {
+		import std.concurrency;
+		import core.atomic;
+		Preloader p = get_free_preloader();
+		atomicOp!"+="(p.working, 1);
+		send(p.tid, cast(shared)PreloadScene(s));
+	}
+	private void unload(Scene s) {
+		import std.concurrency;
+		import core.atomic;
+		Preloader p = get_free_preloader();
+		atomicOp!"+="(p.working, 1);
+		send(p.tid, cast(shared)UnloadScene(s));
+	}
+	private void enter(Scene s) {
+		if (s.loading) {
+			log("deferring entry of loading scene %s", s.name);
+			s.defer_enter = true;
+		} else {
+			s.enter();
+		}
+	}
+
 	void pause(string scene_name) {
 		Scene s;
 		Scene[string] *src;
@@ -65,10 +125,7 @@ class SceneManager {
 		}
 
 		if (!s.loaded && !s.loading) {
-			s.loading = true;
-			s.preload();
-			s.loading = false;
-			s.loaded = true;
+			preload(s);
 		}
 
 		(*src).remove(scene_name);
@@ -92,46 +149,75 @@ class SceneManager {
 		}
 
 		if (!s.loaded && !s.loading) {
-			s.loading = true;
-			s.preload();
-			s.loading = false;
-			s.loaded = true;
+			preload(s);
 		}
 
 		(*src).remove(scene_name);
 		playing_scenes[scene_name] = s;
 
 		if (s.fresh) {
-			s.enter();
+			log("entering fresh %s", scene_name);
+			enter(s);
 			s.fresh = false;
 		}
 	}
 
 	void expose_fun(T...)(T args) {
-		foreach (l; languages.values) l.expose_fun(args);
+		ThreadedScripter.expose_fun(args);
 	}
 
 	void expose_vfun(T...)(T args) {
-		foreach (l; languages.values) l.expose_vfun(args);
+		ThreadedScripter.expose_vfun(args);
 	}
 
 	void update() {
-		foreach (g; playing_scenes.values) g.update();
+		foreach (g; playing_scenes.values) {
+			if (!g.loading) {
+				if (g.defer_enter) {
+					g.defer_enter = false;
+					g.enter();
+				}
+				g.update();
+			}
+		}
 	}
 
 	void graphics_update() {
-		foreach (g; playing_scenes.values) g.graphics_update();
+		foreach (g; playing_scenes.values) {
+			if (!g.loading) {
+				if (g.defer_enter) {
+					g.defer_enter = false;
+					g.enter();
+				}
+				g.graphics_update();
+			}
+		}
 	}
 
 	void keyhandler(ScriptVar[] args...) {
-		foreach (g; playing_scenes.values) g.keyhandler(args);
+		foreach (g; playing_scenes.values) {
+			if (!g.loading) {
+				if (g.defer_enter) {
+					g.defer_enter = false;
+					g.enter();
+				}
+				g.keyhandler(args);
+			}
+		}
 	}
 
 	void mousehandler(ScriptVar[] args...) {
-		foreach (f; playing_scenes.values) f.mousehandler(args);
+		foreach (g; playing_scenes.values) {
+			if (!g.loading) {
+				if (g.defer_enter) {
+					g.defer_enter = false;
+					g.enter();
+				}
+				g.mousehandler(args);
+			}
+		}
 	}
 }
-
 
 class Scene {
 	// fresh => newly loaded from saving, need to enter()
@@ -140,6 +226,10 @@ class Scene {
 	// loaded => preload function has been run,
 	// loading => preload or unload function is currently running
 	bool loaded = false, loading = false;
+
+	// was asked to enter, but still loading; call enter once loading
+	// is done
+	bool defer_enter;
 
 
 	string name;
@@ -152,7 +242,7 @@ class Scene {
 	ScriptedFunction[] keyhandlers;
 	ScriptedFunction[] mousehandlers;
 
-	this(Scriptlang[string] languages, string scene_name) {
+	this(string scene_name) {
 		name = scene_name;
 		import config;
 
@@ -161,7 +251,7 @@ class Scene {
 
 		foreach (fname; fnames) {
 			string ext = fname.split('.')[$-1];
-			if (ext !in languages) {
+			if (ext !in ThreadedScripter.get_languages) {
 				error("Bad script '%s'", fname);
 				continue;
 			}
@@ -174,7 +264,7 @@ class Scene {
 				 "keyhandler":		&keyhandlers,
 				 "mousehandler":	&mousehandlers];
 
-			auto funs = languages[ext].load_getsyms(name ~ ".scene/" ~ fname, fd.keys);
+			auto funs = ThreadedScripter.load_getsyms(ext, name ~ ".scene/" ~ fname, fd.keys);
 
 			foreach (k, v; fd) {
 				if (auto fn = (k in funs)) {
@@ -191,7 +281,13 @@ class Scene {
 	}
 
 	void preload() {
-		foreach (g; preloads) g([]);
+		log("in preload woo");
+		foreach (g; preloads) {
+			log("actually about to preload %s", name);
+			g([]);
+			log("actually did preload %s", name);
+		}
+		log("out preload woo");
 	}
 
 	void unload() {

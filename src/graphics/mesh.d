@@ -1,8 +1,8 @@
-module graphics.model;
+module graphics.mesh;
 import stdlib;
 
 static if (gfx_backend == GfxBackend.Vulkan) {
-	public import graphics.model_vk;
+	public import graphics.mesh_vk;
 } else static if (gfx_backend == GfxBackend.OpenGL) {
-	public import graphics.model_gl;
+	public import graphics.mesh_gl;
 }

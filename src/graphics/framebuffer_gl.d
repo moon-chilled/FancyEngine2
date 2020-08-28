@@ -3,20 +3,15 @@ import stdlib;
 import cstdlib;
 
 import asset;
-import windowing.windows_gl;
+import graphics.windows_gl;
 
 import bindbc.opengl;
-
-
 
 struct Framebuffer {
 	GLuint fbo, /*rbo,*/ tex, tex2;
 	uint w, h;
 
-	@disable this(this);
-	@disable this();
-
-	this(uint w, uint h, GfxContext ctx) {
+	package this(uint w, uint h, GfxContext ctx) {
 		this.w = w;
 		this.h = h;
 
@@ -46,7 +41,7 @@ struct Framebuffer {
 			fatal("OpenGL: unable to create framebuffer");
 	}
 
-	~this() {
+	package void destroy() {
 		glDeleteTextures(1, &tex);
 		glDeleteFramebuffers(1, &fbo);
 	}

@@ -1,4 +1,4 @@
-module windowing.windows_gl;
+module graphics.windows_gl;
 import stdlib;
 import cstdlib;
 
@@ -7,7 +7,7 @@ import bindbc.opengl;
 
 import graphics.framebuffer_gl;
 import graphics.shading_gl;
-import graphics.model_gl;
+import graphics.mesh_gl;
 import windowing.windows;
 
 struct GfxContext {
@@ -19,8 +19,6 @@ struct GfxExtra {
 	Shader tex_copy;
 	Mesh mesh;
 }
-
-
 
 // in order to do aa properly, we need to make sure we don't ask for more
 // samples than the card is willing to do, otherwise bad stuff happens.
@@ -63,36 +61,15 @@ void pre_window_setup() {
 
 enum auxiliary_sdl_window_flags = SDL_WINDOW_OPENGL;
 
-GfxContext setup_context(SDL_Window *window) {
-	GfxContext ret = GfxContext(SDL_GL_CreateContext(window));
+GfxContext win_setup_context(GraphicsState gs) {
+	GfxContext ret;
+       	ret = GfxContext(SDL_GL_CreateContext(gs.window));
 	if (ret.gl_context is null) {
 		fatal("Error creating OpenGL context.  SDL says '%s'", SDL_GetError().dstr);
 	}
 
-	return ret;
-}
-
-GfxExtra setup_extra(GfxContext ctx, WindowSpec ws) {
-	GfxExtra ret = GfxExtra(
-			Framebuffer(ws.render_width, ws.render_height, ctx),
-			Shader(fslurp("dist/shaders/tex_copy.vert"), fslurp("dist/shaders/tex_copy.frag"), ctx),
-			Mesh([-1,+1, 0,1,
-			      +1,-1, 1,0,
-			      -1,-1, 0,0,
-
-			      +1,-1, 1,0,
-			      -1,+1, 0,1,
-			      +1,+1, 1,1], [2, 2]));
-
-	ret.tex_copy.set_int("screen_tex", 0);
-
-	return ret;
-}
-
-
-
-void post_window_setup(SDL_Window *window) {
-	GLSupport status = loadOpenGL();
+	GLSupport status;
+       	status = loadOpenGL();
 	if (status == GLSupport.noContext) {
 		fatal("Unable to configure OpenGL context.");
 	} else if (status == GLSupport.noLibrary) {
@@ -105,7 +82,7 @@ void post_window_setup(SDL_Window *window) {
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
@@ -122,51 +99,40 @@ void post_window_setup(SDL_Window *window) {
 	}
 
 	info("Initialized OpenGL version %s", glGetString(GL_VERSION).dstr);
+
+	return ret;
+}
+
+GfxExtra win_setup_extra(GfxContext ctx, GraphicsState gs) {
+	GfxExtra ret = GfxExtra(
+			Framebuffer(gs.window_spec.render_width, gs.window_spec.render_height, ctx),
+			Shader(fslurp("dist/shaders/tex_copy.vert"), fslurp("dist/shaders/tex_copy.frag"), ctx),
+			Mesh([-1,+1, 0,1,
+			      +1,-1, 1,0,
+			      -1,-1, 0,0,
+
+			      +1,-1, 1,0,
+			      -1,+1, 0,1,
+			      +1,+1, 1,1], [2, 2]));
+
+	ret.tex_copy.set_int("screen_tex", 0);
+
+	return ret;
 }
 
 void set_vsync(bool enabled) {
+	warning("unable to set vsync yet . . ."); //TODO integrate with graphics manager
+	/+
 	if (SDL_GL_SetSwapInterval(enabled) == -1) {
 		warning("unable to set vsync.  SDL says: '%s'", SDL_GetError().dstr);
 	}
+	+/
 
 	//TODO: add adaptive sync support (SDL_GL_SetSwapInterval(-1)
 }
 
 // stub because direct3d needs it
 void set_fullscreen(bool enabled) {
-}
-
-void set_wireframe(bool enabled) {
-	if (enabled) {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	} else {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	}
-}
-
-pragma(inline, true) void gfx_blit(GfxContext ctx, ref GfxExtra extra, SDL_Window *win) {
-	glDisable(GL_DEPTH_TEST);
-	int w, h;
-	SDL_GL_GetDrawableSize(win, &w, &h);
-	glViewport(0, 0, w, h);
-
-	// XXX: this causes flickering with mesa+dri3.
-	//glBlitNamedFramebuffer(extra.framebuffer.fbo, 0, 0, 0, extra.framebuffer.w, extra.framebuffer.h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindTexture(GL_TEXTURE_2D, extra.framebuffer.tex);
-	extra.tex_copy.blit(extra.mesh);
-
-	SDL_GL_SwapWindow(win);	
-
-	glBindFramebuffer(GL_FRAMEBUFFER, extra.framebuffer.fbo);
-	glViewport(0, 0, extra.framebuffer.w, extra.framebuffer.h);
-	glEnable(GL_DEPTH_TEST);
-}
-
-pragma(inline, true) void gfx_clear(GfxContext ctx, float r, float g, float b) {
-	glClearColor(r, g, b, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void gfx_end(GfxContext ctx) {

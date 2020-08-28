@@ -5,96 +5,116 @@ import cstdlib;
 import bindbc.opengl;
 import bindbc.assimp;
 
-import graphics.model;
+import graphics.mesh;
 import graphics.tex;
 
+struct Vertex {
+	vec3f position;
+	vec3f normal;
+	vec2f tex_coords;
+	vec3f tangent;
+	vec3f bitangent;
+}
+
+//TODO free resources
+
+struct FancyMesh {
+	GLuint VAO, VBO, EBO;
+
+	Vertex[] vertices;
+	uint[] indices;
+	Texture[] diffuse_textures, specular_textures;
+
+	package this(Vertex[] vertices, uint[] indices, Texture[] diffuse_textures, Texture[] specular_textures) {
+		this.vertices = vertices;
+		this.indices = indices;
+		this.diffuse_textures = diffuse_textures;
+		this.specular_textures = specular_textures;
+	}
+
+	package void load_verts() {
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VBO);
+		glGenBuffers(1, &EBO);
+
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+		glBufferData(GL_ARRAY_BUFFER, vertices.length * Vertex.sizeof, vertices.ptr, GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * uint.sizeof, indices.ptr, GL_STATIC_DRAW);
+
+		// vertex positions
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, Vertex.sizeof, null);
+
+		// vertex normals
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, Vertex.sizeof, cast(void*)Vertex.normal.offsetof);
+
+		// vertex texture coords
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, Vertex.sizeof, cast(void*)Vertex.tex_coords.offsetof);
+
+		glBindVertexArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+}
 
 
 struct FancyModel {
-	@disable this();
+	FancyMesh[] meshes;
 
-	/// SOA ftw!  Yeah I hate it ;<
-	// Imagine this is:
-	/*
-	 * struct FancyMesh {
-	 * 	Mesh stupid_mesh;
-	 * 	Texture[] textures;
-	 *	uint[] indices;
-	 * }
-	 *
-	 * FancyMesh[] meshes;
-	 *   _,,
-	 *  //||\
-	 * ///||\\
-	 *///alas\\
-	Mesh[] stupid_meshes;
-	Texture[][] meta_diffuse_textures;
-	Texture[][] meta_specular_textures;
-	uint[][] meta_indices;
-
-
-	this(string fpath) {
+	package this(string fpath) {
 		import std.file: getcwd, chdir;
 
 		if (!fpath.fexists) fatal("File '%s' does not exist", fpath);
 
-		const aiScene *scene = aiImportFile(fpath.cstr, aiPostProcessSteps.Triangulate | aiPostProcessSteps.OptimizeMeshes | aiPostProcessSteps.GenNormals); // default winding order is counter-clockwise, we want clockwise, but the flip step in the shader turns the counter-clockwise triangles clockwise again
+		const aiScene *scene = aiImportFile(fpath.cstr, aiPostProcessSteps.Triangulate | aiPostProcessSteps.OptimizeMeshes | aiPostProcessSteps.OptimizeGraph | aiPostProcessSteps.GenNormals | aiPostProcessSteps.JoinIdenticalVertices | aiPostProcessSteps.FixInfacingNormals); // default winding order is counter-clockwise, we want clockwise, but the flip step in the shader turns the counter-clockwise triangles clockwise again
+
 		if (!scene || scene.mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene.mRootNode) {
 			fatal("Failed to properly load model '%s'.  AssImp says '%s'", fpath, aiGetErrorString());
 		}
 
 		string cwd = getcwd();
-		chdir(fpath.split("/")[0 .. $ - 1].join("/"));
+		//chdir(fpath.split("/")[0 .. $ - 1].join("/"));
 		load_meshes(scene.mRootNode, scene);
-		chdir(cwd);
+		//chdir(cwd);
 
-		assert (stupid_meshes.length == meta_diffuse_textures.length && meta_diffuse_textures.length == meta_specular_textures.length && meta_specular_textures.length == meta_indices.length);
-
-		trace("Loaded model %s with %s meshes", fpath, stupid_meshes.length);
+		// synchronized (opengl_lock)
+		foreach (ref m; meshes) {
+			m.load_verts();
+		}
+		trace("Loaded model %s with %s meshes", fpath, meshes.length);
 	}
 
-	void load_meshes(const aiNode *node, const aiScene *scene) {
+	package void load_meshes(const aiNode *node, const aiScene *scene) {
 		foreach (sss; 0 .. node.mNumMeshes) {
 			const aiMesh *mesh = scene.mMeshes[node.mMeshes[sss]];
-			float[] vertices;
+			Vertex[] vertices;
 			Texture[] diffuse_textures;
 			Texture[] specular_textures;
 			uint[] indices;
 
 			foreach (i; 0 .. mesh.mNumVertices) {
-				// position
-				vertices ~= mesh.mVertices[i].x;
-				vertices ~= mesh.mVertices[i].y;
-				vertices ~= mesh.mVertices[i].z;
+				Vertex v;
 
-				// normal
-				vertices ~= mesh.mNormals[i].x;
-				vertices ~= mesh.mNormals[i].y;
-				vertices ~= mesh.mNormals[i].z;
+				v.position = vec3f(mesh.mVertices[i].x, mesh.mVertices[i].y, mesh.mVertices[i].z);
 
-				// tex coords
+				v.normal = vec3f(mesh.mNormals[i].x, mesh.mNormals[i].y, mesh.mNormals[i].z);
+
 				if (mesh.mTextureCoords[0]) {
-					vertices ~= fmod(mesh.mTextureCoords[0][i].x, 1);
-					vertices ~= fmod(mesh.mTextureCoords[0][i].y, 1);
+					v.tex_coords = vec2f(mesh.mTextureCoords[0][i].x, mesh.mTextureCoords[0][i].y);
+					//TODO: why do I need this
+					v.tex_coords.x = fmod(v.tex_coords.x, 1);
+					v.tex_coords.y = fmod(v.tex_coords.y, 1);
 				} else {
-					// for alignment:
-					vertices ~= 0;
-					vertices ~= 0;
+					warning("no tex coords ;-;");
 				}
 
-				/////      | | |
-				//// TODO: v v v those things
-
-				// tangent
-				vertices ~= 0;
-				vertices ~= 0;
-				vertices ~= 0;
-
-				// bitangent
-				vertices ~= 0;
-				vertices ~= 0;
-				vertices ~= 0;
-
+				vertices ~= v;
 			}
 
 			foreach (i; 0 .. mesh.mNumFaces) {
@@ -106,19 +126,7 @@ struct FancyModel {
 			diffuse_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.DIFFUSE);
 			specular_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.SPECULAR);
 
-
-			stupid_meshes ~= Mesh(vertices, [3, 3, 2, 3, 3]);
-
-			glBindVertexArray(stupid_meshes[$-1].VAO);
-
-			GLuint EBO;
-			glGenBuffers(1, &EBO);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * indices[0].sizeof, indices.ptr, GL_STATIC_DRAW);
-			meta_indices ~= indices;
-
-			meta_diffuse_textures ~= diffuse_textures;
-			meta_specular_textures ~= specular_textures;
+			meshes ~= FancyMesh(vertices, indices, diffuse_textures, specular_textures);
 		}
 
 		foreach (i; 0 .. node.mNumChildren) {
@@ -127,7 +135,7 @@ struct FancyModel {
 	}
 }
 
-Texture[] load_materials(const aiMaterial *material, aiTextureType type) {
+private Texture[] load_materials(const aiMaterial *material, aiTextureType type) {
 	Texture[] ret;
 	foreach (i; 0 .. aiGetMaterialTextureCount(material, type)) {
 		aiString fpath;

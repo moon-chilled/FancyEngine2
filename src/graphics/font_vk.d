@@ -6,16 +6,13 @@ import cstdlib;
 import asset;
 import windowing.windows_vk;
 
-import graphics.model_vk;
+import graphics.mesh_vk;
 import graphics.shading_vk;
 
 import erupted;
 import bindbc.freetype;
 
 struct Font {
-	@disable this();
-	@disable this(this);
-
 	uint screen_width, screen_height; // when drawing to screen, need to normalize properly w.r.t to font height
 
 	uint height;

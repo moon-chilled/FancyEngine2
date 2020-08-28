@@ -114,12 +114,16 @@ class S7Script: Scriptlang {
 	private s7_pointer[Key] key_to_symtab;
 
 	this() {
+		import std.concurrency;
+		//log("ENTER (not yet) (%s)", thisTid);
 		s7 = s7_init();
-		log("Successfully booted %s", eval("(*s7* 'version)"));
+		log("Successfully booted %s (%s) (%s)", eval("(*s7* 'version)"), s7, thisTid);
+		//scope(exit)log("and now EXIT (%s) (%s)", s7, thisTid);
 
 		void real_push_log_msg(long ll, string str, string basic_str) { _real_push_log_msg(cast(LogLevel)ll, str, basic_str); }
 
 		super.expose_fun("_real_push_log_msg", &real_push_log_msg);
+
 		s7_add_to_load_path(s7, "dist/scheme".cstr);
 		load("prelude.scm");
 		load("stdlib.scm");
@@ -183,13 +187,19 @@ class S7Script: Scriptlang {
 		return s7_object_to_c_string(s7, s7_eval_c_string(s7, text.cstr)).dstr;
 	}
 	void exec(string text) {
+		import std.concurrency;
+		//log("ENTER (%s) (%s)", s7, thisTid);
+		//scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
 		s7_eval_c_string(s7, text.cstr);
 	}
-	ScriptedFunction[string] load_getsyms(string path, string[] wanted_syms) {
+	ScriptedFunctionBase[string] load_getsyms(string path, string[] wanted_syms) {
+		import std.concurrency;
+		//log("ENTER (%s) (%s)", s7, thisTid);
+		//scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
 		s7_pointer env;
 		env = s7_inlet(s7, s7_nil(s7));
 
-		ScriptedFunction[string] ret;
+		ScriptedFunctionBase[string] ret;
 
 		string pre_src = fslurp(path);
 		string post_src;
@@ -226,7 +236,7 @@ class S7Script: Scriptlang {
 			//but could outlive 'this', which destroys the 's7' ctx.
 			//or is that not an issue since both live basically for the lifetime of the program?
 
-			if (s7_is_function(p) || s7_is_procedure(p)) ret[sym] = ScriptedFunction((((p) => (ScriptVar[] args) => s7_to_script(s7, s7_call(s7, p, arr_to_list(s7, args))))(p)));
+			if (s7_is_function(p) || s7_is_procedure(p)) ret[sym] = ((p) => (ScriptVar[] args) => s7_to_script(s7, s7_call(s7, p, arr_to_list(s7, args))))(p);
 			// ^^ need that indirection to properly close over p
 			// because otherwise it's closed over by reference
 			// meaning that all returned function pointers close over the last p we create (and that will be overwritten on future invocations)
@@ -234,16 +244,24 @@ class S7Script: Scriptlang {
 			// so it's a copy, which persists
 		}
 
+
 		return ret;
 	}
 
 	ScriptVar call(string name, ScriptVar[] args = []) {
+		import std.concurrency;
+		//log("ENTER(%s) (%s) (%s)", name, s7, thisTid);
+		//scope(exit)log("EXIT(%s) (%s) (%s)", name, s7, thisTid);
 		s7_pointer funcptr = s7_name_to_value(s7, name.cstr); // lisp-1 ftw!
 
 		return s7_to_script(s7, s7_call(s7, funcptr, arr_to_list(s7, args)));
 	}
 
 	void expose_fun(string name, ScriptFun fun, ScriptVarType[] argtypes, bool variadic = false) {
+		import std.concurrency;
+		//log("ENTER (%s) (%s)", s7, thisTid);
+		//scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
+
 		name = name.replace('_', '-');
 		long new_index;
 		synchronized (s7funslock) {
@@ -263,11 +281,13 @@ class S7Script: Scriptlang {
 		return s7_to_script(s7, s7_obj).peek!bool;
 	}
 	void load(string path) {
+		import std.concurrency;
+		//log("ENTER (%s) (%s)", s7, thisTid);
+		//scope(exit)log("EXIT (%s) (%s)", s7, thisTid);
 		s7_load(s7, path.cstr);
 	}
 
 	bool has_symbol(string name) {
 		return s7_symbol_table_find_name(s7, name.cstr) ? true : false;
 	}
-
 }

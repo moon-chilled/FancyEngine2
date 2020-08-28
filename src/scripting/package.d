@@ -101,6 +101,47 @@ ScriptVarType script_typeof(T)() {
 	}
 }
 
+ScriptFun normalise_scriptfun(R, A...)(R function(A) fun, ref ScriptVarType[] sig_ret) {
+	return normalise_scriptfun(name, toDelegate(fun), sig_ret);
+}
+
+ScriptFun normalise_scriptfun(R, A...)(R delegate(A) fun, ref ScriptVarType[] sig_ret) {
+	static foreach (T; A) {
+		sig_ret ~= script_typeof!T;
+	}
+
+	enum mixin_str = {
+		import std.conv: to;
+		import std.traits: OriginalType;
+
+		string ret = "fun(";
+		static foreach (i; 0 .. A.length) {
+			static if (is(A[i] == ScriptVar)) {
+				ret ~= "args[" ~ i.to!string ~ "], ";
+			} else {
+				ret ~= "cast(" ~ A[i].stringof ~ ")args[" ~ i.to!string ~ "].peek!(" ~ OriginalType!(A[i]).stringof ~ "), ";
+			}
+		}
+		ret ~= ")";
+		return ret;
+	}();
+
+	static if (is(R == void)) {
+		return (ScriptVar[] args) {
+				mixin(mixin_str ~ ";");
+				return None;
+			};
+	} else static if (is(R == ScriptVar)) {
+		return (ScriptVar[] args) {
+				return mixin(mixin_str);
+			};
+	} else {
+		return (ScriptVar[] args) {
+			return ScriptVar(mixin(mixin_str));
+		};
+	}
+}
+
 interface ScriptlangImpl {
 	void close();
 	string eval_to_str(string text);
@@ -111,77 +152,20 @@ interface ScriptlangImpl {
 	final void expose_vfun(string name, ScriptFun fun) { expose_fun(name, fun, cast(ScriptVarType[])[], true); }
 
 	final void expose_fun(R, A...)(string name, R function(A) fun) {
-		expose_fun(name, toDelegate(fun));
+		return expose_fun(name, toDelegate(fun));
 	}
 	final void expose_fun(R, A...)(string name, R delegate(A) fun) {
 		ScriptVarType[] signature;
-
-		static foreach (T; A) {
-			signature ~= script_typeof!T;
-		}
-
-		enum mixin_str = {
-			import std.conv: to;
-			import std.traits: OriginalType;
-
-			string ret = "fun(";
-			static foreach (i; 0 .. A.length) {
-				static if (is(A[i] == ScriptVar)) {
-					ret ~= "args[" ~ i.to!string ~ "], ";
-				} else {
-					ret ~= "cast(" ~ A[i].stringof ~ ")args[" ~ i.to!string ~ "].peek!(" ~ OriginalType!(A[i]).stringof ~ "), ";
-				}
-			}
-			ret ~= ")";
-			return ret;
-		}();
-
-		static if (is(R == void)) {
-			expose_fun(name,
-					(ScriptVar[] args) {
-						mixin(mixin_str ~ ";");
-						return None;
-					}, signature);
-		} else static if (is(R == ScriptVar)) {
-			expose_fun(name,
-					(ScriptVar[] args) {
-						return mixin(mixin_str);
-					}, signature);
-		} else {
-			expose_fun(name,
-					(ScriptVar[] args) {
-						return ScriptVar(mixin(mixin_str));
-					}, signature);
-		}
+		ScriptFun f = normalise_scriptfun(fun, signature);
+		expose_fun(name, f, signature);
 	}
 
 	bool can_load(string path);
 	void load(string path);
-	ScriptedFunction[string] load_getsyms(string path, string[] wanted_syms);
+	ScriptedFunctionBase[string] load_getsyms(string path, string[] wanted_syms);
 	bool has_symbol(string name);
 }
 
 abstract class Scriptlang: ScriptlangImpl { this() {} }
 
-private string current_scene_name = null;
-
-string get_current_scene_name() { return current_scene_name; }
-
-struct ScriptedFunction {
-	@disable this();
-	this(ScriptVar delegate(ScriptVar[]) fun) { this.fun = fun; }
-	string owned_scene_name;
-	private ScriptVar delegate(ScriptVar[] args = []) fun;
-	ScriptVar opCall(ScriptVar[] args = []) {
-		if (!owned_scene_name) fatal("ScriptedFunction does not belong to any scene");
-
-		string old_scene_name = current_scene_name;
-		current_scene_name = owned_scene_name;
-
-		ScriptVar ret = fun(args);
-
-		current_scene_name = old_scene_name;
-
-		return ret;
-	}
-}
+alias ScriptedFunctionBase = ScriptVar delegate(ScriptVar[]);

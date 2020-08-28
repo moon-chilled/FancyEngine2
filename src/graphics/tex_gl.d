@@ -3,7 +3,7 @@ import stdlib;
 import cstdlib;
 
 import asset;
-import windowing.windows_gl;
+import graphics.windows_gl;
 
 import bindbc.opengl;
 
@@ -12,13 +12,14 @@ private extern (C) ubyte *stbi_load(const(char) *filename, int *x, int *y, int *
 private extern (C) void stbi_image_free(void *retval_from_stbi_load);
 Texture[string] texture_cache;
 
+//TODO free asset
 class Texture: Asset {
 	AssetType asset_type = AssetType.Texture;
 
 	uint w, h;
 	GLuint tex_id;
 
-	this(ubyte[] data, uint width, uint height, ubyte clr_depth) {
+	package this(ubyte[] data, uint width, uint height, ubyte clr_depth) {
 		if (data.length != width * height * clr_depth) fatal("%s != %s*%s*%s", data.length, width, height, clr_depth);
 
 		w = width;
@@ -43,7 +44,7 @@ class Texture: Asset {
 	}
 
 
-	this(string fpath) {
+	package this(string fpath) {
 		if (fpath in texture_cache) {
 			w = texture_cache[fpath].w;
 			h = texture_cache[fpath].h;
@@ -51,7 +52,8 @@ class Texture: Asset {
 			return;
 		}
 
-		if (!fpath.fexists) fatal("tried to read nonexistent texture '%s'", fpath);
+		import std.file: getcwd;
+		if (!fpath.fexists) fatal("tried to read nonexistent texture '%s' (in %s)", fpath, getcwd);
 		int clr_depth;
 
 		int width;
@@ -64,9 +66,10 @@ class Texture: Asset {
 
 		GLuint colour_fmt, internalfmt;
 		switch (clr_depth) {
+			case 1: colour_fmt = GL_RED;  internalfmt = GL_R8;    break;
 			case 3: colour_fmt = GL_RGB;  internalfmt = GL_RGB8;  break;
 			case 4: colour_fmt = GL_RGBA; internalfmt = GL_RGBA8; break;
-			default: fatal("Need 3-byte or 4-byte colour depth, got %s", clr_depth); assert(0);
+			default: fatal("Need 1-, 3-, or 4-byte colour depth, got %s", clr_depth); assert(0);
 		}
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &tex_id);

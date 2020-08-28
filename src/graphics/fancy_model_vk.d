@@ -4,12 +4,10 @@ import cstdlib;
 import erupted;
 import bindbc.assimp;
 
-import graphics.model_vk;
+import graphics.mesh_vk;
 import graphics.tex_vk;
 
 struct FancyModel {
-	@disable this();
-
 	/// SOA ftw!  Yeah I hate it ;<
 	// Imagine this is:
 	/*
