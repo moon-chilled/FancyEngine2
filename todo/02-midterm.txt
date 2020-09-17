@@ -1,5 +1,25 @@
 - RPC
+- Actor partitioning weighted according to how frequently they pass messages to each other
+  - Algorithm: graph partitioning, clustering
+    - http://adl.stanford.edu/cme342/Lecture_Notes_files/lecture7-14.pdf
+      - Here, N_w is the average time an actor takes to respond to messages
+        - Really, probably avg of middle 68.27% of the messages it most frequently gets, not including 'tick' (since that has fixed unavoidable cost)
+      - E_w is the number of messages sent between two actors
+        - (Or, the proportion of all messages that happen to be sent between those two actors)
+    - https://en.wikipedia.org/wiki/Graph_partition
+    - https://en.wikipedia.org/wiki/Minimum_cut
+    - https://www.csc2.ncsu.edu/faculty/nfsamato/practical-graph-mining-with-R/slides/pdf/Graph_Cluster_Analysis.pdf
+  - Heavyweight aot algorithm, flyweight jit tuning
+  - In order to get this strictly optimal, need to:
+    - Analyze what messages get sent in response to other messages
+    - Make preload-related weightings *strictly* secondary to others
+    - Have some way to ignore messages that only get sent rarely
+      - Perhaps rank by #messages^n rather than just #messages?
+  - #1 is likely unfeasible; others not
+  - Alternate algorithm: componentize graph, considering edges with weight <W as unconnected.  Repeat on largest subgraphs with increasing W until the # of components ~~ the # of threads
+    - ('Largest' refers to sum of work rating of all nodes, not number of nodes)
+    - This algorithm probably generates much worse results, but worth thinking about
 - Framebuffer stack
-- Data in engine
+- More expressive data in engine, explore sharing in-engine representation and in-script representation (to avoid (de)serializing overhead)
 - Fancier time stuff in engine (e.g. stretch time/lag compensation by running batchable multiple times or calling back w/ time delta)?
 - (Data, not code) messages, consumers/listeners + producers/emiters

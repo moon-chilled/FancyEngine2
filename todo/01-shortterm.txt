@@ -1,5 +1,1 @@
-- Helper functions for 2-d asset pipeline
-- Write pong
-- Re-appraise everything
-
-- '(preload)', '(unload)'; called to background-load assets
+- better 2-d asset pipeline

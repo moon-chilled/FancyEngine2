@@ -15,8 +15,6 @@
   - Add scripting in d with super fancy reflection?  Or scripting in d is just boring like c?
   - Use binderoo?
 
-- Multithreading
-
 - Multiple error boxes at once cause a crash.  (SDL bug?  Investigate.)
 
 - Compile everything statically
