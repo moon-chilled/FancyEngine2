@@ -91,9 +91,9 @@ mat4f = ffi.metatype("struct mat4", {
 		translate = function(s, v)
 			r = ffi.new("struct mat4")
 
-			r.v[0]=s.v[0]; r.v[1]=s.v[1]; r.v[2]=s.v[2]; r.v[3]=s.v[3]+v.v[0];
-			r.v[4]=s.v[4]; r.v[5]=s.v[5]; r.v[6]=s.v[6]; r.v[7]=s.v[7]+v.v[1];
-			r.v[8]=s.v[8]; r.v[9]=s.v[9]; r.v[10]=s.v[10]; r.v[11]=s.v[11]+v.v[2];
+			r.v[ 0]=s.v[ 0]; r.v[ 1]=s.v[1];  r.v[ 2]=s.v[2];  r.v[ 3]=s.v[ 3]+v.v[0];
+			r.v[ 4]=s.v[ 4]; r.v[ 5]=s.v[5];  r.v[ 6]=s.v[6];  r.v[ 7]=s.v[ 7]+v.v[1];
+			r.v[ 8]=s.v[ 8]; r.v[ 9]=s.v[9];  r.v[10]=s.v[10]; r.v[11]=s.v[11]+v.v[2];
 			r.v[12]=s.v[12]; r.v[13]=s.v[13]; r.v[14]=s.v[14]; r.v[15]=s.v[15];
 
 			return r
@@ -155,18 +155,18 @@ mat4f = ffi.metatype("struct mat4", {
 			Y = Z:cross(-X)
 
 			r = ffi.new("struct mat4")
-			r.v[0] = -X.v[0]
-			r.v[1] = -X.v[1]
-			r.v[2] = -X.v[2]
-			r.v[3] = X:dot(eye)
+			r.v[ 0] = -X.v[0]
+			r.v[ 1] = -X.v[1]
+			r.v[ 2] = -X.v[2]
+			r.v[ 3] = X:dot(eye)
 
-			r.v[4] = Y.v[0]
-			r.v[5] = Y.v[1]
-			r.v[6] = Y.v[2]
-			r.v[7] = -Y:dot(eye)
+			r.v[ 4] = Y.v[0]
+			r.v[ 5] = Y.v[1]
+			r.v[ 6] = Y.v[2]
+			r.v[ 7] = -Y:dot(eye)
 
-			r.v[8] = Z.v[0]
-			r.v[9] = Z.v[1]
+			r.v[ 8] = Z.v[0]
+			r.v[ 9] = Z.v[1]
 			r.v[10] = Z.v[2]
 			r.v[11] = -Z:dot(eye)
 
@@ -179,8 +179,8 @@ mat4f = ffi.metatype("struct mat4", {
 		end,
 		identity = function()
 			ret = ffi.new("struct mat4")
-			ret.v[0] = 1
-			ret.v[5] = 1
+			ret.v[ 0] = 1
+			ret.v[ 5] = 1
 			ret.v[10] = 1
 			ret.v[15] = 1
 			return ret

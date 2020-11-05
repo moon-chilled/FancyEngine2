@@ -8,6 +8,8 @@ elif host_machine.system() == 'macos'
   sys = 'macos'
 elif host_machine.system() == 'linux'
   sys = 'linux'
+elif host_machine.system() == 'freebsd'
+  sys = 'freebsd'
 endif
 
 d_versions = []

@@ -56,16 +56,23 @@ version (_Gfx_is_vulkan) {
 
 enum OS {
 	Windows,
-	Mac,
+	//Mac,
 	Linux,
+	FreeBSD,
 }
 version (Windows) {
 	enum build_target = OS.Windows;
-} else version (OSX) {
-	enum build_target = OS.Mac;
+	version (CRuntime_Microsoft) {} else static assert(false, "On windows, only msvcrt is supported");
+//} else version (OSX) {
+//	enum build_target = OS.Mac;
 } else version (linux) {
 	enum build_target = OS.Linux;
+} else version (FreeBSD) {
+	enum build_target = OS.FreeBSD;
+} else {
+	static assert(false, "Only windows, linux, and freebsd are supported");
 }
+
 
 // !IMPORTANT!
 // size is NOT dependent on T.sizeof
@@ -153,22 +160,8 @@ string strfmt(T...)(T args) {
 }
 
 
-version (Windows) {
-	version (CRuntime_Microsoft) {
-	} else {
-		static assert (false, "On windows, only msvcrt is supported");
-		// maybe someday this turns into mingw/gnu crt, when I have a better dev environment
-		// until then, I will be sad
-	}
-} else version (OSX) {
-} else version (linux) {
-} else {
-	static assert (false, "Only windows, macos, or linux are supported");
-}
-
-
 version (X86_64) {
-	//yayy
+	//yay
 } else {
-	static assert (false, "Only x86_64 is supported"); // sorry risc-v
+	static assert(false, "Only amd64 is supported");
 }
