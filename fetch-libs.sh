@@ -4,9 +4,11 @@ SDL2_WIN_FNAME="SDL2-$SDL2_VER-win32-x64.zip"
 SDL2_URL_BASE="https://www.libsdl.org/release/"
 GORILLA_WIN_URL="https://github.com/moon-chilled/gorilla-audio/releases/download/v0.3.3/gorilla.lib"
 GORILLA_LIN_URL="https://github.com/moon-chilled/gorilla-audio/releases/download/v0.3.3/libgorilla.a"
+GORILLA_FBSD_URL="https://github.com/moon-chilled/gorilla-audio/releases/download/v0.3.3/libgorilla-freebsd.a"
 ASSIMP_WIN_URL="https://github.com/assimp/assimp/releases/download/v4.1.0/assimp-sdk-4.1.0-setup.exe"
-MOONJIT_LIN_URL="https://em.slashem.me/~elronnd/libluajit-5.1.a"
 MOONJIT_WIN_URL="https://em.slashem.me/~elronnd/libluajit-5.1.dll.a"
+MOONJIT_LIN_URL="https://em.slashem.me/~elronnd/libluajit-5.1.a"
+MOONJIT_FBSD_URL="https://em.slashem.me/~elronnd/libluajit-5.1-freebsd.a"
 
 S7_FNAME="s7.tar.gz"
 S7_URL="ftp://ccrma-ftp.stanford.edu/pub/Lisp/$S7_FNAME"
@@ -40,15 +42,22 @@ fetch-linux() {
 
 	popd
 }
+fetch-freebsd() {
+	mkdir lib/freebsd
+	pushd lib/freebsd
+
+	wget $GORILLA_FBSD_URL -O gorilla.lib
+	wget $MOONJIT_FBSD_URL -O libluajit-5.1.a
+
+	popd
+}
 fetch-src() {
 	pushd deps
 
 	rm -f s7.c s7.h
 	wget $S7_URL
 	tar xf $S7_FNAME s7/s7.c s7/s7.h
-	mv s7/s7.c s7/s7.h .
-	rmdir s7
-	rm -f $S7_FNAME
+	mv s7/s7.c .
 
 	# there is code in fe2 that RELIES on s7_double being float-sized,
 	# so think twice before changing this
@@ -56,7 +65,10 @@ fetch-src() {
 	# currently typedefed to int64_t, which should probably be checked on
 	# 32-bit platforms (if I care to support them)
 	# todo - make s7 use float trig functions instead of double ones?
-	sed -i 's/typedef double s7_double/typedef float s7_double/g' s7.h
+	sed 's/typedef double s7_double/typedef float s7_double/g' < s7/s7.h > s7.h
+
+	rm -rf s7
+	rm -f $S7_FNAME
 
 	popd
 }
@@ -65,6 +77,7 @@ rm -rf lib
 mkdir lib
 fetch-win&
 fetch-linux&
+fetch-freebsd&
 fetch-src&
 
 wait
