@@ -50,11 +50,8 @@ class BumpAllocator: Allocator {
 		this.len = size;
 
 		//TODO: VirtualAlloc version
-		// ditto for dfly and fbsd if that ever becomes a thing
-		//import core.sys.posix.sys.mman;
-		static if (build_target == OS.Linux) import core.sys.linux.sys.mman;
-		else static if (build_target == OS.FreeBSD) import core.sys.freebsd.sys.mman;
-		void *memaddr = mmap(null, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+		import core.sys.posix.sys.mman;
+		void *memaddr = mmap(null, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
 		if (memaddr == MAP_FAILED) fatal("Failed to map memory");
 		mem = memaddr;
 	}
