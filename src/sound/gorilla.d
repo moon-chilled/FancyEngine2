@@ -81,9 +81,11 @@ private extern (C) {
 
 	int ga_handle_play(Handle *handle);
 	int ga_handle_playing(Handle *handle);
+	int ga_handle_stop(Handle *handle);
+	int ga_handle_finished(Handle *handle);
+	int ga_handle_seek(Handle *handle, int sample_offset);
 	int ga_handle_tell(Handle* in_handle, TellType in_param);
 	int ga_handle_setParamf(Handle *handle, int param, float value);
-
 
 	void ga_sound_release(Sound *sound);
 }
@@ -96,7 +98,7 @@ shared static ~this() {
 }
 
 
-private abstract class ISound: Asset {
+abstract class ISound: Asset {
 	package:
 	Handle *handle;
 	bool live = true;
@@ -160,18 +162,31 @@ class GorillaAudio {
 		return ret;
 	}
 
-	// TODO: use pos
-	void play(ISound sound, vec3f pos = vec3f(0, 0, 0)) {
-		if (sound is null) {
+	// TODO: 3d pos
+
+	void play(ISound s) {
+		if (s is null) {
 			error("tried to play null sound!");
 			return;
 		}
-		if (!sound.live) {
+		if (!s.live) {
 			error("tried to play dead sound!");
 		}
 
-		int res = ga_handle_play(sound.handle);
-		if (res == 0) error("error playing sound");
+		if (!ga_handle_play(s.handle)) error("error playing sound");
+	}
+
+	void pause(ISound s) {
+		if (!ga_handle_stop(s.handle)) error("error pausing sound");
+	}
+
+	void rewind(ISound s) {
+		if (!ga_handle_seek(s.handle, 0)) error("error rewinding sound");
+	}
+
+	void stop(ISound s) {
+		pause(s);
+		rewind(s);
 	}
 
 	void kill(ISound snd) {
