@@ -95,7 +95,7 @@ int real_main(string[] args) {
 			"effect_volume", &effect_vol);
 
 	// volume in the config file has a range from 0..100, but internally we
-	// have a range of 0..1
+	// use a range of [0, 1]
 	master_vol /= 100;
 	music_vol /= 100;
 	effect_vol /= 100;
@@ -104,14 +104,14 @@ int real_main(string[] args) {
 	switch (fs) {
 		case "fullscreen": ws.fullscreen = Fullscreenstate.Fullscreen; break;
 		case "desktop": ws.fullscreen = Fullscreenstate.Desktop; break;
-		case "none": ws.fullscreen = Fullscreenstate.None; break;
-		default: error("config error: unable to load option 'fullscreen': invalid value '%s'.  Defaulting to windowed mode.", fs); ws.fullscreen = Fullscreenstate.None; break;
+		case "windowed": case "none": ws.fullscreen = Fullscreenstate.None; break;
+		default: error("config error: unable to load option 'fullscreen': invalid value '%s' (valid options are 'fullscreen', 'desktop', and 'none').  Defaulting to windowed mode.", fs); ws.fullscreen = Fullscreenstate.None; break;
 	}
 	switch (vs) {
 		case "on": ws.vsync = Vsyncstate.On; break;
 		case "off": ws.vsync = Vsyncstate.Off; break;
 		case "undefined": ws.vsync = Vsyncstate.Undefined; break;
-		default: error("config error: unable to load option 'fullscreen': invalid value '%s'.  Defaulting to let the driver do whatever it wants.", vs); ws.vsync = Vsyncstate.Undefined;
+		default: error("config error: unable to load option 'vsync': invalid value '%s' (valid options are 'undefined' (let the driver pick a default), 'on', and 'off').  Defaulting to undefined.", vs); ws.vsync = Vsyncstate.Undefined;
 	}
 
 	ws.title = title;
