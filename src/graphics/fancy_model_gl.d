@@ -78,19 +78,16 @@ struct FancyModel {
 			fatal("Failed to properly load model '%s'.  AssImp says '%s'", fpath, aiGetErrorString());
 		}
 
-		string cwd = getcwd();
-		//chdir(fpath.split("/")[0 .. $ - 1].join("/"));
-		load_meshes(scene.mRootNode, scene);
-		//chdir(cwd);
+		string basedir = fpath.split("/")[0 .. $-1].join("/");
+		load_meshes(basedir, scene.mRootNode, scene);
 
-		// synchronized (opengl_lock)
 		foreach (ref m; meshes) {
 			m.load_verts();
 		}
 		trace("Loaded model %s with %s meshes", fpath, meshes.length);
 	}
 
-	package void load_meshes(const aiNode *node, const aiScene *scene) {
+	package void load_meshes(string basedir, const aiNode *node, const aiScene *scene) {
 		foreach (sss; 0 .. node.mNumMeshes) {
 			const aiMesh *mesh = scene.mMeshes[node.mMeshes[sss]];
 			Vertex[] vertices;
@@ -123,19 +120,19 @@ struct FancyModel {
 				}
 			}
 
-			diffuse_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.DIFFUSE);
-			specular_textures = load_materials(scene.mMaterials[mesh.mMaterialIndex], aiTextureType.SPECULAR);
+			diffuse_textures = load_materials(basedir, scene.mMaterials[mesh.mMaterialIndex], aiTextureType.DIFFUSE);
+			specular_textures = load_materials(basedir, scene.mMaterials[mesh.mMaterialIndex], aiTextureType.SPECULAR);
 
 			meshes ~= FancyMesh(vertices, indices, diffuse_textures, specular_textures);
 		}
 
 		foreach (i; 0 .. node.mNumChildren) {
-			load_meshes(node.mChildren[i], scene);
+			load_meshes(basedir, node.mChildren[i], scene);
 		}
 	}
 }
 
-private Texture[] load_materials(const aiMaterial *material, aiTextureType type) {
+private Texture[] load_materials(string basedir, const aiMaterial *material, aiTextureType type) {
 	Texture[] ret;
 	foreach (i; 0 .. aiGetMaterialTextureCount(material, type)) {
 		aiString fpath;
@@ -149,7 +146,7 @@ private Texture[] load_materials(const aiMaterial *material, aiTextureType type)
 		+/
 
 		aiGetMaterialTexture(material, type, i, &fpath, null, null, null, null, null, null);
-		ret ~= new Texture(fpath.data[0 .. fpath.length].idup);
+		ret ~= new Texture(basedir ~ "/" ~ fpath.data[0 .. fpath.length].idup);
 	}
 
 	return ret;
