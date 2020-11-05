@@ -2,6 +2,8 @@ module scripting;
 import stdlib;
 import stdmath;
 
+import sound.gorilla;
+
 import graphics.fancy_model;
 import graphics.shading;
 import graphics.tex;
@@ -33,12 +35,16 @@ enum ScriptVarType {
 	Texture,
 	Font,
 
+	// sound:
+	BufferedSound,
+	CachedSound,
+
 	// special:
 	OpaquePtr,
 	Any,
 	None,
 }
-alias ScriptVar = Sum!(long, float, string, bool, vec2f, vec3f, mat4f, This[], FancyModel, Shader, Key, Texture, Font, void*, NoneType);
+alias ScriptVar = Sum!(long, float, string, bool, vec2f, vec3f, mat4f, This[], FancyModel, Shader, Key, Texture, Font, BufferedSound, CachedSound, void*, NoneType);
 alias ScriptFun = ScriptVar delegate(ScriptVar[] args);
 ScriptVar None = ScriptVar(NoneType());
 
@@ -57,6 +63,8 @@ ScriptVarType script_typeof(ScriptVar v) {
 			(Shader s) => ScriptVarType.Shader,
 			(Texture t) => ScriptVarType.Texture,
 			(Font f) => ScriptVarType.Font,
+			(BufferedSound s) => ScriptVarType.BufferedSound,
+			(CachedSound s) => ScriptVarType.CachedSound,
 
 			(void *v) => ScriptVarType.OpaquePtr,
 			//(ScriptVar s) => ScriptVarType.Any,
@@ -66,39 +74,24 @@ ScriptVarType script_typeof(ScriptVar v) {
 // TODO: should this function use std.traits: Unqual(ified)?
 // (that template removes qualifications from a type like const, shared, etc.
 ScriptVarType script_typeof(T)() {
-	static if (isIntegral!T) {
-		return ScriptVarType.Int;
-	} else static if (isFloatingPoint!T) {
-		return ScriptVarType.Real;
-	} else static if (isSomeString!T) {
-		return ScriptVarType.Str;
-	} else static if (is(T == bool)) {
-		return ScriptVarType.Bool;
-	} else static if (is(T == vec2f)) {
-		return ScriptVarType.Vec2;
-	} else static if (is(T == vec3f)) {
-		return ScriptVarType.Vec3;
-	} else static if (is(T == mat4f)) {
-		return ScriptVarType.Matx4;
-	} else static if (is(T == ScriptVar[])) {
-		return ScriptVarType.Array;
-	} else static if (is(T == FancyModel)) {
-		return ScriptVarType.FancyModel;
-	} else static if (is(T == Shader)) {
-		return ScriptVarType.Shader;
-	} else static if (is(T == Texture)) {
-		return ScriptVarType.Texture;
-	} else static if (is(T == Font)) {
-		return ScriptVarType.Font;
-	} else static if (is(T == void*)) {
-		return ScriptVarType.OpaquePtr;
-	} else static if (is(T == void)) {
-		return ScriptVarType.None;
-	} else static if (is(T == ScriptVar)) {
-		return ScriptVarType.Any;
-	} else {
-		static assert(0);
-	}
+	static if (isIntegral!T)                return ScriptVarType.Int;
+	else static if (isFloatingPoint!T)      return ScriptVarType.Real;
+	else static if (isSomeString!T)         return ScriptVarType.Str;
+	else static if (is(T == bool))          return ScriptVarType.Bool;
+	else static if (is(T == vec2f))         return ScriptVarType.Vec2;
+	else static if (is(T == vec3f))         return ScriptVarType.Vec3;
+	else static if (is(T == mat4f))         return ScriptVarType.Matx4;
+	else static if (is(T == ScriptVar[]))   return ScriptVarType.Array;
+	else static if (is(T == FancyModel))    return ScriptVarType.FancyModel;
+	else static if (is(T == Shader))        return ScriptVarType.Shader;
+	else static if (is(T == Texture))       return ScriptVarType.Texture;
+	else static if (is(T == Font))          return ScriptVarType.Font;
+	else static if (is(T == BufferedSound)) return ScriptVarType.BufferedSound;
+	else static if (is(T == CachedSound))   return ScriptVarType.CachedSound;
+	else static if (is(T == void*))         return ScriptVarType.OpaquePtr;
+	else static if (is(T == void))          return ScriptVarType.None;
+	else static if (is(T == ScriptVar))     return ScriptVarType.Any;
+	else static assert(0);
 }
 
 ScriptFun normalise_scriptfun(R, A...)(R function(A) fun, ref ScriptVarType[] sig_ret) {

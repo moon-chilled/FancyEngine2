@@ -6,6 +6,8 @@ import cstdlib;
 import scripting;
 import bindbc.lua;
 
+import sound.gorilla;
+
 import graphics.fancy_model;
 import graphics.shading;
 import graphics.tex;
@@ -13,7 +15,7 @@ import graphics.font;
 
 import windowing.key;
 
-// note: this is currently BROKEN
+// note: this whole interface is currently BROKEN and UNSUPPORTED
 
 private ScriptVar lua_popvar(lua_State *l) {
 	ScriptVar ret = None;
@@ -98,7 +100,9 @@ private void lua_push_var(lua_State *l, ScriptVar var) {
 		(Shader s) => lua_pushlightuserdata(l, New!ScriptVar(s)),
 		(Texture t) => lua_pushlightuserdata(l, New!ScriptVar(t)),
 		(Font f) => lua_pushlightuserdata(l, New!ScriptVar(f)),
-		(void *v) => lua_pushnil(l),
+		(BufferedSound s) => lua_pushlightuserdata(l, New!ScriptVar(s)),
+		(CachedSound s) => lua_pushlightuserdata(l, New!ScriptVar(s)),
+		(void *v) => lua_pushnil(l), //should this be pushlightuserdata too?
 		(NoneType n) => lua_pushnil(l))();
 }
 

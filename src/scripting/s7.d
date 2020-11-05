@@ -6,6 +6,8 @@ import cstdlib;
 import scripting;
 import scripting.s7_lib_interface;
 
+import sound.gorilla;
+
 import graphics.fancy_model;
 import graphics.shading;
 import graphics.tex;
@@ -52,7 +54,7 @@ private ScriptVar s7_to_script(s7_scheme *s7, s7_pointer ptr) {
 		return ScriptVar(ret);
 	} else if (s7_is_c_pointer(ptr)) {
 		//!WARNING!XXX
-		// this is actually a little bit dangerous
+		// this is a bit dangerous
 		// because anything could be in a c pointer
 		// we provide the following assurance:
 
@@ -85,6 +87,8 @@ private s7_pointer script_to_s7(s7_scheme *s7, ScriptVar var, s7_pointer[Key] ke
 		(Shader s) => s7_make_c_pointer(s7, New!ScriptVar(s)),
 		(Texture t) => s7_make_c_pointer(s7, New!ScriptVar(t)),
 		(Font f) => s7_make_c_pointer(s7, New!ScriptVar(f)),
+		(BufferedSound s) => s7_make_c_pointer(s7, New!ScriptVar(s)),
+		(CachedSound s) => s7_make_c_pointer(s7, New!ScriptVar(s)),
 		(void *v) => s7_nil(s7),
 		(NoneType n) => s7_nil(s7))();
 }

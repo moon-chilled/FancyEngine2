@@ -104,7 +104,7 @@ int real_main(string[] args) {
 	switch (fs) {
 		case "fullscreen": ws.fullscreen = Fullscreenstate.Fullscreen; break;
 		case "desktop": ws.fullscreen = Fullscreenstate.Desktop; break;
-		case "windowed": case "none": ws.fullscreen = Fullscreenstate.None; break;
+		case "windowed": case "none": case "off": ws.fullscreen = Fullscreenstate.None; break;
 		default: error("config error: unable to load option 'fullscreen': invalid value '%s' (valid options are 'fullscreen', 'desktop', and 'none').  Defaulting to windowed mode.", fs); ws.fullscreen = Fullscreenstate.None; break;
 	}
 	switch (vs) {
@@ -187,6 +187,12 @@ int real_main(string[] args) {
 
 	import core.thread;
 	import core.time;
+	faux.expose_fun("load_buf_sound", (string fpath) => audio.load_buf_sound(fpath));
+	faux.expose_fun("load_cache_sound", (string fpath) => audio.load_cache_sound(fpath));
+	faux.expose_fun("play_sound", (ScriptVar s) => s.match!(
+		(BufferedSound s) => audio.play(s),
+		(CachedSound s) => audio.play(s),
+		_ => error("Tried to play non-sound object '%s'", s)));
 	faux.expose_fun("sleep", (long l) => Thread.sleep(l.msecs));
 	faux.expose_fun("grab_mouse", { g_n.am_grabbed = true; queues.enqueue(new GfxGrabMouse(gfx, g_nminusone.am_grabbed)); });
 	faux.expose_fun("ungrab_mouse", { g_n.am_grabbed = false; queues.enqueue(new GfxUngrabMouse(gfx, g_nminusone.am_grabbed)); });
