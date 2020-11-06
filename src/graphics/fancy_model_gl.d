@@ -63,7 +63,6 @@ struct FancyMesh {
 	}
 }
 
-
 struct FancyModel {
 	FancyMesh[] meshes;
 

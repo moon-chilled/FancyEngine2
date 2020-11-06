@@ -24,3 +24,5 @@
 - Engine-managed lifetime/caching of assets, per tentative design doc.
 
 - 3d audio
+
+- Graphics worker threads (so main graphics thread isn't blocked by model loader when it's not actually doing GPU stuff)
