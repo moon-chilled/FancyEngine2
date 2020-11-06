@@ -23,7 +23,7 @@
                      ( v8 (float-vector-ref ,matx  8)) ( v9 (float-vector-ref ,matx  9)) (v10 (float-vector-ref ,matx 10)) (v11 (float-vector-ref ,matx 11))
                      (v12 (float-vector-ref ,matx 12)) (v13 (float-vector-ref ,matx 13)) (v14 (float-vector-ref ,matx 14)) (v15 (float-vector-ref ,matx 15)))
 
-                 ,(cons `begin code)))
+                 ,@code))
 
 (define (matx-translate matrix trans)
   (matx-dec matrix

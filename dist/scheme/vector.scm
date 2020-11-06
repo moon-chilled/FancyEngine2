@@ -22,12 +22,12 @@
               `(let ((x (float-vector-ref ,vec 0))
                      (y (float-vector-ref ,vec 1))
                      (z (float-vector-ref ,vec 2)))
-                 ,(cons `begin code)))
+                 ,@code))
 
 (define-macro (vec2-dec vec . code)
               `(let ((x (float-vector-ref ,vec 0))
                      (y (float-vector-ref ,vec 1)))
-                 ,(cons `begin code)))
+                 ,@code))
 
 
 (define (vec3-cross l r)
