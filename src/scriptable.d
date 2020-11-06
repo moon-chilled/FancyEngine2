@@ -155,11 +155,7 @@ class SceneManager {
 		(*src).remove(scene_name);
 		playing_scenes[scene_name] = s;
 
-		if (s.fresh) {
-			log("entering fresh %s", scene_name);
-			enter(s);
-			s.fresh = false;
-		}
+		enter(s);
 	}
 
 	void expose_fun(T...)(T args) {

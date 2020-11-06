@@ -34,7 +34,7 @@ private extern (C) {
 		Default = -1,
 		Unknown = 0,
 		OpenAL = 1,
-		DirectSound = 2,
+		OSS = 2,
 		XAudio2 = 3,
 	}
 	enum AudioType {

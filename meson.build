@@ -71,6 +71,9 @@ if sys == 'win'
   endforeach
   link_args += ['-L=/nodefaultlib:msvcrtd.lib', '-L=/nodefaultlib:msvcrt.lib', '-L=/nodefaultlib:vcruntime.lib', '-mscrtlib=libcmt']
   run_command('cmd', '/c', 'git rev-parse --short HEAD > src/.commit_hash.txt')
+elif sys == 'freebsd'
+  link_args += '-L-Llib/' + sys + '/'
+  run_command('sh', '-c', 'git rev-parse --short HEAD > src/.commit_hash.txt')
 else
   link_args += '-L-Llib/' + sys + '/'
   run_command('sh', '-c', 'git rev-parse --short HEAD > src/.commit_hash.txt')
