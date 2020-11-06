@@ -38,14 +38,14 @@
         (d (/ (- near far))))
 
     (matx (/ f aspect) 0 0 0
-          0 f 0 0
-          0 0 (* d (+ near far)) (* 2 d far near)
-          0 0 -1 0)))
+          0  f   0                   0
+          0  0   (* d (+ near far))  (* 2 d far near)
+          0  0  -1                   0)))
 
 (define (matx-rotation angle axis)
-  (let* ((c (cos angle))
+  (let* ((c  (cos angle))
          (c- (- 1 c))
-         (s (sin angle))
+         (s  (sin angle))
          (axis- (vec3-normalize axis)))
     (vec3-dec axis-
               (matx
@@ -61,8 +61,9 @@
   (let* ((Z (vec3-normalize (vec3- eye target)))
          (X (vec3-normalize (vec3-cross (vec3- up) Z)))
          (Y (vec3-cross Z (vec3- X))))
-    (matx
-      (- (.x X))  (- (.y X))  (- (.z X))     (vec3-dot X eye)
-         (.x Y)      (.y Y)      (.z Y)   (- (vec3-dot Y eye))
-         (.x Z)      (.y Z)      (.z Z)   (- (vec3-dot Z eye))
-      0           0           0           1)))
+    (vec3-dec (X Y Z)
+              (matx
+                (- x0)  (- y0)  (- z0)     (vec3-dot X eye)
+                   x1      y1      z1   (- (vec3-dot Y eye))
+                   x2      y2      z2   (- (vec3-dot Z eye))
+                0       0       0       1))))
